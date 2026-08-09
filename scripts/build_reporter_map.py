@@ -50,6 +50,26 @@ OUT = REPO / "src" / "nvnm_cite" / "normalizer" / "reporter_registries.json"
 MIN_RECORDS = 100
 DOMINANCE = 0.995
 
+# Same-state family candidates (rule 5b, 1.3.0): an edition that fails the
+# dominance guard still gets an entry when EVERY registry holding >= 1% of
+# its records sits in ONE state — the corpus itself proves every plausible
+# home of the edition, so the verifier can sweep the family with keyed
+# reads instead of refusing (measured: "Cal. App. 5th" splits 71/29 between
+# us-calctapp5d and us-calctapp from CourtListener attribution drift).
+FAMILY_MIN_SHARE = 0.01
+FAMILY_CAP = 5
+
+# The corpus splits some intermediate courts between a parent registry and
+# per-district ones (granularity inconsistency, DECISIONS 2026-08-01
+# findings; measured misroutes on the 2026-08-09 state corpus run). A
+# lookup routed to the parent sweeps the districts too. Members are
+# validated against the manifest at build time.
+REGISTRY_FAMILIES = {
+    "us-texapp": [f"us-txctapp{n}" for n in range(1, 15)],
+    "us-calctapp": [f"us-calctapp{n}d" for n in range(1, 7)],
+    "us-fladistctapp": [f"us-fladistctapp{n}" for n in range(1, 7)],
+}
+
 # Jurisdictionally multi-court in reality; corpus dominance is an artifact
 # of what happens to be loaded. Mapping them would be a genuine guess.
 EXCLUDE = {
@@ -138,6 +158,52 @@ def main() -> int:
             return 1
         table[ed] = {"registry": reg, "records": 0, "share": None, "cite_type": "curated"}
 
+    # Same-state families (rule 5b) for editions the dominance guard keeps
+    # out of the table. Same entry guards (non-vendor, not excluded, one
+    # reporters-db reporter, noise floor); the extra condition is that every
+    # >= FAMILY_MIN_SHARE registry maps to ONE state via courts-db.
+    from nvnm_cite.normalizer.jurisdiction import _court_state_table
+
+    court_state = _court_state_table()
+    families: dict[str, dict] = {}
+    for ed, regs in sorted(ed_regs.items()):
+        if ed in table or is_vendor(ed) or ed in EXCLUDE:
+            continue
+        total = sum(regs.values())
+        if total < MIN_RECORDS:
+            continue
+        entries = rdb_entries(ed)
+        if len(entries) != 1 or entries[0][1] in ("specialty_west", "specialty_lexis"):
+            continue
+        candidates = [
+            (reg, n)
+            for reg, n in regs.most_common()
+            if n / total >= FAMILY_MIN_SHARE and reg in manifest_names
+        ][:FAMILY_CAP]
+        if not candidates:
+            continue
+        states = {court_state.get(reg.removeprefix("us-")) for reg, _ in candidates}
+        if len(states) != 1 or None in states:
+            continue  # multi-state (regional reporters) or non-state courts: refuse
+        families[ed] = {
+            "state": states.pop(),
+            "candidates": [
+                {"registry": reg, "records": n, "share": round(n / total, 5)}
+                for reg, n in candidates
+            ],
+        }
+
+    registry_families: dict[str, list[str]] = {}
+    for parent, children in REGISTRY_FAMILIES.items():
+        if parent not in manifest_names:
+            print(f"FATAL: registry family parent {parent} not in manifest", file=sys.stderr)
+            return 1
+        present = [c for c in children if c in manifest_names]
+        missing = sorted(set(children) - set(present))
+        if missing:
+            print(f"note: {parent} family members not in manifest, dropped: {missing}")
+        registry_families[parent] = present
+
     # LEXIS editions with ANY corpus presence: these are real (parallel) keys
     # on chain, so the normalizer treats them as reporters, not vendor
     # identifiers — even when dominance keeps them out of the inference table
@@ -156,14 +222,22 @@ def main() -> int:
             "dominance": DOMINANCE,
             "single_reporters_db_entry": True,
             "vendor_excluded": True,
+            "family_min_share": FAMILY_MIN_SHARE,
+            "family_cap": FAMILY_CAP,
+            "family_same_state": True,
         },
         "curated_excluded": sorted(EXCLUDE),
         "curated_added": sorted(CURATED_ADD),
         "lexis_editions_present": lexis_present,
         "editions": dict(sorted(table.items())),
+        "families": dict(sorted(families.items())),
+        "registry_families": dict(sorted(registry_families.items())),
     }
     OUT.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n")
-    print(f"wrote {OUT.relative_to(REPO)}: {len(table)} editions")
+    print(
+        f"wrote {OUT.relative_to(REPO)}: {len(table)} editions, "
+        f"{len(families)} families, {len(registry_families)} registry families"
+    )
     return 0
 
 

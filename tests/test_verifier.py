@@ -206,6 +206,76 @@ def test_expanded_coverage_not_found_carries_caution():
     assert appellate["caution"] is None
 
 
+# ---------------------------------------------------- family sweep (1.3.0)
+
+FAMILY_IDS = {
+    "us-texapp": 900, "us-txctapp3": 903, "us-txctapp14": 914,
+    "us-calctapp5d": 920, "us-calctapp": 921,
+}
+
+
+def test_family_sweep_finds_record_in_district_sibling():
+    # "(Tex. App.—Austin ...)" routes to us-texapp, but the corpus keys some
+    # intermediate-court cases under the per-district registries (measured
+    # granularity split). The sweep finds the record and the row reports the
+    # registry that answered, disclosing every registry read.
+    rec = _case_record(
+        903, "101 S.W.3d 381", '{"cluster":1,"name":"Joseph v. City of Austin","year":2003}'
+    )
+    resolver = FakeResolver({(903, "101 S.W.3d 381"): rec})
+    text = "Joseph v. City of Austin, 101 S.W.3d 381 (Tex. App.—Austin 2003)."
+    report = check_text(text, resolver, registry_ids=dict(TEST_REGISTRY_IDS, **FAMILY_IDS))
+    row = report["citations"][0]
+    assert row["status"] == "VERIFIED"
+    assert row["registry"] == "us-txctapp3"
+    assert row["registry_id"] == 903
+    assert row["family_searched"] == ["us-texapp", "us-txctapp3"]
+    assert row["record"]["cases"][0]["name"] == "Joseph v. City of Austin"
+
+
+def test_family_sweep_miss_names_every_registry_read():
+    resolver = FakeResolver({})
+    text = "Joseph v. City of Austin, 101 S.W.3d 381 (Tex. App.—Austin 2003)."
+    report = check_text(text, resolver, registry_ids=dict(TEST_REGISTRY_IDS, **FAMILY_IDS))
+    row = report["citations"][0]
+    assert row["status"] == "NOT_FOUND"
+    # The routed registry stays the row's registry on a family-wide miss.
+    assert row["registry"] == "us-texapp"
+    assert row["family_searched"] == ["us-texapp", "us-txctapp3", "us-txctapp14"]
+    assert "also checked the same-family registries" in row["reason"]
+    assert "us-txctapp3" in row["reason"] and "us-txctapp14" in row["reason"]
+    assert row["confidence"] == "expanded-coverage"  # non-federal miss keeps the caution
+    assert row["query"] is not None  # the primary registry's replayable read
+    # Three keyed reads happened, in family order.
+    assert [rid for rid, _ in resolver.calls] == [900, 903, 914]
+
+
+def test_edition_family_routes_bare_split_editions():
+    # Bare "Cal.App.5th" (California year-first style has no trailing court
+    # parenthetical): rule 5b routes to the dominant registry of the
+    # same-state family; the record here sits in the sibling.
+    rec = _case_record(
+        921, "30 Cal. App. 5th 696",
+        '{"cluster":2,"name":"Drulias v. 1st Century Bancshares, Inc.","year":2018}',
+    )
+    resolver = FakeResolver({(921, "30 Cal. App. 5th 696"): rec})
+    text = "Drulias v. 1st Century Bancshares, Inc. (2018) 30 Cal.App.5th 696."
+    report = check_text(text, resolver, registry_ids=dict(TEST_REGISTRY_IDS, **FAMILY_IDS))
+    row = report["citations"][0]
+    assert row["status"] == "VERIFIED"
+    assert row["registry"] == "us-calctapp"
+    assert row["family_searched"] == ["us-calctapp5d", "us-calctapp"]
+
+
+def test_single_candidate_lookups_have_no_family_field():
+    report = check_document(
+        BRIEF.encode(), "brief.txt", FakeResolver(), registry_ids=TEST_REGISTRY_IDS
+    )
+    roe = next(c for c in report["citations"] if c["canonical"] == "410 U.S. 113")
+    assert roe["status"] == "VERIFIED"
+    assert roe["family_searched"] is None
+
+
 def test_keyed_results_carry_a_replayable_query():
     report = check_document(BRIEF.encode(), "brief.txt", FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
     by_key = {c["canonical"] or c["as_written"]: c for c in report["citations"]}

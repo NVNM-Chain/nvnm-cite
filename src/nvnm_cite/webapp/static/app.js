@@ -556,7 +556,7 @@ function buildVerdict(report) {
     if (nExpanded === 0) {
       sub.textContent = "No registry record exists. Treat as presumptively fabricated until proven otherwise.";
     } else if (nExpanded === nf.length) {
-      sub.textContent = "No registry record exists — but all of these are in newly-expanded coverage, where citation formats are still being proven. Verify each yourself; never delete a citation on this signal alone.";
+      sub.textContent = "No registry record exists — but all of these are in newly-expanded coverage, where the source data's completeness is still being measured (it thins for recent state decisions). Verify each yourself; never delete a citation on this signal alone.";
     } else {
       sub.textContent = `No registry record exists. ${nExpanded} of these are in newly-expanded coverage (marked below) — treat those as flags to verify, never proof of fabrication.`;
     }

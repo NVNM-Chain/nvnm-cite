@@ -59,7 +59,21 @@ from nvnm_cite.normalizer.jurisdiction import map_citation, vendor_in_key_space,
 # court 'supctdc' for a N.Y. "Misc. 3d" cite over "(Sup. Ct. 2004)");
 # (d) star pagination ("*4") recognized as pin-cite material ahead of a
 # court parenthetical. The cite-canonical/v1 KEY format is unchanged.
-NORMALIZER_VERSION = "1.2.0"
+# 1.3.0 (2026-08-09, driven by the state-filings corpus run, CA/NY/TX/FL/IL):
+# (a) the parenthetical BEFORE a citation is read too — California style
+# is "Name (Court Year) cite" — and an eyecite court claim is accepted
+# only when an adjacent parenthetical corroborates it (a contradicting
+# adjacent parenthetical wins; a claim with no adjacent parenthetical is
+# the measured table-of-authorities overreach and is refused); (b) a
+# state-scoped reporter refuses federal appellate court claims; (c) rule-4
+# prefix matches refuse ordinal remainders ("Fla." never swallows
+# "Fla. 1st DCA") and normalize typographic quotes; Florida DCA forms map
+# to the parent fladistctapp where the corpus keys them; (d) same-state
+# family candidates (rule 5b): editions whose whole >=1% corpus population
+# sits in one state's registries route to the dominant one and the
+# verifier sweeps the siblings before reporting a miss. The
+# cite-canonical/v1 KEY format is unchanged.
+NORMALIZER_VERSION = "1.3.0"
 CANONICAL_SPEC = "cite-canonical-v1"
 
 # all_whitespace repairs line-break-mangled cites ("410\nU. S. 113");
@@ -279,9 +293,15 @@ def normalize(text: str, *, clean_steps: tuple[str, ...] = CLEAN_STEPS) -> Norma
                 # Window after the anchor's span feeds the mapper's
                 # circuit-parenthetical fallback; 64 chars spans pin-cite
                 # runs but a guard regex stops at any intervening citation.
-                anchor_end = anchor.span()[1]
+                # The window BEFORE the span feeds the preceding-
+                # parenthetical channel (California style, 1.3.0): 90 chars
+                # holds "(Court Year)" plus slack; the mapper only reads a
+                # parenthetical that closes immediately before the cite.
+                anchor_start, anchor_end = anchor.span()
                 registry, ambiguity = map_citation(
-                    anchor, cleaned[anchor_end : anchor_end + 64]
+                    anchor,
+                    cleaned[anchor_end : anchor_end + 64],
+                    cleaned[max(0, anchor_start - 90) : anchor_start],
                 )
                 if registry is not None:
                     disposition, reason = Disposition.OK, None

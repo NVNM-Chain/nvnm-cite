@@ -38,7 +38,8 @@ The response you care about:
 - `citations[]`: one entry per cited authority, in document order. A run of parallel reporters for the same case ("133 Ohio St.3d 10, 2012-Ohio-5270, 979 N.E.2d 1229") is one entry: the strongest member is the row and the rest stay visible in its `parallels` array with their own statuses. Key fields per entry:
   - `canonical`: the normalized citation key that was checked (first-page form, e.g. `410 U.S. 113`), and `as_written` / `variants` for how the document actually wrote it.
   - `status` and `reason`: the verdict and why.
-  - `registry` / `registry_id`: which court registry was consulted (e.g. `us-scotus`).
+  - `registry` / `registry_id`: which court registry answered (e.g. `us-scotus`); on a miss, the registry the citation routes to.
+  - `family_searched`: when the source data splits an edition or an intermediate court across sibling registries, the lookup sweeps the whole same-state family with keyed reads — this array lists every registry read, and `registry` is the one that answered. Null for ordinary single-registry lookups.
   - `caution`: present on some NOT_FOUND results (see below). If present, relay it verbatim to your user.
   - `name_check`: `match`, `mismatch`, or `unknown`. A token-overlap comparison between the party names in the document and the case name in the on-chain record. `mismatch` flags the failure mode where a real citation is paired with an invented case name. It stays `unknown` when it cannot be sure.
   - `record`: the on-chain record when one was found (case name, year, CourtListener URL).
@@ -59,7 +60,7 @@ The response you care about:
 
 ### The expanded-coverage caution
 
-Jurisdiction mapping was proven end to end for the federal appellate registries (SCOTUS and the thirteen circuits). For every other court, coverage is newly expanded and citation formats are still being proven against real briefs. A `NOT_FOUND` outside the federal appellate set therefore carries `"confidence": "expanded-coverage"` and a `caution` string. Treat such a miss as a flag to verify the citation independently, never as proof of fabrication, and never advise deleting a citation on this signal alone. Pass the caution text through to your user.
+Jurisdiction mapping was proven end to end for the federal appellate registries (SCOTUS and the thirteen circuits), and for state citation formats against real filings from the five highest-volume states (CA/NY/TX/FL/IL, 2026-08-09). What is still being measured for the non-federal-appellate courts is the COMPLETENESS of the underlying source data: the public record measurably thins for recent state decisions, so a real, recent case can be honestly absent. A `NOT_FOUND` outside the federal appellate set therefore carries `"confidence": "expanded-coverage"` and a `caution` string. Treat such a miss as a flag to verify the citation independently, never as proof of fabrication, and never advise deleting a citation on this signal alone. Pass the caution text through to your user.
 
 ## Verify a filed document
 

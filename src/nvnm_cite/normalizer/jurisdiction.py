@@ -12,24 +12,48 @@ reporter-derived default):
    L. Ed. / L. Ed. 2d cites (measured against eyecite 2.7.6).
 2. eyecite's metadata.court (already a courts-db ID, parsed from the court
    parenthetical) -> us-<id>, after validating the ID against courts-db.
+   CORROBORATION-GATED (1.3.0, measured on the state corpus run): eyecite's
+   forward parenthetical scan overreaches across neighboring citations in
+   string cites and tables of authorities, so a claim is accepted only when
+   an ADJACENT parenthetical corroborates it. A contradicting adjacent
+   parenthetical wins outright (it is the citation's own signal); a claim
+   with NO adjacent parenthetical at all is the measured overreach
+   signature and is refused.
 3. Closed-set federal-circuit parenthetical fallback ("(3d Cir. 1999)" and
    ordinal variants eyecite misses).
 4. General court-parenthetical fallback: exact longest-prefix match of the
    parenthetical's content against courts-db citation_strings — measured
-   globally unique (1,959/1,959 map to exactly one court) — plus the closed
-   set of New York Appellate Division forms ("App. Div.", "1st Dep't" …
-   "4th Dep't"), which are definitionally us-nyappdiv (courts-db models the
-   four departments as one court).
+   globally unique (1,959/1,959 map to exactly one court) — plus closed
+   sets for New York Appellate Division forms ("App. Div.", "1st Dep't" …
+   "4th Dep't", state-gated on the reporter) and Florida DCA forms
+   ("Fla. 1st DCA" … — courts-db has no citation_string for them and the
+   corpus keys DCA cases under the parent fladistctapp). 1.3.0: the
+   parenthetical BEFORE the citation is read too — California citation
+   style is "Name (Court Year) cite" — with the trailing year stripped; a
+   year-only preceding parenthetical carries no court signal. A prefix
+   match is refused when the remainder begins with an ordinal token
+   ("Fla." must never swallow "Fla. 1st DCA"), and curly apostrophes /
+   quotes normalize to straight before matching ("Tex. Comm'n App.").
 5. Reporter-edition inference from the corpus-derived table
    (reporter_registries.json, built by scripts/build_reporter_map.py):
    editions that one registry dominates >= 99.5% across the 11.9M-record
    mainnet corpus, guarded (single reporters-db reporter, non-vendor,
    curated adjudications in DECISIONS 2026-08-01). This is what makes bare
    "212 A.D.2d 331", "248 N.Y. 339" or "T.C. Memo. 1976-300" resolvable.
+5b. Same-state family candidates (1.3.0): editions whose ENTIRE >=1%
+   corpus population sits in ONE state but across sibling registries
+   (measured: "Cal. App. 5th" splits 71/29 calctapp5d/calctapp from
+   CourtListener attribution drift; N.Y.2d splits ny/nyappdiv; NY Slip Op,
+   Misc. 3d, Ill. Dec.) route to the family's dominant registry, and the
+   verifier sweeps the remaining candidates with keyed reads before
+   reporting a miss (lookup_candidates). Existence-only semantics are
+   unchanged: every hit is a live keyed read, and the answering registry
+   is disclosed per row.
 6. Anything else is ambiguous. This includes F.2d/F.3d/F.4th/F. App'x and
    regional reporters (S.W.2d, N.E.2d, …) with no recognizable
-   parenthetical, genuinely multi-court reporters (M.J.), and shared
-   nominatives ("Cranch" is both scotus_early and a D.C. reporter).
+   parenthetical, genuinely multi-STATE reporters (S.W.3d, So. 3d, M.J.),
+   and shared nominatives ("Cranch" is both scotus_early and a D.C.
+   reporter).
 
 Vendor identifiers (Westlaw "2019 WL 1439098", LEXIS) are not jurisdiction
 questions at all: they are never registry keys (the corpus scope excludes
@@ -97,6 +121,31 @@ _ANY_PARENTHETICAL = re.compile(
     r"^(?:\s*,?\s*(?:at\s+)?[\d\s,\-–&n\.\*]*)\((?P<content>[^)]{1,80})\)"
 )
 
+# The parenthetical BEFORE the citation (California style: "Name (Court
+# Year) cite"). It must close immediately before the cite (only whitespace
+# or a comma in between) and its content must END with a year — that year
+# is stripped before the court match, and a year-only parenthetical
+# ("(2018)") carries no court signal at all.
+_PRECEDING_PARENTHETICAL = re.compile(r"\((?P<content>[^()]{1,80})\)[\s,]*$")
+_TRAILING_YEAR = re.compile(r"(?:1[6-9]|20)\d{2}$")
+
+# Court text in real documents uses typographic apostrophes and quotes;
+# courts-db citation_strings use straight ones ("Tex. Comm'n App.").
+_QUOTE_TRANSLATION = str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"'})
+
+# A prefix match whose remainder begins with an ordinal token is matching a
+# SHORTER court's string inside a longer court form: "Fla." must never
+# swallow "Fla. 1st DCA" (measured: 60 misroutes on the 2026-08-09 state
+# corpus run). A year remainder ("2020") does not trip this.
+_ORDINAL_REMAINDER = re.compile(r"\d{1,2}(?:st|nd|rd|d|th)\b")
+
+# Florida DCA forms as actually written ("Fla. 1st DCA 1989"): courts-db
+# has NO citation_string for the DCA courts (the district entries are
+# blank), and the corpus keys DCA cases under the parent court
+# fladistctapp — measured 100,839 So. 3d records there vs single digits in
+# the per-district registries.
+_FLA_DCA = re.compile(r"Fla\.\s*\d{1,2}(?:st|nd|rd|d|th)\s+DCA\b")
+
 # "App. Div." / department parentheticals are STATE-GATED on the reporter:
 # both New York and New Jersey have an Appellate Division, so the bare form
 # identifies a court only in combination with the citation's own reporter
@@ -124,7 +173,7 @@ def _citation_string_index() -> tuple[dict[str, str], list[str]]:
     """
     seen: dict[str, list[str]] = {}
     for court in courts_db.courts:
-        s = (court.get("citation_string") or "").strip()
+        s = (court.get("citation_string") or "").strip().translate(_QUOTE_TRANSLATION)
         if s:
             seen.setdefault(s, []).append(court["id"])
     index = {s: ids[0] for s, ids in seen.items() if len(ids) == 1}
@@ -137,11 +186,14 @@ def _prefix_match(content: str, key: str) -> bool:
     )
 
 
-def _court_from_parenthetical(following_text: str, edition: str | None = None) -> str | None:
-    match = _ANY_PARENTHETICAL.match(following_text)
-    if not match:
-        return None
-    content = match.group("content").strip()
+def _court_from_content(content: str, edition: str | None = None) -> str | None:
+    """Resolve parenthetical CONTENT (already extracted) to a courts-db id.
+
+    Shared by the following-parenthetical (rule 4) and preceding-
+    parenthetical (California style) channels. Refuses rather than guesses:
+    unknown forms, state-gate conflicts, and ordinal-remainder swallows all
+    return None."""
+    content = content.strip().translate(_QUOTE_TRANSLATION)
     ed = edition or ""
     if any(_prefix_match(content, form) for form in _APPDIV_FORMS):
         if ed.startswith(_NY_EDITION_PREFIXES):
@@ -149,9 +201,21 @@ def _court_from_parenthetical(following_text: str, edition: str | None = None) -
         if ed.startswith(_NJ_EDITION_PREFIXES):
             return "njsuperctappdiv"
         return None  # "App. Div." without a state-identifying reporter: refuse
+    if _FLA_DCA.match(content):
+        court_id = "fladistctapp"
+        if edition and _state_conflict(edition, court_id):
+            return None
+        return court_id
     index, keys_longest_first = _citation_string_index()
     for key in keys_longest_first:
         if _prefix_match(content, key):
+            remainder = content[len(key) :].lstrip(" ,")
+            if _ORDINAL_REMAINDER.match(remainder):
+                # "Fla. 1st DCA …" reached the "Fla." key: the content
+                # continues with MORE court text, so this match is a
+                # shorter court swallowing a longer form. Refuse it (a
+                # longer key would already have matched above).
+                continue
             court_id = index[key]
             # State gate: a prefix match whose court sits outside the
             # reporter's own state set is a misattribution, not a signal.
@@ -159,6 +223,43 @@ def _court_from_parenthetical(following_text: str, edition: str | None = None) -
                 return None
             return court_id
     return None
+
+
+def _court_from_parenthetical(following_text: str, edition: str | None = None) -> str | None:
+    match = _ANY_PARENTHETICAL.match(following_text)
+    if not match:
+        return None
+    return _court_from_content(match.group("content"), edition)
+
+
+def _court_from_preceding(preceding_text: str, edition: str | None = None) -> str | None:
+    """Court from the parenthetical immediately BEFORE the citation.
+
+    California style places the court parenthetical ahead of the cite —
+    "E. & J. Gallo Winery v. Andina Licores S.A. (9th Cir. 2006) 446 F.3d
+    984" — so the preceding parenthetical is the citation's own signal
+    there. The content must end with a year (stripped before matching);
+    a year-only parenthetical ("(2018)") names no court."""
+    match = _PRECEDING_PARENTHETICAL.search(preceding_text or "")
+    if not match:
+        return None
+    content = _TRAILING_YEAR.sub("", match.group("content").strip()).strip(" ,")
+    if not content:
+        return None
+    return _court_from_content(content, edition)
+
+
+def _adjacent_parenthetical_exists(following_text: str, preceding_text: str) -> bool:
+    """True when the citation has ANY adjacent parenthetical that could
+    carry a court — the corroboration surface for an eyecite court claim.
+    A year-only preceding parenthetical does not count."""
+    if _ANY_PARENTHETICAL.match(following_text or ""):
+        return True
+    match = _PRECEDING_PARENTHETICAL.search(preceding_text or "")
+    if not match:
+        return False
+    content = _TRAILING_YEAR.sub("", match.group("content").strip()).strip(" ,")
+    return bool(content)
 
 
 # --- state-consistency gate (1.2.0) ---
@@ -245,6 +346,19 @@ def _state_conflict(edition: str | None, court_id: str) -> bool:
     return bool(states) and court_state is not None and court_state not in states
 
 
+# Federal appellate courts have no state location, so the state gate above
+# is inert for them — but a STATE-scoped reporter can never be a federal
+# appellate citation ("30 Cal.App.5th 696" claimed as ca9, measured on the
+# 2026-08-09 state corpus run: eyecite overreach in a table of authorities).
+_FEDERAL_APPELLATE_IDS = frozenset({"scotus", "cadc", "cafc"} | {f"ca{n}" for n in range(1, 12)})
+
+
+def _federal_appellate_conflict(edition: str | None, court_id: str) -> bool:
+    return court_id in _FEDERAL_APPELLATE_IDS and bool(
+        _edition_state_table().get(edition or "")
+    )
+
+
 # Reporter-edition inference table (rule 5): corpus-derived, guarded,
 # curated; see scripts/build_reporter_map.py and DECISIONS 2026-08-01.
 @lru_cache(maxsize=1)
@@ -261,6 +375,50 @@ def _reporter_registry_table() -> dict[str, str]:
 @lru_cache(maxsize=1)
 def _lexis_editions_present() -> frozenset[str]:
     return frozenset(_reporter_registries_doc().get("lexis_editions_present", []))
+
+
+# --- same-state family candidates (rule 5b, 1.3.0) ---
+
+
+@lru_cache(maxsize=1)
+def _families_table() -> dict[str, dict]:
+    return dict(_reporter_registries_doc().get("families", {}))
+
+
+@lru_cache(maxsize=1)
+def _registry_families_table() -> dict[str, list[str]]:
+    return dict(_reporter_registries_doc().get("registry_families", {}))
+
+
+def family_candidates(edition: str | None) -> list[str]:
+    """Ordered same-state registries an edition's corpus population spans
+    (share-descending), or [] when the edition has no family entry."""
+    entry = _families_table().get(edition or "")
+    if not entry:
+        return []
+    return [c["registry"] for c in entry["candidates"]]
+
+
+def lookup_candidates(edition: str | None, registry: str | None) -> list[str]:
+    """Every registry a keyed existence lookup should try, in order.
+
+    The routed registry first, then the edition's same-state family
+    candidates, then the routed registry's district siblings (the corpus
+    splits some intermediate courts across a parent registry and
+    per-district ones — measured: us-texapp vs us-txctapp1..14). The
+    verifier resolves each with a live keyed read and reports the registry
+    that answered; a miss is a miss across ALL of them."""
+    out: list[str] = []
+    if registry:
+        out.append(registry)
+    for name in family_candidates(edition):
+        if name not in out:
+            out.append(name)
+    if registry:
+        for name in _registry_families_table().get(registry, []):
+            if name not in out:
+                out.append(name)
+    return out
 
 
 def vendor_kind(edition: str | None) -> str | None:
@@ -292,13 +450,14 @@ def registry_for_court(court_id: str) -> str:
 
 
 def map_citation(
-    citation: CaseCitation, following_text: str = ""
+    citation: CaseCitation, following_text: str = "", preceding_text: str = ""
 ) -> tuple[str | None, str | None]:
     """(registry, None) when the citation maps cleanly, else (None, reason).
 
-    following_text is the cleaned text immediately after the citation span,
-    used only for the closed-set circuit-parenthetical fallback when eyecite
-    reports no court. A (None, reason) result means AMBIGUOUS_JURISDICTION
+    following_text is the cleaned text immediately after the citation span
+    (circuit fallback + rule-4 parenthetical); preceding_text is the cleaned
+    text immediately before it (California style puts the court parenthetical
+    ahead of the cite). A (None, reason) result means AMBIGUOUS_JURISDICTION
     to the caller.
     """
     edition = citation.corrected_reporter()
@@ -307,42 +466,68 @@ def map_citation(
 
     table_default = _reporter_registry_table().get(edition or "")
 
+    # The citation's OWN adjacent parentheticals — the strongest local
+    # signal after the reporter itself. Following (Bluebook) outranks
+    # preceding (California style) when both are readable.
+    following_court = _circuit_from_following_text(following_text) or _court_from_parenthetical(
+        following_text, edition
+    )
+    preceding_court = _court_from_preceding(preceding_text, edition)
+    adjacent = following_court or preceding_court
+
     court = (citation.metadata.court or "").strip()
-    if court and _state_conflict(edition, court):
-        # eyecite's claimed court sits in a state the citation's own
-        # reporter never covers (measured: 'supctdc' for a N.Y. Misc. 3d
-        # cite). The reporter is part of the citation itself — drop the
-        # claim and let rules 3-6 decide from the citation's own signals.
+    if court and (_state_conflict(edition, court) or _federal_appellate_conflict(edition, court)):
+        # eyecite's claimed court is impossible for the citation's own
+        # reporter (measured: 'supctdc' for a N.Y. Misc. 3d cite; 'ca9' for
+        # a Cal.App.5th cite via table-of-authorities overreach). The
+        # reporter is part of the citation itself — drop the claim and let
+        # the citation's own signals decide.
         court = ""
+    if court and court not in _VALID_COURT_IDS:
+        # eyecite court IDs come from courts-db, so this branch should be
+        # unreachable; if the libraries ever skew, refuse rather than guess.
+        return None, f"court id {court!r} not found in courts-db"
     if court:
-        if court not in _VALID_COURT_IDS:
-            # eyecite court IDs come from courts-db, so this branch should be
-            # unreachable; if the libraries ever skew, refuse rather than guess.
-            return None, f"court id {court!r} not found in courts-db"
-        claimed = REGISTRY_PREFIX + court
-        if table_default is None or claimed == table_default:
-            return claimed, None
-        # eyecite's court CONTRADICTS the citation's own reporter. eyecite's
-        # forward parenthetical scan can overreach across a neighboring
-        # citation in a string cite (measured: "54 Cal. 3d 868. ... LEXIS
-        # 7085 (N.Y. App. Div. 1912)" gets court='nyappdiv'). Accept the
-        # claimed court only when the ADJACENT parenthetical corroborates
-        # it; otherwise the reporter's own default wins — the reporter is
-        # part of the citation itself, the strongest local signal.
-        if _court_from_parenthetical(following_text, edition) == court:
-            return claimed, None
-        return table_default, None
+        if court in (following_court, preceding_court):
+            return REGISTRY_PREFIX + court, None
+        if adjacent is not None:
+            # The citation's own adjacent parenthetical names a DIFFERENT
+            # court: eyecite's forward scan overreached onto a neighboring
+            # citation (measured: "(2d Cir. 2010) 603 F.3d 23" claimed as
+            # 'cal' from the NEXT authority's parenthetical). The local
+            # parenthetical wins.
+            return REGISTRY_PREFIX + adjacent, None
+        windows_provided = bool(following_text or preceding_text)
+        if not windows_provided or _adjacent_parenthetical_exists(following_text, preceding_text):
+            # Either the caller gave no document context (a bare
+            # map_citation call — nothing to corroborate against), or an
+            # adjacent parenthetical exists that our index cannot read and
+            # eyecite likely read that same parenthetical with richer
+            # patterns. Keep the 2026-08-02 rule: the reporter's own
+            # default outranks an uncorroborated contradicting claim.
+            claimed = REGISTRY_PREFIX + court
+            if table_default is None or claimed == table_default:
+                return claimed, None
+            return table_default, None
+        # Document context was provided and holds NO adjacent parenthetical:
+        # the claim's source parenthetical belongs to some OTHER citation —
+        # the measured table-of-authorities overreach signature. Refuse the
+        # claim; rules 5/5b/6 decide.
+        court = ""
 
-    fallback = _circuit_from_following_text(following_text)
-    if fallback is not None:
-        return REGISTRY_PREFIX + fallback, None
-
-    paren_court = _court_from_parenthetical(following_text, edition)
-    if paren_court is not None:
-        return REGISTRY_PREFIX + paren_court, None
+    if adjacent is not None:
+        return REGISTRY_PREFIX + adjacent, None
 
     if table_default is not None:
         return table_default, None
+
+    family = family_candidates(edition)
+    if family:
+        # Rule 5b: the edition's whole corpus population sits in one
+        # state's family of registries. Route to the dominant one; the
+        # verifier sweeps the rest (lookup_candidates) before reporting a
+        # miss, and the answering registry is disclosed.
+        return family[0], None
 
     if edition in AMBIGUOUS_FEDERAL_REPORTERS:
         return None, f"{edition} citation with no recognizable court parenthetical"

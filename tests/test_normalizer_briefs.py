@@ -58,7 +58,15 @@ class TestAviancaReplyMemo:
         regs = Counter(c.registry for c in r.citations if c.registry)
         assert regs["us-scotus"] >= 3
         assert regs["us-ca11"] >= 2
-        assert any(c.disposition is Disposition.AMBIGUOUS_JURISDICTION for c in r.citations)
+        # 1.3.0: the memo's formerly-ambiguous state cites now route via the
+        # same-state family mechanism (rule 5b), so every fabricated cite
+        # reaches a keyed chain read instead of refusing.
+        by_canonical = {c.canonical: c for c in r.citations if c.canonical}
+        assert by_canonical["360 N.J. Super. 360"].registry == "us-njsuperctappdiv"
+        assert by_canonical["7 Misc. 3d 1004(A)"].registry == "us-nysupct"
+        assert not any(
+            c.disposition is Disposition.AMBIGUOUS_JURISDICTION for c in r.citations
+        )
 
 
 class TestSanctionsOpinion:

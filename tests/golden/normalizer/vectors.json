@@ -3,8 +3,8 @@
   "spec": "cite-canonical-v1",
   "generator": "generate_vectors.py",
   "note": "Expectations hand-derived from docs/canonical-citation-spec.md; adjudications recorded in DECISIONS.md. Compared fields: as_written, canonical, registry, disposition, kind.",
-  "vector_count": 242,
-  "expectation_rows": 269
+  "vector_count": 257,
+  "expectation_rows": 286
  },
  "vectors": [
   {
@@ -3169,8 +3169,8 @@
     {
      "as_written": "45 N.Y.S.3d 200",
      "canonical": "45 N.Y.S.3d 200",
-     "registry": null,
-     "disposition": "ambiguous_jurisdiction",
+     "registry": "us-nyappdiv",
+     "disposition": "ok",
      "kind": "full"
     }
    ]
@@ -3281,8 +3281,8 @@
     {
      "as_written": "1912 N.Y. App. Div. LEXIS 7085",
      "canonical": "1912 N.Y. App. Div. LEXIS 7085",
-     "registry": null,
-     "disposition": "vendor",
+     "registry": "us-nyappdiv",
+     "disposition": "ok",
      "kind": "full"
     }
    ]
@@ -3554,8 +3554,8 @@
     {
      "as_written": "7 Misc. 3d 1004(A)",
      "canonical": "7 Misc. 3d 1004(A)",
-     "registry": null,
-     "disposition": "ambiguous_jurisdiction",
+     "registry": "us-nysupct",
+     "disposition": "ok",
      "kind": "full"
     }
    ]
@@ -3570,6 +3570,230 @@
      "canonical": "100 Misc. 2d 500",
      "registry": "us-nysupct",
      "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "preceding_parenthetical-001",
+   "category": "preceding_parenthetical",
+   "text": "E. & J. Gallo Winery v. Andina Licores S.A. (9th Cir. 2006) 446 F.3d 984.",
+   "expect": [
+    {
+     "as_written": "446 F.3d 984",
+     "canonical": "446 F.3d 984",
+     "registry": "us-ca9",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "preceding_parenthetical-002",
+   "category": "preceding_parenthetical",
+   "text": "Perkins v. CCH Computax, Inc. (N.C. 1992) 423 S.E.2d 780, 784.",
+   "expect": [
+    {
+     "as_written": "423 S.E.2d 780",
+     "canonical": "423 S.E.2d 780",
+     "registry": "us-nc",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "preceding_parenthetical-003",
+   "category": "preceding_parenthetical",
+   "text": "Salzberg v. Sciabacucchi (Del. 2020) 227 A.3d 102, 113.",
+   "expect": [
+    {
+     "as_written": "227 A.3d 102",
+     "canonical": "227 A.3d 102",
+     "registry": "us-del",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "preceding_parenthetical-004",
+   "category": "preceding_parenthetical",
+   "text": "Foo v. Bar (2018) 100 F.3d 200.",
+   "expect": [
+    {
+     "as_written": "100 F.3d 200",
+     "canonical": "100 F.3d 200",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "toa_overreach-001",
+   "category": "toa_overreach",
+   "text": "Drulias v. 1st Century Bancshares, Inc., (2018) 30 Cal.App.5th 696 ....................... 15, 19, 27 E. & J. Gallo Winery v. Andina Licores S.A., (9th Cir. 2006) 446 F.3d 984 .......... 12",
+   "expect": [
+    {
+     "as_written": "30 Cal.App.5th 696",
+     "canonical": "30 Cal. App. 5th 696",
+     "registry": "us-calctapp5d",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "446 F.3d 984",
+     "canonical": "446 F.3d 984",
+     "registry": "us-ca9",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "toa_overreach-002",
+   "category": "toa_overreach",
+   "text": "Greenwich Financial Services Distressed Mortg. Fund 3 LLC v. Countrywide Financial Corp., (2d Cir. 2010) 603 F.3d 23 ........... 18 6 Handoush v. Lease Finance Group, (Cal. 2020) 258 Cal.Rptr.3d 363 ....... 6",
+   "expect": [
+    {
+     "as_written": "603 F.3d 23",
+     "canonical": "603 F.3d 23",
+     "registry": "us-ca2",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "258 Cal.Rptr.3d 363",
+     "canonical": "258 Cal. Rptr. 3d 363",
+     "registry": "us-cal",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "fla_dca-001",
+   "category": "fla_dca",
+   "text": "Masonoff v. State, 546 So. 2d 72, 74 (Fla. 2d DCA 1989).",
+   "expect": [
+    {
+     "as_written": "546 So. 2d 72",
+     "canonical": "546 So. 2d 72",
+     "registry": "us-fladistctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "fla_dca-002",
+   "category": "fla_dca",
+   "text": "Baxter v. State, 389 So. 3d 803 (Fla. 5th DCA 2024) (en banc).",
+   "expect": [
+    {
+     "as_written": "389 So. 3d 803",
+     "canonical": "389 So. 3d 803",
+     "registry": "us-fladistctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "fla_dca-003",
+   "category": "fla_dca",
+   "text": "State v. Poole, 297 So. 3d 487 (Fla. 2020).",
+   "expect": [
+    {
+     "as_written": "297 So. 3d 487",
+     "canonical": "297 So. 3d 487",
+     "registry": "us-fla",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curly_quotes-001",
+   "category": "curly_quotes",
+   "text": "Fid. Union Cas. Co. v. Hammock, 248 S.W. 667 (Tex. Comm’n App. 1923, judgm’t adopted).",
+   "expect": [
+    {
+     "as_written": "248 S.W. 667",
+     "canonical": "248 S.W. 667",
+     "registry": "us-texcommnapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "family_inference-001",
+   "category": "family_inference",
+   "text": "Doe v. Roe (2018) 30 Cal.App.5th 696.",
+   "expect": [
+    {
+     "as_written": "30 Cal.App.5th 696",
+     "canonical": "30 Cal. App. 5th 696",
+     "registry": "us-calctapp5d",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "family_inference-002",
+   "category": "family_inference",
+   "text": "People v. Vivar (1999) 21 Cal.4th 903.",
+   "expect": [
+    {
+     "as_written": "21 Cal.4th 903",
+     "canonical": "21 Cal. 4th 903",
+     "registry": "us-cal",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "family_inference-003",
+   "category": "family_inference",
+   "text": "Matter of Jamal S., 28 NY3d 92 (2016).",
+   "expect": [
+    {
+     "as_written": "28 NY3d 92",
+     "canonical": "28 N.Y.3d 92",
+     "registry": "us-ny",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "family_inference-004",
+   "category": "family_inference",
+   "text": "People v. Bing, 76 NY2d 331 (1990).",
+   "expect": [
+    {
+     "as_written": "76 NY2d 331",
+     "canonical": "76 N.Y.2d 331",
+     "registry": "us-ny",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "family_inference-005",
+   "category": "family_inference",
+   "text": "Baz v. Qux, 700 S.W.3d 100.",
+   "expect": [
+    {
+     "as_written": "700 S.W.3d 100",
+     "canonical": "700 S.W.3d 100",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
      "kind": "full"
     }
    ]

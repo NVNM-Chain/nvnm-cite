@@ -1,12 +1,15 @@
 {
  "schema": "nvnm-cite-reporter-registries/v1",
- "generated_at": "2026-08-01T12:13:26Z",
+ "generated_at": "2026-08-09T20:53:00Z",
  "source": "data/mainnet-full-export (mainnet corpus, manifest block 2070234)",
  "guards": {
   "min_records": 100,
   "dominance": 0.995,
   "single_reporters_db_entry": true,
-  "vendor_excluded": true
+  "vendor_excluded": true,
+  "family_min_share": 0.01,
+  "family_cap": 5,
+  "family_same_state": true
  },
  "curated_excluded": [
   "Fla. L. Weekly Supp.",
@@ -2299,5 +2302,3250 @@
    "share": 1.0,
    "cite_type": "state"
   }
+ },
+ "families": {
+  "Abb. N. Cas.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 994,
+     "share": 0.51396
+    },
+    {
+     "registry": "us-nyctcompl",
+     "records": 221,
+     "share": 0.11427
+    },
+    {
+     "registry": "us-ny",
+     "records": 210,
+     "share": 0.10858
+    },
+    {
+     "registry": "us-nysuperctnyc",
+     "records": 179,
+     "share": 0.09255
+    },
+    {
+     "registry": "us-nynyccityct",
+     "records": 84,
+     "share": 0.04343
+    }
+   ]
+  },
+  "Abb. Pr.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 1492,
+     "share": 0.52517
+    },
+    {
+     "registry": "us-nysuperctnyc",
+     "records": 539,
+     "share": 0.18972
+    },
+    {
+     "registry": "us-nyctcompl",
+     "records": 495,
+     "share": 0.17423
+    },
+    {
+     "registry": "us-ny",
+     "records": 211,
+     "share": 0.07427
+    }
+   ]
+  },
+  "Add.": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pactcomplallegh",
+     "records": 44,
+     "share": 0.35772
+    },
+    {
+     "registry": "us-pactcomplwashin",
+     "records": 29,
+     "share": 0.23577
+    },
+    {
+     "registry": "us-pactcomplwestmo",
+     "records": 28,
+     "share": 0.22764
+    },
+    {
+     "registry": "us-pactcomplfayett",
+     "records": 16,
+     "share": 0.13008
+    },
+    {
+     "registry": "us-pa",
+     "records": 4,
+     "share": 0.03252
+    }
+   ]
+  },
+  "Ala. App.": {
+   "state": "al",
+   "candidates": [
+    {
+     "registry": "us-alactapp",
+     "records": 12046,
+     "share": 0.8356
+    },
+    {
+     "registry": "us-alacrimapp",
+     "records": 1589,
+     "share": 0.11022
+    },
+    {
+     "registry": "us-alacivapp",
+     "records": 779,
+     "share": 0.05404
+    }
+   ]
+  },
+  "Ala. Civ. App. LEXIS": {
+   "state": "al",
+   "candidates": [
+    {
+     "registry": "us-alacivapp",
+     "records": 12736,
+     "share": 0.92652
+    },
+    {
+     "registry": "us-alactapp",
+     "records": 928,
+     "share": 0.06751
+    }
+   ]
+  },
+  "Am. Dec.": {
+   "state": "va",
+   "candidates": [
+    {
+     "registry": "us-va",
+     "records": 157,
+     "share": 0.81771
+    },
+    {
+     "registry": "us-vactapp",
+     "records": 21,
+     "share": 0.10938
+    },
+    {
+     "registry": "us-vagensess",
+     "records": 12,
+     "share": 0.0625
+    }
+   ]
+  },
+  "Am. Samoa": {
+   "state": "as",
+   "candidates": [
+    {
+     "registry": "us-amsamoa",
+     "records": 609,
+     "share": 0.99347
+    }
+   ]
+  },
+  "Ant. N.P. Cas.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 82,
+     "share": 0.82
+    },
+    {
+     "registry": "us-superctny",
+     "records": 18,
+     "share": 0.18
+    }
+   ]
+  },
+  "App. D.C.": {
+   "state": "dc",
+   "candidates": [
+    {
+     "registry": "us-cadc",
+     "records": 6041,
+     "share": 0.85858
+    },
+    {
+     "registry": "us-dc",
+     "records": 568,
+     "share": 0.08073
+    },
+    {
+     "registry": "us-dcd",
+     "records": 425,
+     "share": 0.0604
+    }
+   ]
+  },
+  "Ariz.": {
+   "state": "az",
+   "candidates": [
+    {
+     "registry": "us-ariz",
+     "records": 12943,
+     "share": 0.54646
+    },
+    {
+     "registry": "us-arizctapp",
+     "records": 10675,
+     "share": 0.45071
+    }
+   ]
+  },
+  "Ariz. Adv. Rep.": {
+   "state": "az",
+   "candidates": [
+    {
+     "registry": "us-arizctapp",
+     "records": 5220,
+     "share": 0.78947
+    },
+    {
+     "registry": "us-ariz",
+     "records": 1355,
+     "share": 0.20493
+    }
+   ]
+  },
+  "Ark. App. LEXIS": {
+   "state": "ar",
+   "candidates": [
+    {
+     "registry": "us-arkctapp",
+     "records": 7904,
+     "share": 0.99346
+    }
+   ]
+  },
+  "BNH": {
+   "state": "nh",
+   "candidates": [
+    {
+     "registry": "us-nhb",
+     "records": 162,
+     "share": 0.9878
+    },
+    {
+     "registry": "us-nhd",
+     "records": 2,
+     "share": 0.0122
+    }
+   ]
+  },
+  "Backes": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njch",
+     "records": 1707,
+     "share": 0.897
+    },
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 171,
+     "share": 0.08986
+    },
+    {
+     "registry": "us-nj",
+     "records": 25,
+     "share": 0.01314
+    }
+   ]
+  },
+  "Ben.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysd",
+     "records": 784,
+     "share": 0.65225
+    },
+    {
+     "registry": "us-nyed",
+     "records": 343,
+     "share": 0.28536
+    },
+    {
+     "registry": "us-nynd",
+     "records": 39,
+     "share": 0.03245
+    },
+    {
+     "registry": "us-circtsdny",
+     "records": 13,
+     "share": 0.01082
+    }
+   ]
+  },
+  "Binn.": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pa",
+     "records": 512,
+     "share": 0.99417
+    }
+   ]
+  },
+  "Brief Times Rptr.": {
+   "state": "co",
+   "candidates": [
+    {
+     "registry": "us-coloctapp",
+     "records": 2676,
+     "share": 0.62787
+    },
+    {
+     "registry": "us-colo",
+     "records": 1586,
+     "share": 0.37213
+    }
+   ]
+  },
+  "Buchanan": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njch",
+     "records": 562,
+     "share": 0.56144
+    },
+    {
+     "registry": "us-nj",
+     "records": 399,
+     "share": 0.3986
+    },
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 40,
+     "share": 0.03996
+    }
+   ]
+  },
+  "Cai. Cas.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 412,
+     "share": 0.94713
+    },
+    {
+     "registry": "us-nycterr",
+     "records": 23,
+     "share": 0.05287
+    }
+   ]
+  },
+  "Cal. 4th": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-cal",
+     "records": 2439,
+     "share": 0.99429
+    }
+   ]
+  },
+  "Cal. App. 2d": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-calctapp",
+     "records": 35862,
+     "share": 0.99393
+    }
+   ]
+  },
+  "Cal. App. 5th": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-calctapp5d",
+     "records": 1884,
+     "share": 0.71229
+    },
+    {
+     "registry": "us-calctapp",
+     "records": 761,
+     "share": 0.28771
+    }
+   ]
+  },
+  "Cal. App. LEXIS": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-calctapp",
+     "records": 92402,
+     "share": 0.98663
+    }
+   ]
+  },
+  "Cal. App. Supp. 2d": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-calctapp",
+     "records": 317,
+     "share": 0.58704
+    },
+    {
+     "registry": "us-calappdeptsuper",
+     "records": 223,
+     "share": 0.41296
+    }
+   ]
+  },
+  "Cal. App. Supp. 3d": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-calappdeptsuper",
+     "records": 432,
+     "share": 0.99083
+    }
+   ]
+  },
+  "Cal. App. Supp. 4th": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-calappdeptsuper",
+     "records": 181,
+     "share": 0.88725
+    },
+    {
+     "registry": "us-cal",
+     "records": 15,
+     "share": 0.07353
+    },
+    {
+     "registry": "us-calctapp",
+     "records": 8,
+     "share": 0.03922
+    }
+   ]
+  },
+  "Cal. Dist. Ct.": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-caldistct",
+     "records": 145,
+     "share": 0.6682
+    },
+    {
+     "registry": "us-sfdistct",
+     "records": 43,
+     "share": 0.19816
+    },
+    {
+     "registry": "us-sacdistct",
+     "records": 15,
+     "share": 0.06912
+    },
+    {
+     "registry": "us-trinitydistct",
+     "records": 5,
+     "share": 0.02304
+    }
+   ]
+  },
+  "Cal. Rptr.": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-calctapp",
+     "records": 32732,
+     "share": 0.86618
+    },
+    {
+     "registry": "us-cal",
+     "records": 4575,
+     "share": 0.12107
+    },
+    {
+     "registry": "us-calappdeptsuper",
+     "records": 482,
+     "share": 0.01276
+    }
+   ]
+  },
+  "Cal. Rptr. 2d": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-calctapp",
+     "records": 10427,
+     "share": 0.88914
+    },
+    {
+     "registry": "us-cal",
+     "records": 1210,
+     "share": 0.10318
+    }
+   ]
+  },
+  "Cal. Rptr. 3d": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-calctapp",
+     "records": 11819,
+     "share": 0.74371
+    },
+    {
+     "registry": "us-calctapp5d",
+     "records": 1943,
+     "share": 0.12226
+    },
+    {
+     "registry": "us-cal",
+     "records": 1920,
+     "share": 0.12082
+    }
+   ]
+  },
+  "Coffey": {
+   "state": "ca",
+   "candidates": [
+    {
+     "registry": "us-calsuppctsf",
+     "records": 238,
+     "share": 0.86232
+    },
+    {
+     "registry": "us-calsuperct",
+     "records": 38,
+     "share": 0.13768
+    }
+   ]
+  },
+  "Conn. Cir. Ct.": {
+   "state": "ct",
+   "candidates": [
+    {
+     "registry": "us-connappct",
+     "records": 805,
+     "share": 0.85456
+    },
+    {
+     "registry": "us-connsuperct",
+     "records": 136,
+     "share": 0.14437
+    }
+   ]
+  },
+  "Conn. Cir. LEXIS": {
+   "state": "ct",
+   "candidates": [
+    {
+     "registry": "us-connappct",
+     "records": 642,
+     "share": 0.82519
+    },
+    {
+     "registry": "us-connsuperct",
+     "records": 136,
+     "share": 0.17481
+    }
+   ]
+  },
+  "Cow.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 1175,
+     "share": 0.92229
+    },
+    {
+     "registry": "us-nycterr",
+     "records": 91,
+     "share": 0.07143
+    }
+   ]
+  },
+  "D.C.": {
+   "state": "dc",
+   "candidates": [
+    {
+     "registry": "us-dc",
+     "records": 1208,
+     "share": 0.44957
+    },
+    {
+     "registry": "us-circtddc",
+     "records": 1060,
+     "share": 0.39449
+    },
+    {
+     "registry": "us-dcd",
+     "records": 419,
+     "share": 0.15594
+    }
+   ]
+  },
+  "D.C. App.": {
+   "state": "dc",
+   "candidates": [
+    {
+     "registry": "us-cadc",
+     "records": 152,
+     "share": 0.71698
+    },
+    {
+     "registry": "us-dc",
+     "records": 60,
+     "share": 0.28302
+    }
+   ]
+  },
+  "DSD": {
+   "state": "sd",
+   "candidates": [
+    {
+     "registry": "us-sdd",
+     "records": 118,
+     "share": 0.9916
+    }
+   ]
+  },
+  "Day": {
+   "state": "ct",
+   "candidates": [
+    {
+     "registry": "us-conn",
+     "records": 296,
+     "share": 0.82222
+    },
+    {
+     "registry": "us-circtdct",
+     "records": 50,
+     "share": 0.13889
+    },
+    {
+     "registry": "us-connsuperct",
+     "records": 14,
+     "share": 0.03889
+    }
+   ]
+  },
+  "Del. Ch.": {
+   "state": "de",
+   "candidates": [
+    {
+     "registry": "us-delch",
+     "records": 2018,
+     "share": 0.85112
+    },
+    {
+     "registry": "us-del",
+     "records": 283,
+     "share": 0.11936
+    },
+    {
+     "registry": "us-delorphct",
+     "records": 66,
+     "share": 0.02784
+    }
+   ]
+  },
+  "Del. Ch. LEXIS": {
+   "state": "de",
+   "candidates": [
+    {
+     "registry": "us-delch",
+     "records": 2558,
+     "share": 0.96238
+    },
+    {
+     "registry": "us-del",
+     "records": 49,
+     "share": 0.01843
+    },
+    {
+     "registry": "us-delorphct",
+     "records": 47,
+     "share": 0.01768
+    }
+   ]
+  },
+  "Denio": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 411,
+     "share": 0.67267
+    },
+    {
+     "registry": "us-nycterr",
+     "records": 192,
+     "share": 0.31424
+    },
+    {
+     "registry": "us-ny",
+     "records": 8,
+     "share": 0.01309
+    }
+   ]
+  },
+  "Dickinson": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njch",
+     "records": 618,
+     "share": 0.76202
+    },
+    {
+     "registry": "us-nj",
+     "records": 169,
+     "share": 0.20838
+    },
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 24,
+     "share": 0.02959
+    }
+   ]
+  },
+  "Dudley Rep.": {
+   "state": "ga",
+   "candidates": [
+    {
+     "registry": "us-gasuperctrichm",
+     "records": 39,
+     "share": 0.37143
+    },
+    {
+     "registry": "us-gasuperctwilkes",
+     "records": 12,
+     "share": 0.11429
+    },
+    {
+     "registry": "us-gasuperctchatha",
+     "records": 8,
+     "share": 0.07619
+    },
+    {
+     "registry": "us-gasuperctcolumb",
+     "records": 8,
+     "share": 0.07619
+    },
+    {
+     "registry": "us-gasupercttallia",
+     "records": 7,
+     "share": 0.06667
+    }
+   ]
+  },
+  "Edm. Sel. Cas.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nycirct",
+     "records": 75,
+     "share": 0.38462
+    },
+    {
+     "registry": "us-nysupct",
+     "records": 72,
+     "share": 0.36923
+    },
+    {
+     "registry": "us-nyoytermct",
+     "records": 38,
+     "share": 0.19487
+    },
+    {
+     "registry": "us-ny",
+     "records": 3,
+     "share": 0.01538
+    },
+    {
+     "registry": "us-nycountyct",
+     "records": 3,
+     "share": 0.01538
+    }
+   ]
+  },
+  "Fla. L. Weekly": {
+   "state": "fl",
+   "candidates": [
+    {
+     "registry": "us-fladistctapp",
+     "records": 9315,
+     "share": 0.87935
+    },
+    {
+     "registry": "us-fla",
+     "records": 1275,
+     "share": 0.12036
+    }
+   ]
+  },
+  "Fla. Supp.": {
+   "state": "fl",
+   "candidates": [
+    {
+     "registry": "us-flacirct11mia",
+     "records": 853,
+     "share": 0.33556
+    },
+    {
+     "registry": "us-flapubserv",
+     "records": 266,
+     "share": 0.10464
+    },
+    {
+     "registry": "us-flacirct15pal",
+     "records": 202,
+     "share": 0.07946
+    },
+    {
+     "registry": "us-flacirct4duv",
+     "records": 193,
+     "share": 0.07592
+    },
+    {
+     "registry": "us-flacirct5lak",
+     "records": 102,
+     "share": 0.04013
+    }
+   ]
+  },
+  "Fla. Supp. 2d": {
+   "state": "fl",
+   "candidates": [
+    {
+     "registry": "us-flacirct",
+     "records": 1903,
+     "share": 0.73617
+    },
+    {
+     "registry": "us-fladivadminhrg",
+     "records": 195,
+     "share": 0.07544
+    },
+    {
+     "registry": "us-flactyct50",
+     "records": 83,
+     "share": 0.03211
+    },
+    {
+     "registry": "us-flactyct64",
+     "records": 72,
+     "share": 0.02785
+    },
+    {
+     "registry": "us-flactyct48",
+     "records": 58,
+     "share": 0.02244
+    }
+   ]
+  },
+  "Foster": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pactcomplschuyl",
+     "records": 115,
+     "share": 0.29262
+    },
+    {
+     "registry": "us-pa",
+     "records": 107,
+     "share": 0.27226
+    },
+    {
+     "registry": "us-pennsylvaniad",
+     "records": 24,
+     "share": 0.06107
+    },
+    {
+     "registry": "us-pactcomplphilad",
+     "records": 19,
+     "share": 0.04835
+    },
+    {
+     "registry": "us-pactcomplluzern",
+     "records": 15,
+     "share": 0.03817
+    }
+   ]
+  },
+  "Fulton County D. Rep.": {
+   "state": "ga",
+   "candidates": [
+    {
+     "registry": "us-gactapp",
+     "records": 25208,
+     "share": 0.80033
+    },
+    {
+     "registry": "us-ga",
+     "records": 6279,
+     "share": 0.19935
+    }
+   ]
+  },
+  "Gratt.": {
+   "state": "va",
+   "candidates": [
+    {
+     "registry": "us-va",
+     "records": 1154,
+     "share": 0.98213
+    },
+    {
+     "registry": "us-vagensess",
+     "records": 21,
+     "share": 0.01787
+    }
+   ]
+  },
+  "Guam": {
+   "state": "gu",
+   "candidates": [
+    {
+     "registry": "us-superctguam",
+     "records": 153,
+     "share": 0.41129
+    },
+    {
+     "registry": "us-gud",
+     "records": 120,
+     "share": 0.32258
+    },
+    {
+     "registry": "us-guam",
+     "records": 99,
+     "share": 0.26613
+    }
+   ]
+  },
+  "Hall": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysuperctnyc",
+     "records": 151,
+     "share": 0.99342
+    }
+   ]
+  },
+  "Haw.": {
+   "state": "hi",
+   "candidates": [
+    {
+     "registry": "us-haw",
+     "records": 9382,
+     "share": 0.80865
+    },
+    {
+     "registry": "us-hawapp",
+     "records": 2220,
+     "share": 0.19135
+    }
+   ]
+  },
+  "Hayw. & H.D.C.": {
+   "state": "dc",
+   "candidates": [
+    {
+     "registry": "us-circtddc",
+     "records": 144,
+     "share": 0.90566
+    },
+    {
+     "registry": "us-dccrimct",
+     "records": 7,
+     "share": 0.04403
+    },
+    {
+     "registry": "us-dcorphanct",
+     "records": 7,
+     "share": 0.04403
+    }
+   ]
+  },
+  "Hill & Den.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 979,
+     "share": 0.87724
+    },
+    {
+     "registry": "us-nycterr",
+     "records": 137,
+     "share": 0.12276
+    }
+   ]
+  },
+  "How. Pr.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 5016,
+     "share": 0.68124
+    },
+    {
+     "registry": "us-nysuperctnyc",
+     "records": 742,
+     "share": 0.10077
+    },
+    {
+     "registry": "us-nyctcompl",
+     "records": 618,
+     "share": 0.08393
+    },
+    {
+     "registry": "us-ny",
+     "records": 512,
+     "share": 0.06954
+    }
+   ]
+  },
+  "How. Pr. (n.s.)": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 104,
+     "share": 0.47489
+    },
+    {
+     "registry": "us-ny",
+     "records": 27,
+     "share": 0.12329
+    },
+    {
+     "registry": "us-nynyccityct",
+     "records": 27,
+     "share": 0.12329
+    },
+    {
+     "registry": "us-nysuperctnyc",
+     "records": 18,
+     "share": 0.08219
+    },
+    {
+     "registry": "us-nysurct",
+     "records": 17,
+     "share": 0.07763
+    }
+   ]
+  },
+  "Idaho": {
+   "state": "id",
+   "candidates": [
+    {
+     "registry": "us-idaho",
+     "records": 15446,
+     "share": 0.78754
+    },
+    {
+     "registry": "us-idahoctapp",
+     "records": 4165,
+     "share": 0.21236
+    }
+   ]
+  },
+  "Ill. Dec.": {
+   "state": "il",
+   "candidates": [
+    {
+     "registry": "us-illappct",
+     "records": 46555,
+     "share": 0.88963
+    },
+    {
+     "registry": "us-ill",
+     "records": 5776,
+     "share": 0.11037
+    }
+   ]
+  },
+  "Ind. App.": {
+   "state": "in",
+   "candidates": [
+    {
+     "registry": "us-indctapp",
+     "records": 18574,
+     "share": 0.9948
+    }
+   ]
+  },
+  "Ind. Dec.": {
+   "state": "in",
+   "candidates": [
+    {
+     "registry": "us-indctapp",
+     "records": 625,
+     "share": 0.94841
+    },
+    {
+     "registry": "us-ind",
+     "records": 34,
+     "share": 0.05159
+    }
+   ]
+  },
+  "Johns.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 2564,
+     "share": 0.96609
+    },
+    {
+     "registry": "us-nycterr",
+     "records": 90,
+     "share": 0.03391
+    }
+   ]
+  },
+  "Johns. Cas.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 274,
+     "share": 0.98561
+    },
+    {
+     "registry": "us-nycterr",
+     "records": 4,
+     "share": 0.01439
+    }
+   ]
+  },
+  "Ky. L. Rptr.": {
+   "state": "ky",
+   "candidates": [
+    {
+     "registry": "us-kyctapp",
+     "records": 845,
+     "share": 0.9837
+    }
+   ]
+  },
+  "L. Ed. 2d": {
+   "state": "dc",
+   "candidates": [
+    {
+     "registry": "us-scotus",
+     "records": 41223,
+     "share": 0.99352
+    }
+   ]
+  },
+  "Leigh": {
+   "state": "va",
+   "candidates": [
+    {
+     "registry": "us-va",
+     "records": 129,
+     "share": 0.94161
+    },
+    {
+     "registry": "us-vagensess",
+     "records": 8,
+     "share": 0.05839
+    }
+   ]
+  },
+  "Liquor Tax Rep.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 258,
+     "share": 0.43655
+    },
+    {
+     "registry": "us-nyappdiv",
+     "records": 230,
+     "share": 0.38917
+    },
+    {
+     "registry": "us-ny",
+     "records": 52,
+     "share": 0.08799
+    },
+    {
+     "registry": "us-nycountyct",
+     "records": 27,
+     "share": 0.04569
+    }
+   ]
+  },
+  "Low.": {
+   "state": "ma",
+   "candidates": [
+    {
+     "registry": "us-mad",
+     "records": 249,
+     "share": 0.90876
+    },
+    {
+     "registry": "us-circtdma",
+     "records": 25,
+     "share": 0.09124
+    }
+   ]
+  },
+  "Mass. App. Div.": {
+   "state": "ma",
+   "candidates": [
+    {
+     "registry": "us-massdistctapp",
+     "records": 4243,
+     "share": 0.98812
+    }
+   ]
+  },
+  "Mass. L. Rptr.": {
+   "state": "ma",
+   "candidates": [
+    {
+     "registry": "us-masssuperct",
+     "records": 7512,
+     "share": 0.99484
+    }
+   ]
+  },
+  "Mass. Supp.": {
+   "state": "ma",
+   "candidates": [
+    {
+     "registry": "us-massdistctapp",
+     "records": 199,
+     "share": 0.35346
+    },
+    {
+     "registry": "us-masssuperct",
+     "records": 144,
+     "share": 0.25577
+    },
+    {
+     "registry": "us-massdistct",
+     "records": 108,
+     "share": 0.19183
+    },
+    {
+     "registry": "us-mad",
+     "records": 60,
+     "share": 0.10657
+    },
+    {
+     "registry": "us-masslandct",
+     "records": 20,
+     "share": 0.03552
+    }
+   ]
+  },
+  "Md.": {
+   "state": "md",
+   "candidates": [
+    {
+     "registry": "us-md",
+     "records": 29893,
+     "share": 0.99497
+    }
+   ]
+  },
+  "Mills Surr.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysurct",
+     "records": 1768,
+     "share": 0.89837
+    },
+    {
+     "registry": "us-nyappdiv",
+     "records": 126,
+     "share": 0.06402
+    },
+    {
+     "registry": "us-nysupct",
+     "records": 45,
+     "share": 0.02287
+    },
+    {
+     "registry": "us-ny",
+     "records": 27,
+     "share": 0.01372
+    }
+   ]
+  },
+  "Misc.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 21051,
+     "share": 0.45088
+    },
+    {
+     "registry": "us-nysurct",
+     "records": 7991,
+     "share": 0.17115
+    },
+    {
+     "registry": "us-nyappterm",
+     "records": 7347,
+     "share": 0.15736
+    },
+    {
+     "registry": "us-nynyccityct",
+     "records": 4236,
+     "share": 0.09073
+    },
+    {
+     "registry": "us-nycountyct",
+     "records": 1784,
+     "share": 0.03821
+    }
+   ]
+  },
+  "Misc. 2d": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 27599,
+     "share": 0.56704
+    },
+    {
+     "registry": "us-nysurct",
+     "records": 4427,
+     "share": 0.09096
+    },
+    {
+     "registry": "us-nycountyct",
+     "records": 2984,
+     "share": 0.06131
+    },
+    {
+     "registry": "us-nycivct",
+     "records": 2976,
+     "share": 0.06114
+    },
+    {
+     "registry": "us-nyappterm",
+     "records": 2526,
+     "share": 0.0519
+    }
+   ]
+  },
+  "Misc. 3d": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 3572,
+     "share": 0.46565
+    },
+    {
+     "registry": "us-nyappterm",
+     "records": 1679,
+     "share": 0.21888
+    },
+    {
+     "registry": "us-nycivct",
+     "records": 506,
+     "share": 0.06596
+    },
+    {
+     "registry": "us-nycrimct",
+     "records": 393,
+     "share": 0.05123
+    },
+    {
+     "registry": "us-nycfamct",
+     "records": 291,
+     "share": 0.03794
+    }
+   ]
+  },
+  "Miss.": {
+   "state": "ms",
+   "candidates": [
+    {
+     "registry": "us-miss",
+     "records": 25688,
+     "share": 0.99162
+    }
+   ]
+  },
+  "Morr. St. Cas.": {
+   "state": "ms",
+   "candidates": [
+    {
+     "registry": "us-miss",
+     "records": 247,
+     "share": 0.97628
+    },
+    {
+     "registry": "us-missctapp",
+     "records": 6,
+     "share": 0.02372
+    }
+   ]
+  },
+  "N. Mar. I. Commw.": {
+   "state": "mp",
+   "candidates": [
+    {
+     "registry": "us-nmid",
+     "records": 180,
+     "share": 0.61856
+    },
+    {
+     "registry": "us-cnmitrialct",
+     "records": 101,
+     "share": 0.34708
+    },
+    {
+     "registry": "us-cnmisuperct",
+     "records": 10,
+     "share": 0.03436
+    }
+   ]
+  },
+  "N.C.": {
+   "state": "nc",
+   "candidates": [
+    {
+     "registry": "us-nc",
+     "records": 55008,
+     "share": 0.97959
+    },
+    {
+     "registry": "us-ncsuperct",
+     "records": 773,
+     "share": 0.01377
+    }
+   ]
+  },
+  "N.J. Ch. LEXIS": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njch",
+     "records": 6031,
+     "share": 0.97874
+    },
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 118,
+     "share": 0.01915
+    }
+   ]
+  },
+  "N.J. Eq.": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njch",
+     "records": 10307,
+     "share": 0.62878
+    },
+    {
+     "registry": "us-nj",
+     "records": 5008,
+     "share": 0.30551
+    },
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 1077,
+     "share": 0.0657
+    }
+   ]
+  },
+  "N.J. Prerog. Ct. LEXIS": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 474,
+     "share": 0.99371
+    }
+   ]
+  },
+  "N.J. Super.": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 27252,
+     "share": 0.98847
+    }
+   ]
+  },
+  "N.J. Super. LEXIS": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 9382,
+     "share": 0.97052
+    }
+   ]
+  },
+  "N.J. Tax": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njtaxct",
+     "records": 1193,
+     "share": 0.77669
+    },
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 338,
+     "share": 0.22005
+    }
+   ]
+  },
+  "N.M.": {
+   "state": "nm",
+   "candidates": [
+    {
+     "registry": "us-nm",
+     "records": 11050,
+     "share": 0.61725
+    },
+    {
+     "registry": "us-nmctapp",
+     "records": 6848,
+     "share": 0.38253
+    }
+   ]
+  },
+  "N.M. Ct. App.": {
+   "state": "nm",
+   "candidates": [
+    {
+     "registry": "us-nmctapp",
+     "records": 121,
+     "share": 0.7707
+    },
+    {
+     "registry": "us-nm",
+     "records": 36,
+     "share": 0.2293
+    }
+   ]
+  },
+  "N.Y. Ann. Cas.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nyappdiv",
+     "records": 73,
+     "share": 0.47097
+    },
+    {
+     "registry": "us-nysupct",
+     "records": 43,
+     "share": 0.27742
+    },
+    {
+     "registry": "us-nyctcompl",
+     "records": 16,
+     "share": 0.10323
+    },
+    {
+     "registry": "us-nyappterm",
+     "records": 10,
+     "share": 0.06452
+    },
+    {
+     "registry": "us-superctny",
+     "records": 10,
+     "share": 0.06452
+    }
+   ]
+  },
+  "N.Y. App. Div. LEXIS": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nyappdiv",
+     "records": 344820,
+     "share": 0.98685
+    },
+    {
+     "registry": "us-nysupct",
+     "records": 4550,
+     "share": 0.01302
+    }
+   ]
+  },
+  "N.Y. City Ct. Rep.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nymarct",
+     "records": 172,
+     "share": 0.50588
+    },
+    {
+     "registry": "us-nynyccityct",
+     "records": 143,
+     "share": 0.42059
+    },
+    {
+     "registry": "us-nyctcompl",
+     "records": 15,
+     "share": 0.04412
+    },
+    {
+     "registry": "us-nysupct",
+     "records": 7,
+     "share": 0.02059
+    }
+   ]
+  },
+  "N.Y. Civ. Proc. R.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 167,
+     "share": 0.30699
+    },
+    {
+     "registry": "us-nyappdiv",
+     "records": 125,
+     "share": 0.22978
+    },
+    {
+     "registry": "us-nyctcompl",
+     "records": 100,
+     "share": 0.18382
+    },
+    {
+     "registry": "us-nynyccityct",
+     "records": 44,
+     "share": 0.08088
+    },
+    {
+     "registry": "us-nysuperctnyc",
+     "records": 29,
+     "share": 0.05331
+    }
+   ]
+  },
+  "N.Y. Civ. Proc. R., (N.S.)": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nyappdiv",
+     "records": 94,
+     "share": 0.65278
+    },
+    {
+     "registry": "us-nyappterm",
+     "records": 22,
+     "share": 0.15278
+    },
+    {
+     "registry": "us-ny",
+     "records": 21,
+     "share": 0.14583
+    },
+    {
+     "registry": "us-nysupct",
+     "records": 5,
+     "share": 0.03472
+    },
+    {
+     "registry": "us-nynyccityct",
+     "records": 2,
+     "share": 0.01389
+    }
+   ]
+  },
+  "N.Y. Crim.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nyappdiv",
+     "records": 1045,
+     "share": 0.3481
+    },
+    {
+     "registry": "us-nysupct",
+     "records": 761,
+     "share": 0.2535
+    },
+    {
+     "registry": "us-ny",
+     "records": 670,
+     "share": 0.22318
+    },
+    {
+     "registry": "us-nygensess",
+     "records": 185,
+     "share": 0.06163
+    },
+    {
+     "registry": "us-nycountyct",
+     "records": 136,
+     "share": 0.0453
+    }
+   ]
+  },
+  "N.Y. LEXIS": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-ny",
+     "records": 86383,
+     "share": 0.97135
+    },
+    {
+     "registry": "us-nychanct",
+     "records": 2212,
+     "share": 0.02487
+    }
+   ]
+  },
+  "N.Y. Misc. LEXIS": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 44657,
+     "share": 0.54674
+    },
+    {
+     "registry": "us-nysurct",
+     "records": 9656,
+     "share": 0.11822
+    },
+    {
+     "registry": "us-nyappterm",
+     "records": 4521,
+     "share": 0.05535
+    },
+    {
+     "registry": "us-nycountyct",
+     "records": 3936,
+     "share": 0.04819
+    },
+    {
+     "registry": "us-nycivct",
+     "records": 2987,
+     "share": 0.03657
+    }
+   ]
+  },
+  "N.Y. St. Rep.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 13924,
+     "share": 0.55282
+    },
+    {
+     "registry": "us-ny",
+     "records": 4304,
+     "share": 0.17088
+    },
+    {
+     "registry": "us-nyctcompl",
+     "records": 2105,
+     "share": 0.08357
+    },
+    {
+     "registry": "us-nysuperctnyc",
+     "records": 1285,
+     "share": 0.05102
+    },
+    {
+     "registry": "us-nynyccityct",
+     "records": 1026,
+     "share": 0.04074
+    }
+   ]
+  },
+  "N.Y. Sup. Ct.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 14771,
+     "share": 0.98042
+    },
+    {
+     "registry": "us-nysuperctnyc",
+     "records": 289,
+     "share": 0.01918
+    }
+   ]
+  },
+  "N.Y.2d": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-ny",
+     "records": 24255,
+     "share": 0.64886
+    },
+    {
+     "registry": "us-nyappdiv",
+     "records": 13114,
+     "share": 0.35082
+    }
+   ]
+  },
+  "N.Y.3d": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-ny",
+     "records": 5997,
+     "share": 0.94411
+    },
+    {
+     "registry": "us-nycterr",
+     "records": 327,
+     "share": 0.05148
+    }
+   ]
+  },
+  "N.Y.S.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nyappdiv",
+     "records": 50024,
+     "share": 0.50335
+    },
+    {
+     "registry": "us-nysupct",
+     "records": 24082,
+     "share": 0.24232
+    },
+    {
+     "registry": "us-nyappterm",
+     "records": 10528,
+     "share": 0.10593
+    },
+    {
+     "registry": "us-nysurct",
+     "records": 5170,
+     "share": 0.05202
+    },
+    {
+     "registry": "us-nynyccityct",
+     "records": 3596,
+     "share": 0.03618
+    }
+   ]
+  },
+  "N.Y.S.2d": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nyappdiv",
+     "records": 310339,
+     "share": 0.78751
+    },
+    {
+     "registry": "us-nysupct",
+     "records": 34419,
+     "share": 0.08734
+    },
+    {
+     "registry": "us-ny",
+     "records": 21838,
+     "share": 0.05542
+    },
+    {
+     "registry": "us-nysurct",
+     "records": 6804,
+     "share": 0.01727
+    }
+   ]
+  },
+  "N.Y.S.3d": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nyappdiv",
+     "records": 42558,
+     "share": 0.94389
+    },
+    {
+     "registry": "us-ny",
+     "records": 668,
+     "share": 0.01482
+    },
+    {
+     "registry": "us-nysupct",
+     "records": 625,
+     "share": 0.01386
+    }
+   ]
+  },
+  "NMCA": {
+   "state": "nm",
+   "candidates": [
+    {
+     "registry": "us-nmctapp",
+     "records": 2873,
+     "share": 0.9839
+    },
+    {
+     "registry": "us-nm",
+     "records": 47,
+     "share": 0.0161
+    }
+   ]
+  },
+  "NMSC": {
+   "state": "nm",
+   "candidates": [
+    {
+     "registry": "us-nm",
+     "records": 1149,
+     "share": 0.98205
+    },
+    {
+     "registry": "us-nmctapp",
+     "records": 21,
+     "share": 0.01795
+    }
+   ]
+  },
+  "NY Slip Op": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nyappdiv",
+     "records": 74538,
+     "share": 0.82859
+    },
+    {
+     "registry": "us-ny",
+     "records": 5486,
+     "share": 0.06098
+    },
+    {
+     "registry": "us-nysupctnewyork",
+     "records": 3356,
+     "share": 0.03731
+    },
+    {
+     "registry": "us-nyappterm",
+     "records": 2406,
+     "share": 0.02675
+    },
+    {
+     "registry": "us-nysupctkings",
+     "records": 1056,
+     "share": 0.01174
+    }
+   ]
+  },
+  "Nev. Adv. Op. No.": {
+   "state": "nv",
+   "candidates": [
+    {
+     "registry": "us-nev",
+     "records": 182,
+     "share": 0.875
+    },
+    {
+     "registry": "us-nevapp",
+     "records": 26,
+     "share": 0.125
+    }
+   ]
+  },
+  "O.B.A.J.": {
+   "state": "ok",
+   "candidates": [
+    {
+     "registry": "us-oklacivapp",
+     "records": 1878,
+     "share": 0.47162
+    },
+    {
+     "registry": "us-okla",
+     "records": 1383,
+     "share": 0.34731
+    },
+    {
+     "registry": "us-oklacrimapp",
+     "records": 715,
+     "share": 0.17956
+    }
+   ]
+  },
+  "Ohio B.": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohioctapp",
+     "records": 2416,
+     "share": 0.61617
+    },
+    {
+     "registry": "us-ohio",
+     "records": 1268,
+     "share": 0.32339
+    }
+   ]
+  },
+  "Ohio C.C.": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohiocirct",
+     "records": 2111,
+     "share": 0.85674
+    },
+    {
+     "registry": "us-ohcirctlucas",
+     "records": 105,
+     "share": 0.04261
+    },
+    {
+     "registry": "us-ohcirctcuyahoga",
+     "records": 76,
+     "share": 0.03084
+    }
+   ]
+  },
+  "Ohio C.C. (n.s.)": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohioctapp",
+     "records": 983,
+     "share": 0.25539
+    },
+    {
+     "registry": "us-ohcirctcuyahoga",
+     "records": 977,
+     "share": 0.25383
+    },
+    {
+     "registry": "us-ohcircthamilton",
+     "records": 449,
+     "share": 0.11665
+    },
+    {
+     "registry": "us-ohiocirct",
+     "records": 326,
+     "share": 0.0847
+    },
+    {
+     "registry": "us-ohcirctlucas",
+     "records": 226,
+     "share": 0.05872
+    }
+   ]
+  },
+  "Ohio C.C. Dec.": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohcirctcuyahoga",
+     "records": 944,
+     "share": 0.25955
+    },
+    {
+     "registry": "us-ohioctapp",
+     "records": 861,
+     "share": 0.23673
+    },
+    {
+     "registry": "us-ohiocirct",
+     "records": 620,
+     "share": 0.17047
+    },
+    {
+     "registry": "us-ohcircthamilton",
+     "records": 364,
+     "share": 0.10008
+    },
+    {
+     "registry": "us-ohcirctlucas",
+     "records": 219,
+     "share": 0.06021
+    }
+   ]
+  },
+  "Ohio Cir. Dec.": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohcircthamilton",
+     "records": 632,
+     "share": 0.26126
+    },
+    {
+     "registry": "us-ohiocirct",
+     "records": 565,
+     "share": 0.23357
+    },
+    {
+     "registry": "us-ohcirctlucas",
+     "records": 304,
+     "share": 0.12567
+    },
+    {
+     "registry": "us-ohcirctcuyahoga",
+     "records": 193,
+     "share": 0.07979
+    },
+    {
+     "registry": "us-ohcirctbutler",
+     "records": 51,
+     "share": 0.02108
+    }
+   ]
+  },
+  "Ohio Dec.": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohctcomplfrankl",
+     "records": 156,
+     "share": 0.27907
+    },
+    {
+     "registry": "us-ohctcomplhamilt",
+     "records": 118,
+     "share": 0.21109
+    },
+    {
+     "registry": "us-ohctcomplcuyaho",
+     "records": 83,
+     "share": 0.14848
+    },
+    {
+     "registry": "us-ohsuperctcinci",
+     "records": 68,
+     "share": 0.12165
+    },
+    {
+     "registry": "us-ohctcompllucas",
+     "records": 15,
+     "share": 0.02683
+    }
+   ]
+  },
+  "Ohio Law. Abs.": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohioctapp",
+     "records": 14182,
+     "share": 0.77765
+    },
+    {
+     "registry": "us-ohio",
+     "records": 1099,
+     "share": 0.06026
+    },
+    {
+     "registry": "us-ohctcomplfrankl",
+     "records": 298,
+     "share": 0.01634
+    },
+    {
+     "registry": "us-ohctcomplhamilt",
+     "records": 270,
+     "share": 0.01481
+    },
+    {
+     "registry": "us-ohctcomplcuyaho",
+     "records": 261,
+     "share": 0.01431
+    }
+   ]
+  },
+  "Ohio Misc. 2d": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohioctcl",
+     "records": 294,
+     "share": 0.22357
+    },
+    {
+     "registry": "us-ohctcomplclermo",
+     "records": 118,
+     "share": 0.08973
+    },
+    {
+     "registry": "us-ohmunicthamilto",
+     "records": 113,
+     "share": 0.08593
+    },
+    {
+     "registry": "us-ohctcompllucas",
+     "records": 78,
+     "share": 0.05932
+    },
+    {
+     "registry": "us-ohctcomplcuyaho",
+     "records": 67,
+     "share": 0.05095
+    }
+   ]
+  },
+  "Ohio Misc. LEXIS": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohioctapp",
+     "records": 5772,
+     "share": 0.46455
+    },
+    {
+     "registry": "us-ohcirctcuyahoga",
+     "records": 692,
+     "share": 0.05569
+    },
+    {
+     "registry": "us-ohctcomplhamilt",
+     "records": 644,
+     "share": 0.05183
+    },
+    {
+     "registry": "us-ohctcomplcuyaho",
+     "records": 584,
+     "share": 0.047
+    },
+    {
+     "registry": "us-ohctcomplfrankl",
+     "records": 552,
+     "share": 0.04443
+    }
+   ]
+  },
+  "Ohio N.P.": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohctcomplhamilt",
+     "records": 278,
+     "share": 0.2603
+    },
+    {
+     "registry": "us-ohsuperctcinci",
+     "records": 257,
+     "share": 0.24064
+    },
+    {
+     "registry": "us-ohctcomplcuyaho",
+     "records": 88,
+     "share": 0.0824
+    },
+    {
+     "registry": "us-ohctcompllucas",
+     "records": 70,
+     "share": 0.06554
+    },
+    {
+     "registry": "us-ohctcomplfrankl",
+     "records": 56,
+     "share": 0.05243
+    }
+   ]
+  },
+  "Ohio N.P. (n.s.)": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohctcomplhamilt",
+     "records": 766,
+     "share": 0.30051
+    },
+    {
+     "registry": "us-ohctcomplfrankl",
+     "records": 416,
+     "share": 0.1632
+    },
+    {
+     "registry": "us-ohsuperctcinci",
+     "records": 252,
+     "share": 0.09886
+    },
+    {
+     "registry": "us-ohctcomplcuyaho",
+     "records": 243,
+     "share": 0.09533
+    },
+    {
+     "registry": "us-ohctcompllickin",
+     "records": 120,
+     "share": 0.04708
+    }
+   ]
+  },
+  "Ore. App. LEXIS": {
+   "state": "or",
+   "candidates": [
+    {
+     "registry": "us-orctapp",
+     "records": 26465,
+     "share": 0.99496
+    }
+   ]
+  },
+  "Pa.": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pa",
+     "records": 62467,
+     "share": 0.99093
+    }
+   ]
+  },
+  "Pa. D. & C.": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pactcomplphilad",
+     "records": 2157,
+     "share": 0.1496
+    },
+    {
+     "registry": "us-paorphctphilad",
+     "records": 1426,
+     "share": 0.0989
+    },
+    {
+     "registry": "us-padeptjust",
+     "records": 633,
+     "share": 0.0439
+    },
+    {
+     "registry": "us-pactcompldauphi",
+     "records": 565,
+     "share": 0.03919
+    },
+    {
+     "registry": "us-pactcomplmontgo",
+     "records": 465,
+     "share": 0.03225
+    }
+   ]
+  },
+  "Pa. D. & C.2d": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pactcomplphilad",
+     "records": 1350,
+     "share": 0.13476
+    },
+    {
+     "registry": "us-pactcomplmontgo",
+     "records": 558,
+     "share": 0.0557
+    },
+    {
+     "registry": "us-pactcompldauphi",
+     "records": 448,
+     "share": 0.04472
+    },
+    {
+     "registry": "us-pactcompldelawa",
+     "records": 441,
+     "share": 0.04402
+    },
+    {
+     "registry": "us-pactcomplallegh",
+     "records": 432,
+     "share": 0.04312
+    }
+   ]
+  },
+  "Pa. D. & C.3d": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pactcomplphilad",
+     "records": 620,
+     "share": 0.10999
+    },
+    {
+     "registry": "us-pactcomplbucks",
+     "records": 343,
+     "share": 0.06085
+    },
+    {
+     "registry": "us-pactcomplallegh",
+     "records": 321,
+     "share": 0.05695
+    },
+    {
+     "registry": "us-pa",
+     "records": 311,
+     "share": 0.05517
+    },
+    {
+     "registry": "us-pactcomplmontgo",
+     "records": 244,
+     "share": 0.04329
+    }
+   ]
+  },
+  "Pa. D. & C.4th": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pactcomplphilad",
+     "records": 546,
+     "share": 0.1075
+    },
+    {
+     "registry": "us-pa",
+     "records": 389,
+     "share": 0.07659
+    },
+    {
+     "registry": "us-pactcomplallegh",
+     "records": 278,
+     "share": 0.05474
+    },
+    {
+     "registry": "us-pactcomplbucks",
+     "records": 257,
+     "share": 0.0506
+    },
+    {
+     "registry": "us-pactcomplmonroe",
+     "records": 244,
+     "share": 0.04804
+    }
+   ]
+  },
+  "Pa. D. & C.5th": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pactcomplphilad",
+     "records": 337,
+     "share": 0.16241
+    },
+    {
+     "registry": "us-pactcomplmonroe",
+     "records": 266,
+     "share": 0.12819
+    },
+    {
+     "registry": "us-pactcompllawren",
+     "records": 234,
+     "share": 0.11277
+    },
+    {
+     "registry": "us-pactcomplberks",
+     "records": 210,
+     "share": 0.1012
+    },
+    {
+     "registry": "us-pactcompllackaw",
+     "records": 148,
+     "share": 0.07133
+    }
+   ]
+  },
+  "Pa. Dist. & Cnty. Dec. LEXIS": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pactcomplphilad",
+     "records": 4468,
+     "share": 0.13942
+    },
+    {
+     "registry": "us-paorphctphilad",
+     "records": 1759,
+     "share": 0.05489
+    },
+    {
+     "registry": "us-pactcomplmontgo",
+     "records": 1436,
+     "share": 0.04481
+    },
+    {
+     "registry": "us-pactcomplallegh",
+     "records": 1380,
+     "share": 0.04306
+    },
+    {
+     "registry": "us-pactcompldauphi",
+     "records": 1348,
+     "share": 0.04206
+    }
+   ]
+  },
+  "Pa. Just. L. Rep.": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pactcompllancas",
+     "records": 15,
+     "share": 0.14706
+    },
+    {
+     "registry": "us-pactcomplmontgo",
+     "records": 10,
+     "share": 0.09804
+    },
+    {
+     "registry": "us-pactcomplluzern",
+     "records": 8,
+     "share": 0.07843
+    },
+    {
+     "registry": "us-pactcomplbeaver",
+     "records": 6,
+     "share": 0.05882
+    },
+    {
+     "registry": "us-pactcomplbradfo",
+     "records": 6,
+     "share": 0.05882
+    }
+   ]
+  },
+  "Pa. LEXIS": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pa",
+     "records": 63313,
+     "share": 0.99117
+    }
+   ]
+  },
+  "Pa. Super. LEXIS": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pasuperct",
+     "records": 52561,
+     "share": 0.92271
+    },
+    {
+     "registry": "us-pa",
+     "records": 4402,
+     "share": 0.07728
+    }
+   ]
+  },
+  "Park. Cr.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 241,
+     "share": 0.70468
+    },
+    {
+     "registry": "us-nyoytermct",
+     "records": 63,
+     "share": 0.18421
+    },
+    {
+     "registry": "us-nysuperctbuf",
+     "records": 14,
+     "share": 0.04094
+    },
+    {
+     "registry": "us-ny",
+     "records": 8,
+     "share": 0.02339
+    },
+    {
+     "registry": "us-nygensess",
+     "records": 6,
+     "share": 0.01754
+    }
+   ]
+  },
+  "Pears.": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pactcompldauphi",
+     "records": 140,
+     "share": 0.70352
+    },
+    {
+     "registry": "us-paorphctdauphi",
+     "records": 27,
+     "share": 0.13568
+    },
+    {
+     "registry": "us-pactcompllebano",
+     "records": 21,
+     "share": 0.10553
+    },
+    {
+     "registry": "us-paqtrsessdauphi",
+     "records": 11,
+     "share": 0.05528
+    }
+   ]
+  },
+  "Pennyp.": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pa",
+     "records": 270,
+     "share": 0.75209
+    },
+    {
+     "registry": "us-pactcomplphilad",
+     "records": 19,
+     "share": 0.05292
+    },
+    {
+     "registry": "us-pactcomplallegh",
+     "records": 14,
+     "share": 0.039
+    },
+    {
+     "registry": "us-pactcomplarmstr",
+     "records": 4,
+     "share": 0.01114
+    },
+    {
+     "registry": "us-pactcomplbutler",
+     "records": 4,
+     "share": 0.01114
+    }
+   ]
+  },
+  "Rand.": {
+   "state": "va",
+   "candidates": [
+    {
+     "registry": "us-va",
+     "records": 121,
+     "share": 0.58738
+    },
+    {
+     "registry": "us-vactapp",
+     "records": 84,
+     "share": 0.40777
+    }
+   ]
+  },
+  "Robb.": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njch",
+     "records": 248,
+     "share": 0.74699
+    },
+    {
+     "registry": "us-nj",
+     "records": 73,
+     "share": 0.21988
+    },
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 11,
+     "share": 0.03313
+    }
+   ]
+  },
+  "Root": {
+   "state": "ct",
+   "candidates": [
+    {
+     "registry": "us-conn",
+     "records": 252,
+     "share": 0.63636
+    },
+    {
+     "registry": "us-connsuperct",
+     "records": 144,
+     "share": 0.36364
+    }
+   ]
+  },
+  "S. & M.": {
+   "state": "ms",
+   "candidates": [
+    {
+     "registry": "us-misschanceryct",
+     "records": 70,
+     "share": 0.54264
+    },
+    {
+     "registry": "us-miss",
+     "records": 59,
+     "share": 0.45736
+    }
+   ]
+  },
+  "S. Ct.": {
+   "state": "dc",
+   "candidates": [
+    {
+     "registry": "us-scotus",
+     "records": 87073,
+     "share": 0.99449
+    }
+   ]
+  },
+  "S.C.": {
+   "state": "sc",
+   "candidates": [
+    {
+     "registry": "us-sc",
+     "records": 27439,
+     "share": 0.82895
+    },
+    {
+     "registry": "us-scctapp",
+     "records": 5659,
+     "share": 0.17096
+    }
+   ]
+  },
+  "S.C. App. LEXIS": {
+   "state": "sc",
+   "candidates": [
+    {
+     "registry": "us-scctapp",
+     "records": 5268,
+     "share": 0.99415
+    }
+   ]
+  },
+  "S.C. Eq.": {
+   "state": "sc",
+   "candidates": [
+    {
+     "registry": "us-scctapp",
+     "records": 1504,
+     "share": 0.80213
+    },
+    {
+     "registry": "us-ctchansc",
+     "records": 255,
+     "share": 0.136
+    },
+    {
+     "registry": "us-sc",
+     "records": 116,
+     "share": 0.06187
+    }
+   ]
+  },
+  "Sarat. Ch. Sent.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nychanct",
+     "records": 291,
+     "share": 0.67832
+    },
+    {
+     "registry": "us-nychanctsara",
+     "records": 138,
+     "share": 0.32168
+    }
+   ]
+  },
+  "Stock.": {
+   "state": "nj",
+   "candidates": [
+    {
+     "registry": "us-njch",
+     "records": 1261,
+     "share": 0.56827
+    },
+    {
+     "registry": "us-nj",
+     "records": 856,
+     "share": 0.38576
+    },
+    {
+     "registry": "us-njsuperctappdiv",
+     "records": 102,
+     "share": 0.04597
+    }
+   ]
+  },
+  "Storey": {
+   "state": "de",
+   "candidates": [
+    {
+     "registry": "us-del",
+     "records": 278,
+     "share": 0.53359
+    },
+    {
+     "registry": "us-delsuperct",
+     "records": 239,
+     "share": 0.45873
+    }
+   ]
+  },
+  "Tapp. Rep.": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohctcompljeffer",
+     "records": 42,
+     "share": 0.32558
+    },
+    {
+     "registry": "us-ohctcomplcolumb",
+     "records": 26,
+     "share": 0.20155
+    },
+    {
+     "registry": "us-ohctcomplbelmon",
+     "records": 18,
+     "share": 0.13953
+    },
+    {
+     "registry": "us-ohctcomplstark",
+     "records": 14,
+     "share": 0.10853
+    },
+    {
+     "registry": "us-ohctcomplharris",
+     "records": 13,
+     "share": 0.10078
+    }
+   ]
+  },
+  "Tenn.": {
+   "state": "tn",
+   "candidates": [
+    {
+     "registry": "us-tenn",
+     "records": 19971,
+     "share": 0.98817
+    }
+   ]
+  },
+  "Tenn. App.": {
+   "state": "tn",
+   "candidates": [
+    {
+     "registry": "us-tennctapp",
+     "records": 4082,
+     "share": 0.99488
+    }
+   ]
+  },
+  "Tenn. Crim. App. LEXIS": {
+   "state": "tn",
+   "candidates": [
+    {
+     "registry": "us-tenncrimapp",
+     "records": 2966,
+     "share": 0.98999
+    }
+   ]
+  },
+  "Tex.": {
+   "state": "tx",
+   "candidates": [
+    {
+     "registry": "us-tex",
+     "records": 17876,
+     "share": 0.98806
+    }
+   ]
+  },
+  "Tex. Crim. App. LEXIS": {
+   "state": "tx",
+   "candidates": [
+    {
+     "registry": "us-texcrimapp",
+     "records": 45170,
+     "share": 0.95746
+    },
+    {
+     "registry": "us-texapp",
+     "records": 1992,
+     "share": 0.04222
+    }
+   ]
+  },
+  "Tex. L. R.": {
+   "state": "tx",
+   "candidates": [
+    {
+     "registry": "us-tex",
+     "records": 425,
+     "share": 0.74692
+    },
+    {
+     "registry": "us-texapp",
+     "records": 130,
+     "share": 0.22847
+    },
+    {
+     "registry": "us-texcommnapp",
+     "records": 13,
+     "share": 0.02285
+    }
+   ]
+  },
+  "Tex. LEXIS": {
+   "state": "tx",
+   "candidates": [
+    {
+     "registry": "us-tex",
+     "records": 16040,
+     "share": 0.97567
+    },
+    {
+     "registry": "us-texcommnapp",
+     "records": 176,
+     "share": 0.01071
+    },
+    {
+     "registry": "us-texapp",
+     "records": 170,
+     "share": 0.01034
+    }
+   ]
+  },
+  "U.S.": {
+   "state": "dc",
+   "candidates": [
+    {
+     "registry": "us-scotus",
+     "records": 67173,
+     "share": 0.98969
+    }
+   ]
+  },
+  "U.S. App. D.C.": {
+   "state": "dc",
+   "candidates": [
+    {
+     "registry": "us-cadc",
+     "records": 18102,
+     "share": 0.99222
+    }
+   ]
+  },
+  "Utah Adv. Rep.": {
+   "state": "ut",
+   "candidates": [
+    {
+     "registry": "us-utahctapp",
+     "records": 5031,
+     "share": 0.62919
+    },
+    {
+     "registry": "us-utah",
+     "records": 2965,
+     "share": 0.37081
+    }
+   ]
+  },
+  "V.I. LEXIS": {
+   "state": "vi",
+   "candidates": [
+    {
+     "registry": "us-virginislands",
+     "records": 696,
+     "share": 0.60208
+    },
+    {
+     "registry": "us-visuper",
+     "records": 305,
+     "share": 0.26384
+    },
+    {
+     "registry": "us-vimunict",
+     "records": 148,
+     "share": 0.12803
+    }
+   ]
+  },
+  "Va.": {
+   "state": "va",
+   "candidates": [
+    {
+     "registry": "us-va",
+     "records": 22258,
+     "share": 0.91665
+    },
+    {
+     "registry": "us-vactapp",
+     "records": 1329,
+     "share": 0.05473
+    },
+    {
+     "registry": "us-vagensess",
+     "records": 546,
+     "share": 0.02249
+    }
+   ]
+  },
+  "Va. Cir.": {
+   "state": "va",
+   "candidates": [
+    {
+     "registry": "us-vaccfairfax",
+     "records": 1982,
+     "share": 0.18523
+    },
+    {
+     "registry": "us-vaccrichmondcty",
+     "records": 1438,
+     "share": 0.13439
+    },
+    {
+     "registry": "us-vacc",
+     "records": 829,
+     "share": 0.07748
+    },
+    {
+     "registry": "us-vaccnorfolk",
+     "records": 721,
+     "share": 0.06738
+    },
+    {
+     "registry": "us-vaccloudoun",
+     "records": 569,
+     "share": 0.05318
+    }
+   ]
+  },
+  "Va. Cir. LEXIS": {
+   "state": "va",
+   "candidates": [
+    {
+     "registry": "us-vaccfairfax",
+     "records": 1875,
+     "share": 0.18314
+    },
+    {
+     "registry": "us-vaccrichmondcty",
+     "records": 1412,
+     "share": 0.13792
+    },
+    {
+     "registry": "us-vacc",
+     "records": 791,
+     "share": 0.07726
+    },
+    {
+     "registry": "us-vaccnorfolk",
+     "records": 689,
+     "share": 0.0673
+    },
+    {
+     "registry": "us-vaccloudoun",
+     "records": 548,
+     "share": 0.05353
+    }
+   ]
+  },
+  "Va. Dec.": {
+   "state": "va",
+   "candidates": [
+    {
+     "registry": "us-va",
+     "records": 257,
+     "share": 0.9278
+    },
+    {
+     "registry": "us-vactapp",
+     "records": 19,
+     "share": 0.06859
+    }
+   ]
+  },
+  "Va. LEXIS": {
+   "state": "va",
+   "candidates": [
+    {
+     "registry": "us-va",
+     "records": 18210,
+     "share": 0.97536
+    },
+    {
+     "registry": "us-vactapp",
+     "records": 397,
+     "share": 0.02126
+    }
+   ]
+  },
+  "Va. Law Rep.": {
+   "state": "va",
+   "candidates": [
+    {
+     "registry": "us-vactapp",
+     "records": 1572,
+     "share": 0.57582
+    },
+    {
+     "registry": "us-va",
+     "records": 1158,
+     "share": 0.42418
+    }
+   ]
+  },
+  "W.N.C.": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pa",
+     "records": 401,
+     "share": 0.77413
+    },
+    {
+     "registry": "us-circtedpa",
+     "records": 41,
+     "share": 0.07915
+    },
+    {
+     "registry": "us-paed",
+     "records": 35,
+     "share": 0.06757
+    }
+   ]
+  },
+  "WI App": {
+   "state": "wi",
+   "candidates": [
+    {
+     "registry": "us-wisctapp",
+     "records": 3679,
+     "share": 0.99325
+    }
+   ]
+  },
+  "Wend.": {
+   "state": "ny",
+   "candidates": [
+    {
+     "registry": "us-nysupct",
+     "records": 2736,
+     "share": 0.92998
+    },
+    {
+     "registry": "us-nycterr",
+     "records": 206,
+     "share": 0.07002
+    }
+   ]
+  },
+  "White & W.": {
+   "state": "tx",
+   "candidates": [
+    {
+     "registry": "us-texapp",
+     "records": 343,
+     "share": 0.64353
+    },
+    {
+     "registry": "us-texcommnapp",
+     "records": 190,
+     "share": 0.35647
+    }
+   ]
+  },
+  "Wis. 2d": {
+   "state": "wi",
+   "candidates": [
+    {
+     "registry": "us-wis",
+     "records": 11545,
+     "share": 0.55409
+    },
+    {
+     "registry": "us-wisctapp",
+     "records": 9290,
+     "share": 0.44586
+    }
+   ]
+  },
+  "Wisc. LEXIS": {
+   "state": "wi",
+   "candidates": [
+    {
+     "registry": "us-wis",
+     "records": 34806,
+     "share": 0.99483
+    }
+   ]
+  }
+ },
+ "registry_families": {
+  "us-calctapp": [
+   "us-calctapp1d",
+   "us-calctapp2d",
+   "us-calctapp3d",
+   "us-calctapp4d",
+   "us-calctapp5d",
+   "us-calctapp6d"
+  ],
+  "us-fladistctapp": [
+   "us-fladistctapp1",
+   "us-fladistctapp2",
+   "us-fladistctapp3",
+   "us-fladistctapp4",
+   "us-fladistctapp5"
+  ],
+  "us-texapp": [
+   "us-txctapp1",
+   "us-txctapp2",
+   "us-txctapp3",
+   "us-txctapp4",
+   "us-txctapp5",
+   "us-txctapp6",
+   "us-txctapp7",
+   "us-txctapp8",
+   "us-txctapp9",
+   "us-txctapp10",
+   "us-txctapp11",
+   "us-txctapp12",
+   "us-txctapp13",
+   "us-txctapp14"
+  ]
  }
 }

@@ -473,9 +473,12 @@ vec(
 )
 vec(
     "ny_appdiv",
-    # N.Y.S. genuinely spans courts: bare stays ambiguous (never guess).
+    # N.Y.S. spans New York courts. 1.3.0: bare routes via the same-state
+    # family (rule 5b) — 91% of its corpus population is us-nyappdiv and
+    # every >=1% candidate is a New York court; the verifier sweeps the
+    # family before reporting a miss.
     "People v. Jones, 45 N.Y.S.3d 200.",
-    [full("45 N.Y.S.3d 200", "45 N.Y.S.3d 200", None, AMB)],
+    [full("45 N.Y.S.3d 200", "45 N.Y.S.3d 200", "us-nyappdiv")],
 )
 vec(
     "ny_appdiv",
@@ -526,8 +529,13 @@ vec(
     "vendor_cites",
     # A corpus-present LEXIS edition the dominance guard keeps OUT of the
     # table (a real us-nysupct second population): bare stays VENDOR...
+    # 1.3.0: this LEXIS edition's genuine nyappdiv/nysupct split is a same-
+    # state family, so the bare form routes to the dominant registry and the
+    # verifier sweeps both — 3.28M court-specific LEXIS keys are real
+    # parallel keys on chain (supersedes the 1.1.0 vendor-bare posture for
+    # same-state-family LEXIS editions).
     "Doe v. Roe, 1912 N.Y. App. Div. LEXIS 7085.",
-    [full("1912 N.Y. App. Div. LEXIS 7085", "1912 N.Y. App. Div. LEXIS 7085", None, VEN)],
+    [full("1912 N.Y. App. Div. LEXIS 7085", "1912 N.Y. App. Div. LEXIS 7085", "us-nyappdiv")],
 )
 vec(
     "vendor_cites",
@@ -649,18 +657,135 @@ vec(
 )
 # (c) State-consistency gate: eyecite claims the D.C. court 'supctdc' from
 # "(Sup. Ct. 2004)" after a N.Y. Misc. 3d cite (measured on the Mata reply
-# brief). Misc. is a NY/FL reporter, so the claim is refused and the cite
-# is honestly ambiguous (Misc. stays multi-court by design).
+# brief). The claim is still refused; under 1.3.0 the cite then routes via
+# the Misc. 3d same-state family (all >=1% candidates are New York courts)
+# instead of refusing outright — the verifier sweeps the family.
 vec(
     "state_gate",
     "Astudillo v. Port Auth., 7 Misc. 3d 1004(A), *4 (Sup. Ct. 2004) (same).",
-    [full("7 Misc. 3d 1004(A)", "7 Misc. 3d 1004(A)", None, AMB)],
+    [full("7 Misc. 3d 1004(A)", "7 Misc. 3d 1004(A)", "us-nysupct")],
 )
 # Gate is inert when the claimed court's state agrees with the reporter's.
 vec(
     "state_gate",
     "Matter of Smith, 100 Misc. 2d 500 (N.Y. Sup. Ct. 1979).",
     [full("100 Misc. 2d 500", "100 Misc. 2d 500", "us-nysupct")],
+)
+
+# --- 14. Normalizer 1.3.0 (2026-08-09): state-filings corpus-run fixes -----
+# (a) Preceding-parenthetical channel: California citation style puts the
+# court parenthetical BEFORE the cite ("Name (Court Year) cite"). Measured
+# on the CA Supreme Court briefs: without it, eyecite's forward scan claims
+# a NEIGHBORING authority's court.
+vec(
+    "preceding_parenthetical",
+    "E. & J. Gallo Winery v. Andina Licores S.A. (9th Cir. 2006) 446 F.3d 984.",
+    [full("446 F.3d 984", "446 F.3d 984", "us-ca9")],
+)
+vec(
+    "preceding_parenthetical",
+    "Perkins v. CCH Computax, Inc. (N.C. 1992) 423 S.E.2d 780, 784.",
+    [full("423 S.E.2d 780", "423 S.E.2d 780", "us-nc")],
+)
+vec(
+    "preceding_parenthetical",
+    "Salzberg v. Sciabacucchi (Del. 2020) 227 A.3d 102, 113.",
+    [full("227 A.3d 102", "227 A.3d 102", "us-del")],
+)
+vec(
+    "preceding_parenthetical",
+    # A year-only preceding parenthetical carries no court signal: a bare
+    # federal reporter stays honestly ambiguous.
+    "Foo v. Bar (2018) 100 F.3d 200.",
+    [full("100 F.3d 200", "100 F.3d 200", None, AMB)],
+)
+# (b) Table-of-authorities overreach refused: the TOA lists entries with
+# dotted leaders, and eyecite attaches the NEXT entry's leading
+# parenthetical to the PREVIOUS entry's cite. With no adjacent
+# parenthetical of its own, the claim is refused and the citation's own
+# signals decide (here: the Cal. App. 5th same-state family). Measured:
+# Drulias, claimed 'ca9' from the following Gallo entry.
+vec(
+    "toa_overreach",
+    "Drulias v. 1st Century Bancshares, Inc., (2018) 30 Cal.App.5th 696 "
+    "....................... 15, 19, 27 E. & J. Gallo Winery v. Andina "
+    "Licores S.A., (9th Cir. 2006) 446 F.3d 984 .......... 12",
+    [
+        full("30 Cal.App.5th 696", "30 Cal. App. 5th 696", "us-calctapp5d"),
+        full("446 F.3d 984", "446 F.3d 984", "us-ca9"),
+    ],
+)
+vec(
+    "toa_overreach",
+    # The adjacent PRECEDING parenthetical contradicts eyecite's claim
+    # (claimed 'cal' from the next entry): the local parenthetical wins.
+    "Greenwich Financial Services Distressed Mortg. Fund 3 LLC v. "
+    "Countrywide Financial Corp., (2d Cir. 2010) 603 F.3d 23 ........... "
+    "18 6 Handoush v. Lease Finance Group, (Cal. 2020) 258 Cal.Rptr.3d 363 "
+    "....... 6",
+    [
+        full("603 F.3d 23", "603 F.3d 23", "us-ca2"),
+        full("258 Cal.Rptr.3d 363", "258 Cal. Rptr. 3d 363", "us-cal"),
+    ],
+)
+# (c) Florida DCA forms: courts-db has no citation_string for the DCA
+# courts, and "Fla." must never swallow "Fla. 2d DCA" (the ordinal-
+# remainder guard). The corpus keys DCA cases under the parent
+# fladistctapp. Measured: 60 misroutes to us-fla on the state corpus run.
+vec(
+    "fla_dca",
+    "Masonoff v. State, 546 So. 2d 72, 74 (Fla. 2d DCA 1989).",
+    [full("546 So. 2d 72", "546 So. 2d 72", "us-fladistctapp")],
+)
+vec(
+    "fla_dca",
+    "Baxter v. State, 389 So. 3d 803 (Fla. 5th DCA 2024) (en banc).",
+    [full("389 So. 3d 803", "389 So. 3d 803", "us-fladistctapp")],
+)
+vec(
+    "fla_dca",
+    # The supreme court's own form still routes to us-fla.
+    "State v. Poole, 297 So. 3d 487 (Fla. 2020).",
+    [full("297 So. 3d 487", "297 So. 3d 487", "us-fla")],
+)
+# (d) Typographic quotes normalize before the courts-db match ("Tex.
+# Comm'n App." is straight-quoted in courts-db, curly in real documents).
+vec(
+    "curly_quotes",
+    "Fid. Union Cas. Co. v. Hammock, 248 S.W. 667 "
+    "(Tex. Comm’n App. 1923, judgm’t adopted).",
+    [full("248 S.W. 667", "248 S.W. 667", "us-texcommnapp")],
+)
+# (e) Same-state family inference (rule 5b): editions whose whole >=1%
+# corpus population sits in one state's registries route to the dominant
+# one; the verifier sweeps the siblings. Measured splits: Cal. App. 5th
+# 71/29 calctapp5d/calctapp, N.Y.2d 65/35 ny/nyappdiv, Cal. 4th 99.4% cal.
+vec(
+    "family_inference",
+    "Doe v. Roe (2018) 30 Cal.App.5th 696.",
+    [full("30 Cal.App.5th 696", "30 Cal. App. 5th 696", "us-calctapp5d")],
+)
+vec(
+    "family_inference",
+    "People v. Vivar (1999) 21 Cal.4th 903.",
+    [full("21 Cal.4th 903", "21 Cal. 4th 903", "us-cal")],
+)
+vec(
+    "family_inference",
+    "Matter of Jamal S., 28 NY3d 92 (2016).",
+    [full("28 NY3d 92", "28 N.Y.3d 92", "us-ny")],
+)
+vec(
+    "family_inference",
+    "People v. Bing, 76 NY2d 331 (1990).",
+    [full("76 NY2d 331", "76 N.Y.2d 331", "us-ny")],
+)
+vec(
+    "family_inference",
+    # Multi-STATE regionals have no family and stay ambiguous bare
+    # (S.W.3d spans TX/KY/MO/AR/TN in the corpus itself).
+    "Baz v. Qux, 700 S.W.3d 100.",
+    [full("700 S.W.3d 100", "700 S.W.3d 100", None, AMB)],
 )
 
 

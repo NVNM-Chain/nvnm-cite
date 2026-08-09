@@ -33,23 +33,28 @@ from nvnm_cite import config
 from nvnm_cite.chain import precompile as pc
 from nvnm_cite.chain import registrymap
 from nvnm_cite.normalizer import CANONICAL_SPEC, NORMALIZER_VERSION, Disposition, normalize
+from nvnm_cite.normalizer import jurisdiction
 from nvnm_cite.verifier.extract import ExtractError, extract_text
 from nvnm_cite.verifier.resolver import Resolver
 
 # The registries whose jurisdiction mapping AND corpus were proven end-to-end
 # during the pilot (SCOTUS + the 13 circuits). A NOT_FOUND outside this set
-# carries the expanded-coverage caution below: state-reporter normalization
-# is unproven until the plan-7.7 rebuild, so a miss there is a flag to
-# verify, never proof of fabrication.
+# carries the expanded-coverage caution below. State-reporter normalization
+# was proven against real filings from the five pilot states on 2026-08-09
+# (normalizer 1.3.0), so the caution's stated reason is now SOURCE
+# COMPLETENESS, not unproven formats: the corpus's public source data
+# measurably thins for recent state decisions (DECISIONS 2026-08-09;
+# per-court coverage numbers are the deferred Track-2 workstream).
 FEDERAL_APPELLATE: frozenset[str] = frozenset(
     {"us-scotus", "us-cadc", "us-cafc"} | {f"us-ca{n}" for n in range(1, 12)}
 )
 
 EXPANDED_COVERAGE_CAUTION = (
-    "Coverage for this court is newly expanded and its citation formats are "
-    "still being proven against real briefs. Treat this as a flag to verify "
-    "the citation yourself — never as proof it is fabricated, and never "
-    "delete a citation on this signal alone."
+    "Coverage for this court is newly expanded and the completeness of its "
+    "source data is still being measured — the public record is known to be "
+    "thinner for recent years. Treat this as a flag to verify the citation "
+    "yourself — never as proof it is fabricated, and never delete a "
+    "citation on this signal alone."
 )
 
 
@@ -311,26 +316,58 @@ def check_text(
         registry_id: int | None = None
         confidence: str | None = None
         caution: str | None = None
+        family_searched: list[str] | None = None
+        registry_out = entry.get("registry")
         if kind == "ok":
-            registry_id = registry_ids.get(entry["registry"])
-            if registry_id is not None:
-                resolution = resolver.resolve(
-                    registry_id, entry["canonical"], entry["registry"]
-                )
-                record = resolution.record
-                query = resolution.query
+            # 1.3.0: one keyed read per candidate registry. The routed
+            # registry leads; same-state family candidates and district
+            # siblings follow (jurisdiction.lookup_candidates) — the corpus
+            # splits some editions and courts across sibling registries, so
+            # a miss is only a miss after the whole family answered. The
+            # registry that answered is the row's registry; every registry
+            # read is disclosed.
+            canonical_parts = (entry["canonical"] or "").split(" ")
+            edition = " ".join(canonical_parts[1:-1])
+            candidates = [
+                name
+                for name in jurisdiction.lookup_candidates(edition, entry["registry"])
+                if name in registry_ids
+            ]
+            primary_resolution = None
+            searched: list[str] = []
+            for name in candidates:
+                resolution = resolver.resolve(registry_ids[name], entry["canonical"], name)
+                searched.append(name)
+                if primary_resolution is None:
+                    primary_resolution = resolution
+                if resolution.record is not None:
+                    record = resolution.record
+                    query = resolution.query
+                    registry_out = name
+                    registry_id = registry_ids[name]
+                    break
+            if searched:
+                family_searched = searched if len(searched) > 1 else None
                 if record is not None:
                     status, reason = VERIFIED, None
                 else:
+                    registry_out = searched[0]
+                    registry_id = registry_ids[searched[0]]
+                    query = primary_resolution.query
                     status = NOT_FOUND
                     reason = (
                         "no record for this citation in the "
-                        f"{entry['registry']} registry (first-page canonical keys)"
+                        f"{searched[0]} registry (first-page canonical keys)"
                     )
-                    if entry["registry"] not in FEDERAL_APPELLATE:
+                    if len(searched) > 1:
+                        reason += (
+                            "; also checked the same-family "
+                            f"registries {', '.join(searched[1:])}"
+                        )
+                    if searched[0] not in FEDERAL_APPELLATE:
                         confidence = "expanded-coverage"
                         caution = EXPANDED_COVERAGE_CAUTION
-                    elif entry["registry"] == "us-scotus":
+                    elif searched[0] == "us-scotus":
                         # Measured on real merits briefs (2026-08-02): the
                         # source data records some SCOTUS cases under only
                         # one of the parallel official U.S. / S. Ct. cites.
@@ -361,10 +398,14 @@ def check_text(
 
         rows[key] = (
             {
-                "registry": entry["registry"],
+                "registry": registry_out,
                 "registry_id": registry_id,
                 "confidence": confidence,
                 "caution": caution,
+                # 1.3.0: when the lookup swept same-family registries, every
+                # registry read is disclosed (the row's registry is the one
+                # that answered, or the routed one on a family-wide miss).
+                "family_searched": family_searched,
                 "canonical": entry["canonical"],
                 "as_written": entry["as_written"],
                 "variants": entry["variants"],

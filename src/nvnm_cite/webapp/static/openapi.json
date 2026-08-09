@@ -342,11 +342,16 @@
           },
           "registry": {
             "type": ["string", "null"],
-            "description": "The court registry consulted or implicated, e.g. 'us-scotus'."
+            "description": "The court registry that answered (or, on a miss, the one the citation routes to), e.g. 'us-scotus'."
           },
           "registry_id": {
             "type": ["integer", "null"],
             "description": "Its numeric id on this chain (registry names are not unique; the id is canonical)."
+          },
+          "family_searched": {
+            "type": ["array", "null"],
+            "items": {"type": "string"},
+            "description": "When the lookup swept same-family registries (the corpus splits some editions and intermediate courts across sibling registries), every registry read, in order; 'registry' is the one that answered, or the first (routed) one when all missed. Null for ordinary single-registry lookups."
           },
           "confidence": {
             "type": ["string", "null"],
@@ -354,7 +359,7 @@
           },
           "caution": {
             "type": ["string", "null"],
-            "description": "Present with confidence 'expanded-coverage': this court's citation formats are still being proven, so treat the miss as a flag to verify the citation yourself, never as proof it is fabricated, and never delete a citation on this signal alone. Relay it verbatim to your user."
+            "description": "Present with confidence 'expanded-coverage': the completeness of this court's source data is still being measured (the public record thins for recent years), so treat the miss as a flag to verify the citation yourself, never as proof it is fabricated, and never delete a citation on this signal alone. Relay it verbatim to your user."
           },
           "name_check": {
             "type": "string",
