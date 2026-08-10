@@ -6,7 +6,7 @@ What an answer asserts: existence of a registry record, at a stated block, in a 
 
 ## Conventions
 
-- The API lives on this origin (`https://nvnmcite.com/api/...`). If you are reading this from another deployment, the same paths apply to that origin.
+- The API lives on this origin (`https://www.nvnmcite.com/api/...`). If you are reading this from another deployment, the same paths apply to that origin.
 - No authentication and no API keys. Reads are free.
 - Every error response is JSON: `{"error": "human-readable message"}` with a meaningful HTTP status (400/404/411/413/422, and 502 when the chain RPC cannot be reached).
 - A 502 means the chain could not be consulted. It is never a statement about any citation. Do not report citations as missing because the RPC was down.
@@ -17,7 +17,7 @@ What an answer asserts: existence of a registry record, at a stated block, in a 
 ## Start here: identify the deployment
 
 ```
-curl -sS https://nvnmcite.com/api/status
+curl -sS https://www.nvnmcite.com/api/status
 ```
 
 Returns the network this deployment serves (chain id, cosmos chain id, public RPC URL, explorer URL, gas token), coverage (the number of court registries in the pinned name-to-id manifest and its creator), the normalizer and schema versions, live chain health, and whether aggregate telemetry is enabled. Read it once per session; the anchor workflow needs `network.public_rpc`, `network.chain_id`, and `network.explorer` from it.
@@ -25,7 +25,7 @@ Returns the network this deployment serves (chain id, cosmos chain id, public RP
 ## Check a document's citations
 
 ```
-curl -sS -X POST https://nvnmcite.com/api/check \
+curl -sS -X POST https://www.nvnmcite.com/api/check \
   -H "X-Filename: brief.pdf" \
   --data-binary @brief.pdf
 ```
@@ -68,7 +68,7 @@ Anyone can verify that a filed document's receipt is anchored, for free, without
 
 ```
 shasum -a 256 filed.pdf
-curl -sS "https://nvnmcite.com/api/receipt/lookup?sha256=<64-hex-digest>"
+curl -sS "https://www.nvnmcite.com/api/receipt/lookup?sha256=<64-hex-digest>"
 ```
 
 Without a `registry` parameter the server searches every receipts registry on the chain by keyed read (the court citation registries are excluded — they hold citation keys, never document receipts). The response: `chain_wide` true, `found`, `sweep` (how many registries were checked), and `hits[]` — one entry per registry that anchors this hash, each with `registry` / `registry_id` / `registry_owner`, `versions[]` (each anchored version with its chain timestamp and the receipt JSON: document hash, chain id, block checked, normalizer version, court registries read, attesting wallet, and a status tally), and `proof.request`: the exact `eth_call` (method, `to`, `data`) to replay against any RPC for this network, so no trust in this server is required. Any wallet can anchor any hash into its own registry, so relay each hit's `registry_owner` — who recorded the receipt is part of the answer.
@@ -80,7 +80,7 @@ Citation verifications: NVNM Chain (chain 1611) registry #4711 — example-firm-
 ```
 
 ```
-curl -sS "https://nvnmcite.com/api/receipt/lookup?registry=4711&sha256=<64-hex-digest>"
+curl -sS "https://www.nvnmcite.com/api/receipt/lookup?registry=4711&sha256=<64-hex-digest>"
 ```
 
 The `registry` parameter accepts the bare number, `#number`, or the whole pasted line; the bare number avoids URL-encoding mistakes (`#` must be `%23` in a URL). The scoped response is the single-registry form (`found`, `registry` / `registry_id` / `registry_owner`, `versions[]`, `proof.request`), with `note` distinguishing a missing registry from a missing record.
@@ -90,7 +90,7 @@ The hash binds exact bytes. If verification fails, first confirm you hashed the 
 ## Inspect a transaction
 
 ```
-curl -sS "https://nvnmcite.com/api/tx?hash=0x<64-hex>"
+curl -sS "https://www.nvnmcite.com/api/tx?hash=0x<64-hex>"
 ```
 
 Decodes an NVNM Chain anchoring transaction into readable form: the function called with its plaintext arguments, the precompile events it emitted, `success`/`pending`, gas, and an explorer link. After a registry-creation transaction confirms, the `registry_id` field carries the chain-assigned id recovered from the AddRegistry event; the anchor workflow below depends on this. After an anchor transaction confirms, `record_id` carries the chain-assigned record id from the AddRecord event the same way.
@@ -104,7 +104,7 @@ Receipts live in a per-firm-per-case registry owned by the filing party's wallet
 1. **Prepare.** POST the final document with the filer's details:
 
    ```
-   curl -sS -X POST https://nvnmcite.com/api/receipt/prepare \
+   curl -sS -X POST https://www.nvnmcite.com/api/receipt/prepare \
      -H "X-Filename: brief.pdf" \
      -H "X-Firm: Example Firm" \
      -H "X-Case: Example v. Example" \
