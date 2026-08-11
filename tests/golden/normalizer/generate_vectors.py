@@ -920,6 +920,233 @@ vec(
     [full("7 Cranch 116", "7 Cranch 116", "us-scotus")],
 )
 
+# --- 16. Normalizer 1.4.0 / task 7.8.2 (2026-08-11): rule-4 forms for the
+# remaining 45 states. Every vector below is a measured calibration case
+# (DECISIONS 2026-08-11) or a verbatim string from the 45-state report.
+# (a) Bare "(Ct. App.)" / "(App.)", state-gated on the reporter. Before
+# 7.8.2 eyecite resolved the bare form to ctappindterr — the Indian
+# Territory Court of Appeals, dead since 1907 — on live SC/WV/ID/NV
+# strings, and the claim survived because the territorial court carries no
+# state for the state gate. A recognized form the citation's own reporter
+# cannot resolve now DEFEATS the claim (refuse-with-prejudice) instead of
+# counting as an unreadable parenthetical.
+vec(
+    "ct_app_state_gate",
+    "State v. Daniels, 439 S.C. 500 (Ct. App. 2023).",
+    [full("439 S.C. 500", "439 S.C. 500", "us-scctapp")],
+)
+vec(
+    "ct_app_state_gate",
+    # W. Va. + bare Ct. App. = the 2022 Intermediate Court of Appeals
+    # (courts-db wvactapp). No registry exists on chain, so the verifier
+    # reports NOT_COVERED — the approved 2026-08-11 disclosure posture.
+    "Foster cited 247 W. Va. 590 (Ct. App. 2023).",
+    [full("247 W. Va. 590", "247 W. Va. 590", "us-wvactapp")],
+)
+vec(
+    "ct_app_state_gate",
+    "Monahan v. Hogan, 138 Nev. 58 (Ct. App. 2022).",
+    [full("138 Nev. 58", "138 Nev. 58", "us-nevapp")],
+)
+vec(
+    "ct_app_state_gate",
+    # The parallel-run form: the parenthetical is adjacent to the REGIONAL
+    # cite, whose multi-state edition cannot prove the state — honestly
+    # refused (no ctappindterr, no guess). The official half routes via
+    # its edition/family and the family sweep carries the authority.
+    "State v. Franks, 432 S.C. 58, 79, 849 S.E.2d 580, 591 (Ct. App. 2020).",
+    [
+        full("432 S.C. 58", "432 S.C. 58", "us-sc"),
+        full("849 S.E.2d 580", "849 S.E.2d 580", None, AMB),
+    ],
+)
+vec(
+    "ct_app_state_gate",
+    "Town of Menasha v. Bastian, 178 Wis. 2d 191, 503 N.W.2d 382 (Ct. App. 1993).",
+    [
+        full("178 Wis. 2d 191", "178 Wis. 2d 191", "us-wis"),
+        full("503 N.W.2d 382", "503 N.W.2d 382", None, AMB),
+    ],
+)
+vec(
+    "ct_app_state_gate",
+    "Doe v. Roe, 500 S.E.2d 100 (Ct. App. 1998).",
+    [full("500 S.E.2d 100", "500 S.E.2d 100", None, AMB)],
+)
+vec(
+    "ct_app_state_gate",
+    "State v. Sanchez, 181 Ariz. 492, 495 (App. 1995).",
+    [full("181 Ariz. 492", "181 Ariz. 492", "us-arizctapp")],
+)
+vec(
+    "ct_app_state_gate",
+    "Turbin v. Superior Court, 165 Ariz. 195, 196 (App. 1990).",
+    [full("165 Ariz. 195", "165 Ariz. 195", "us-arizctapp")],
+)
+# (b) Curated court forms courts-db lacks, each measured swallowing into
+# the state's shortest citation_string before 7.8.2.
+vec(
+    "curated_court_forms",
+    "Mayfield v. Commonwealth, 590 S.W.3d 300, 303-05 (Ky. App. 2019).",
+    [full("590 S.W.3d 300", "590 S.W.3d 300", "us-kyctapp")],
+)
+vec(
+    "curated_court_forms",
+    "Fletcher Props., Inc. v. City of Minneapolis, 931 N.W.2d 410, 429-30 (Minn. App. 2019).",
+    [full("931 N.W.2d 410", "931 N.W.2d 410", "us-minnctapp")],
+)
+vec(
+    "curated_court_forms",
+    "Corozzo v. Wal-Mart Stores, Inc., 531 S.W.3d 566, 575 (Mo. App. W.D. 2017).",
+    [full("531 S.W.3d 566", "531 S.W.3d 566", "us-moctapp")],
+)
+vec(
+    "curated_court_forms",
+    # The bracketed editorial district and the district-less generic the
+    # Missouri Supreme Court itself writes — one "Mo. App." entry covers
+    # E.D./W.D./S.D., "[W.D.]", and the bare form.
+    "Groh v. Groh, 910 S.W.2d 747 (Mo. App. [W.D.] 1995).",
+    [full("910 S.W.2d 747", "910 S.W.2d 747", "us-moctapp")],
+)
+vec(
+    "curated_court_forms",
+    "Mo. Mun. League v. Carnahan, 303 S.W.3d 573, 586 (Mo. App. 2010).",
+    [full("303 S.W.3d 573", "303 S.W.3d 573", "us-moctapp")],
+)
+vec(
+    "curated_court_forms",
+    # "Mo. banc" previously resolved right only because "Mo." swallowed it.
+    "J.C.W. v. Wyciskalla, 275 S.W.3d 249 (Mo. banc 2009).",
+    [full("275 S.W.3d 249", "275 S.W.3d 249", "us-mo")],
+)
+vec(
+    "curated_court_forms",
+    # The report's measured N.C. Ct. App. word-order inversion.
+    "State v. Hollis, 905 S.E.2d 265, 267 (N.C. App. Ct. 2024).",
+    [full("905 S.E.2d 265", "905 S.E.2d 265", "us-ncctapp")],
+)
+vec(
+    "curated_court_forms",
+    "Rogele, Inc. v. WCAB, 198 A.3d 1195, 1204 (Pa. Cmwlth. 2018).",
+    [full("198 A.3d 1195", "198 A.3d 1195", "us-pacommwct")],
+)
+vec(
+    "curated_court_forms",
+    "McCoy v. State, 80 P.3d 757, 764 (Alaska App. 2002).",
+    [full("80 P.3d 757", "80 P.3d 757", "us-alaskactapp")],
+)
+vec(
+    "curated_court_forms",
+    # Court-authored period-drop variant preserved verbatim in the report.
+    "State v. Lee, 71 S.W.3d 299, 303 (Tenn. Crim App. 2001).",
+    [full("71 S.W.3d 299", "71 S.W.3d 299", "us-tenncrimapp")],
+)
+vec(
+    "curated_court_forms",
+    # Alabama's historical compressed division parenthetical, gated on
+    # Ala. editions ("(Civ. 1974)" after an Ala. App. cite).
+    "Phillips v. Phillips, 52 Ala. App. 234 (Civ. 1974).",
+    [full("52 Ala. App. 234", "52 Ala. App. 234", "us-alacivapp")],
+)
+# (c) Paragraph parentheticals are pin material, not court signals: the
+# scan skips them (Mississippi's standard form), and a claim whose only
+# adjacency is "(¶13)" has the no-parenthetical overreach signature.
+vec(
+    "paragraph_parenthetical",
+    "Esco v. State, 102 So. 3d 1209, 1214 (¶13) (Miss. Ct. App. 2012).",
+    [full("102 So. 3d 1209", "102 So. 3d 1209", "us-missctapp")],
+)
+vec(
+    "paragraph_parenthetical",
+    "Huff-Cook, Inc. v. Dale, 913 So. 2d 988, 990 (¶ 10) (Miss. 2005).",
+    [full("913 So. 2d 988", "913 So. 2d 988", "us-miss")],
+)
+# (d) Louisiana public-domain citations: the numbered circuit is part of
+# the citation, cardinal per the Supreme Court's rule and ordinal in real
+# First Circuit opinions, with a full M/D/YY date. The docket half is not
+# reporter-shaped (never parsed); the So. 2d/3d parallel carries the key,
+# routed by the circuit parenthetical on its PRECEDING side. Writ history
+# appends a separate Supreme Court decision.
+vec(
+    "la_public_domain",
+    "State v. Palmer, 45,627 (La. App. 2 Cir. 1/26/11), 57 So. 3d 1099, writ denied, 11-0412 (La. 9/2/11), 68 So. 3d 526.",
+    [
+        full("57 So. 3d 1099", "57 So. 3d 1099", "us-lactapp"),
+        full("68 So. 3d 526", "68 So. 3d 526", "us-la"),
+    ],
+)
+vec(
+    "la_public_domain",
+    "Succession of Blythe, 466 So. 2d 500, 501 (La. App. 5 Cir.), writ denied, 469 So. 2d 985 (La. 1985).",
+    [
+        full("466 So. 2d 500", "466 So. 2d 500", "us-lactapp"),
+        full("469 So. 2d 985", "469 So. 2d 985", "us-la"),
+    ],
+)
+vec(
+    "la_public_domain",
+    "Lafayette Steel Erector, Inc. v. G. Kendrick LLC, 2022-0892 (La. App. 1st Cir. 8/29/23), 375 So. 3d 464, 474.",
+    [full("375 So. 3d 464", "375 So. 3d 464", "us-lactapp")],
+)
+vec(
+    "la_public_domain",
+    # The federal-circuit whitelist is untouched: "(1st Cir.)" without the
+    # "La. App." lead is still the First Circuit.
+    "United States v. Gamma, 100 F.3d 200 (1st Cir. 1996).",
+    [full("100 F.3d 200", "100 F.3d 200", "us-ca1")],
+)
+# (e) Ohio's numbered districts, trailing ("(12th Dist.)", "(6th
+# Dist.1991)" with no space before the year) — gated on Ohio editions
+# because N.E.-family reporters span Ohio AND Illinois, which also
+# numbers its districts. The webcite routes via the v3 family either way;
+# a lone N.E. cite with a district parenthetical stays honestly ambiguous.
+vec(
+    "ohio_districts",
+    "Hild v. Samaritan Health Partners, 2023-Ohio-2408, ¶ 87 (2d Dist.).",
+    [full("2023-Ohio-2408", "2023 Ohio 2408", "us-ohioctapp")],
+)
+vec(
+    "ohio_districts",
+    "State v. Rosa, 2013-Ohio-5867, 6 N.E.3d 57 (7th Dist.).",
+    [
+        full("2013-Ohio-5867", "2013 Ohio 5867", "us-ohioctapp"),
+        full("6 N.E.3d 57", "6 N.E.3d 57", None, AMB),
+    ],
+)
+vec(
+    "ohio_districts",
+    "In re Smith, 77 Ohio App.3d 1, 16, 601 N.E.2d 45 (6th Dist.1991).",
+    [
+        full("77 Ohio App.3d 1", "77 Ohio App. 3d 1", "us-ohioctapp"),
+        full("601 N.E.2d 45", "601 N.E.2d 45", None, AMB),
+    ],
+)
+# (f) North Carolina's withdrawn 2021–2022 universal citations: eyecite is
+# blind to them and the corpus holds zero keys under them — accounted as
+# out-of-scope (the law-sections precedent), never silently dropped.
+vec(
+    "nc_universal",
+    "State v. Johnson, 2021-NCSC-165, ¶ 12, was decided that term.",
+    [full("2021-NCSC-165", None, None, "out_of_scope", kind="unknown")],
+)
+vec(
+    "nc_universal",
+    "Vaitovas v. City of Greenville, 2022-NCCOA-169.",
+    [full("2022-NCCOA-169", None, None, "out_of_scope", kind="unknown")],
+)
+# (g) Hawaiʻi ʻokina, ADJUDICATED NOT FIXED (2026-08-11): archive text
+# renders the ʻokina as "Hawai#i" / "Hawai i" / a backtick, and eyecite
+# drops the state cite (the straight-apostrophe form "Hawai'i" parses
+# fine). Recovering it would mean a new text-cleaning rule, and §7 of the
+# spec makes cleaning rules checksumAlgo territory — not warranted for an
+# additive parse-recovery of archive artifacts. Pinned: the P.3d parallel
+# survives and carries the authority; the mangled state cite drops.
+vec(
+    "okina_artifacts",
+    "Womble Bond Dickinson (US) LLP v. Kim, 153 Hawai i 307, 319, 537 P.3d 1154, 1166 (2023).",
+    [full("537 P.3d 1154", "537 P.3d 1154", None, AMB)],
+)
+
 
 def main() -> None:
     out = Path(__file__).parent / "vectors.json"

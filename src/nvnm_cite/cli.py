@@ -180,8 +180,9 @@ def _render(report: dict) -> str:
     if sections.get("count"):
         n = sections["count"]
         lines.append(
-            f"  {n} statute/regulation section reference{'s' if n != 1 else ''} "
-            "ignored — registries hold case citations only."
+            f"  {n} out-of-scope reference{'s' if n != 1 else ''} ignored "
+            "(statute/regulation sections, or citation forms outside the "
+            "registry key space; each row's reason is in --json)."
         )
     if any(c.get("confidence") == "expanded-coverage" for c in citations):
         lines.append("")

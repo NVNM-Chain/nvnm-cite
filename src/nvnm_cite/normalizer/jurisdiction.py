@@ -34,6 +34,20 @@ reporter-derived default):
    match is refused when the remainder begins with an ordinal token
    ("Fla." must never swallow "Fla. 1st DCA"), and curly apostrophes /
    quotes normalize to straight before matching ("Tex. Comm'n App.").
+   1.4.0 (7.8.2, the remaining-45-states rollout): ¶-pinpoint
+   parentheticals are pin material — skipped by the scan, and not
+   corroboration surface for a rule-2 claim; bare "(Ct. App.)"/"(App.)"
+   are state-gated like App. Div. (S.C./W. Va./Wis./Idaho/Nev.;
+   Ariz./Haw.), and a recognized bare form the reporter cannot resolve is
+   refused WITH PREJUDICE — it defeats a rule-2 claim riding the same
+   text; a curated closed set covers court forms courts-db lacks
+   (Ky. App., Minn. App., Mo. App. + districts, Mo. banc, N.C. App. Ct.,
+   Pa. Cmwlth., Alaska App., Kan. App., Md. App. Ct., Nev. Ct. App.,
+   W. Va. Ct. App., Tennessee period-drop variants); Louisiana's numbered
+   circuits map to us-lactapp; Ohio's numbered districts map to
+   us-ohioctapp for Ohio editions only (N.E. spans Ohio AND Illinois);
+   Alabama's historical "(Civ.)"/"(Crim.)" map to the division courts for
+   Ala. editions only.
 5. Reporter-edition inference from the corpus-derived table
    (reporter_registries.json, built by scripts/build_reporter_map.py):
    editions that one registry dominates >= 99.5% across the 11.9M-record
@@ -116,10 +130,19 @@ def _circuit_from_following_text(following_text: str) -> str | None:
 
 # General parenthetical fallback (rule 4): the first parenthetical right
 # after the cite (same pin-cite-only guard as the circuit fallback, so a
-# neighboring citation's parenthetical is never misattributed).
+# neighboring citation's parenthetical is never misattributed). ¶ joined
+# the pin-cite class in 7.8.2c: Ohio pinpoints paragraphs before the
+# district parenthetical ("2023-Ohio-116, ¶ 29 (12th Dist.)").
 _ANY_PARENTHETICAL = re.compile(
-    r"^(?:\s*,?\s*(?:at\s+)?[\d\s,\-–&n\.\*]*)\((?P<content>[^)]{1,80})\)"
+    r"^(?:\s*,?\s*(?:at\s+)?[\d\s,\-–&n\.\*¶]*)\((?P<content>[^)]{1,80})\)"
 )
+
+# A parenthetical that is itself a paragraph pinpoint — Mississippi's
+# standard citation interleaves one before the court parenthetical
+# ("102 So. 3d 1209, 1214 (¶13) (Miss. Ct. App. 2012)", spacing varies).
+# The court scan skips these (7.8.2c); they are pins, not court signals,
+# so they are also NOT corroboration surface for an eyecite claim.
+_PARAGRAPH_PARENTHETICAL = re.compile(r"^¶")
 
 # The parenthetical BEFORE the citation (California style: "Name (Court
 # Year) cite"). It must close immediately before the cite (only whitespace
@@ -159,6 +182,93 @@ _APPDIV_FORMS: tuple[str, ...] = (
     "1st Dept.", "2d Dept.", "2nd Dept.", "3d Dept.", "3rd Dept.", "4th Dept.",
 )
 
+# A recognized bare form whose state cannot be resolved from the citation's
+# own reporter. Distinct from None (unrecognized content): a REFUSED form
+# also DEFEATS an eyecite court claim riding the same parenthetical —
+# measured (7.8.2, calibration on the 45-state report strings): eyecite
+# resolves bare "(Ct. App. 2020)" to ctappindterr, the Indian Territory
+# Court of Appeals (dead 1907), on live S.C./W. Va./Idaho/Nev. strings,
+# and the state gate is inert because that territorial court carries no
+# state. Truthy on purpose so it propagates through or-chains; never a
+# courts-db id.
+_REFUSE = "__refuse__"
+
+# Bare intermediate-court parentheticals, state-gated on the reporter (the
+# App. Div. pattern, 7.8.2a). "(Ct. App. 2020)" after an S.C. cite is the
+# South Carolina Court of Appeals; after a W. Va. cite it is the 2022
+# Intermediate Court of Appeals (courts-db wvactapp — no registry on
+# chain, so the verifier reports NOT_COVERED per the 2026-08-11 decision);
+# after a multi-state regional reporter it names an intermediate court of
+# SOME unknowable state and is REFUSED. The gate fires only on truly BARE
+# content (remainder empty or a year), so genuine longer courts-db strings
+# ("Ct. App. Nev.", "Ct. App. Ind. Terr.") still reach the index.
+_CT_APP_EDITION_GATE: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("S.C.",), "scctapp"),
+    (("W. Va.", "W.Va."), "wvactapp"),
+    (("Wis.",), "wisctapp"),  # pre-2000 "(Ct. App. 1993)" after Wis. 2d
+    (("Idaho",), "idahoctapp"),
+    (("Nev.",), "nevapp"),
+)
+# "(App. 1995)" — Arizona and Hawaii identify their intermediate courts by
+# a bare "(App. <year>)" after the official reporter (the reporter itself
+# spans both appellate levels in each state).
+_APP_EDITION_GATE: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("Ariz.",), "arizctapp"),
+    (("Haw.",), "hawapp"),
+)
+_BARE_REMAINDER = re.compile(r"^(?:(?:1[6-9]|20)\d{2})?$")  # empty or a year
+
+# Alabama's historical compressed division parentheticals: "(Civ. 1974)" /
+# "(Crim. 1974)" after an Ala. / Ala. App. cite (measured in the 45-state
+# report's verbatim strings). Gated on Ala. editions only — So. 2d/3d spans
+# four states, so the bare token is not state-provable there.
+_ALA_DIVISION_GATE: tuple[tuple[str, str], ...] = (
+    ("Civ.", "alacivapp"),
+    ("Crim.", "alacrimapp"),
+)
+
+# Court-parenthetical forms courts-db has NO citation_string for, each
+# measured swallowing into the state's shortest string (7.8.2b, the
+# Fla-DCA precedent — calibration: "(Ky. App. 2019)" routed us-ky,
+# "(Minn. App. 2019)" us-minn, "(Mo. App. W.D. 2017)" us-mo,
+# "(Pa. Cmwlth. 2018)" us-pa, "(Alaska App. 2002)" us-alaska,
+# "(N.C. App. Ct. 2024)" us-nc). Prefix-matched before the courts-db index
+# (every entry is longer than the string it was measured swallowing into);
+# a single "Mo. App." entry covers the E.D./W.D./S.D. district suffixes,
+# the bracketed "[W.D.]" editorial form, and the district-less generic the
+# Missouri Supreme Court itself uses. "Mo. banc" is the Missouri Supreme
+# Court's own signal (previously right only by prefix accident).
+_CURATED_COURT_FORMS: tuple[tuple[str, str], ...] = (
+    ("W. Va. Ct. App.", "wvactapp"),
+    ("W.Va. Ct. App.", "wvactapp"),
+    ("N.C. App. Ct.", "ncctapp"),
+    ("Md. App. Ct.", "mdctspecapp"),
+    ("Nev. Ct. App.", "nevapp"),  # courts-db has only the inverted "Ct. App. Nev."
+    ("Tenn. Crim App.", "tenncrimapp"),  # measured period-drop variants in
+    ("Tenn Crim. App.", "tenncrimapp"),  # court-authored text (the report)
+    ("Pa. Cmwlth.", "pacommwct"),
+    ("Alaska App.", "alaskactapp"),
+    ("Minn. App.", "minnctapp"),
+    ("Kan. App.", "kanctapp"),
+    ("Ky. App.", "kyctapp"),
+    ("Mo. App.", "moctapp"),
+    ("Mo. banc", "mo"),
+)
+
+# Louisiana's five numbered Courts of Appeal: the circuit is part of the
+# citation ("La. App. 2 Cir." per the Supreme Court's rule; "La. App. 1st
+# Cir." in actual First Circuit opinions). All five are one courts-db court
+# (lactapp) and one registry. The trailing full date ("1/26/11") rides in
+# the remainder. Anchored so federal "(1st Cir.)" can never reach it.
+_LA_CIRCUIT = re.compile(r"^La\.\s?App\.\s?[1-5](?:st|nd|rd|d|th)?\s?Cir\.")
+
+# Ohio's twelve numbered appellate districts, as trailing parentheticals
+# ("(12th Dist.)", "(6th Dist.1991)" — no space before the year in real
+# text). One courts-db court (ohioctapp); gated on Ohio editions because
+# N.E.-family reporters span Ohio AND Illinois (which also has numbered
+# districts), so the bare district is not state-provable there.
+_OHIO_DISTRICT = re.compile(r"^(?:1st|2n?d|3r?d|[4-9]th|1[0-2]th)\s?Dist\.")
+
 _BOUNDARY_CHARS = " ,—–[(0123456789"
 
 
@@ -192,7 +302,10 @@ def _court_from_content(content: str, edition: str | None = None) -> str | None:
     Shared by the following-parenthetical (rule 4) and preceding-
     parenthetical (California style) channels. Refuses rather than guesses:
     unknown forms, state-gate conflicts, and ordinal-remainder swallows all
-    return None."""
+    return None. A RECOGNIZED bare form whose state the citation's own
+    reporter cannot prove returns _REFUSE instead — the caller must treat
+    it as "this parenthetical is the citation's signal and it resolves
+    nothing", defeating any eyecite claim that rode the same text."""
     content = content.strip().translate(_QUOTE_TRANSLATION)
     ed = edition or ""
     if any(_prefix_match(content, form) for form in _APPDIV_FORMS):
@@ -200,12 +313,44 @@ def _court_from_content(content: str, edition: str | None = None) -> str | None:
             return "nyappdiv"
         if ed.startswith(_NJ_EDITION_PREFIXES):
             return "njsuperctappdiv"
-        return None  # "App. Div." without a state-identifying reporter: refuse
+        return _REFUSE  # "App. Div." without a state-identifying reporter
+    # Bare "(Ct. App.)" / "(App.)" — state-gated (7.8.2a). Only truly bare
+    # content (remainder empty or a year) qualifies; longer genuine
+    # courts-db strings ("Ct. App. Nev.") fall through to the index.
+    for lead, gate in (("Ct. App.", _CT_APP_EDITION_GATE), ("App.", _APP_EDITION_GATE)):
+        if _prefix_match(content, lead) and _BARE_REMAINDER.match(
+            content[len(lead) :].strip(" ,")
+        ):
+            for prefixes, court_id in gate:
+                if ed.startswith(prefixes):
+                    return court_id
+            return _REFUSE
+    if ed.startswith("Ala."):
+        for lead, court_id in _ALA_DIVISION_GATE:
+            if _prefix_match(content, lead) and _BARE_REMAINDER.match(
+                content[len(lead) :].strip(" ,")
+            ):
+                return court_id
     if _FLA_DCA.match(content):
         court_id = "fladistctapp"
         if edition and _state_conflict(edition, court_id):
             return None
         return court_id
+    if _LA_CIRCUIT.match(content):
+        court_id = "lactapp"
+        if edition and _state_conflict(edition, court_id):
+            return None
+        return court_id
+    if ed.startswith("Ohio") and _OHIO_DISTRICT.match(content):
+        return "ohioctapp"
+    # Curated forms courts-db lacks (7.8.2b): checked before the index so
+    # the state's shortest string can no longer swallow them. Same state
+    # gate as index matches.
+    for key, court_id in _CURATED_COURT_FORMS:
+        if _prefix_match(content, key):
+            if edition and _state_conflict(edition, court_id):
+                return None
+            return court_id
     index, keys_longest_first = _citation_string_index()
     for key in keys_longest_first:
         if _prefix_match(content, key):
@@ -225,11 +370,28 @@ def _court_from_content(content: str, edition: str | None = None) -> str | None:
     return None
 
 
+def _first_court_parenthetical(following_text: str) -> str | None:
+    """Content of the first following parenthetical that is not a paragraph
+    pinpoint, or None. Skips at most two ¶-parentheticals (Mississippi
+    writes one; two is margin, unbounded scanning is not)."""
+    window = following_text
+    for _ in range(3):
+        match = _ANY_PARENTHETICAL.match(window)
+        if not match:
+            return None
+        content = match.group("content").strip()
+        if _PARAGRAPH_PARENTHETICAL.match(content):
+            window = window[match.end() :]
+            continue
+        return content
+    return None
+
+
 def _court_from_parenthetical(following_text: str, edition: str | None = None) -> str | None:
-    match = _ANY_PARENTHETICAL.match(following_text)
-    if not match:
+    content = _first_court_parenthetical(following_text)
+    if content is None:
         return None
-    return _court_from_content(match.group("content"), edition)
+    return _court_from_content(content, edition)
 
 
 def _court_from_preceding(preceding_text: str, edition: str | None = None) -> str | None:
@@ -252,8 +414,11 @@ def _court_from_preceding(preceding_text: str, edition: str | None = None) -> st
 def _adjacent_parenthetical_exists(following_text: str, preceding_text: str) -> bool:
     """True when the citation has ANY adjacent parenthetical that could
     carry a court — the corroboration surface for an eyecite court claim.
-    A year-only preceding parenthetical does not count."""
-    if _ANY_PARENTHETICAL.match(following_text or ""):
+    A year-only preceding parenthetical does not count, and neither does a
+    ¶-pinpoint parenthetical (7.8.2c): a paragraph pin is pin material, so
+    a claim whose only adjacency is "(¶13)" has the same no-parenthetical
+    overreach signature the 1.3.0 rule refuses."""
+    if _first_court_parenthetical(following_text or "") is not None:
         return True
     match = _PRECEDING_PARENTHETICAL.search(preceding_text or "")
     if not match:
@@ -468,12 +633,16 @@ def map_citation(
 
     # The citation's OWN adjacent parentheticals — the strongest local
     # signal after the reporter itself. Following (Bluebook) outranks
-    # preceding (California style) when both are readable.
+    # preceding (California style) when both are readable. _REFUSE is
+    # truthy, so a recognized-but-unresolvable form propagates here too.
     following_court = _circuit_from_following_text(following_text) or _court_from_parenthetical(
         following_text, edition
     )
     preceding_court = _court_from_preceding(preceding_text, edition)
     adjacent = following_court or preceding_court
+    refused = adjacent == _REFUSE
+    if refused:
+        adjacent = None
 
     court = (citation.metadata.court or "").strip()
     if court and (_state_conflict(edition, court) or _federal_appellate_conflict(edition, court)):
@@ -497,8 +666,19 @@ def map_citation(
             # 'cal' from the NEXT authority's parenthetical). The local
             # parenthetical wins.
             return REGISTRY_PREFIX + adjacent, None
+        if refused:
+            # The adjacent parenthetical is a RECOGNIZED bare form the
+            # citation's own reporter cannot resolve to a state ("(Ct.
+            # App. 2020)" after S.E.2d). eyecite's claim rode that same
+            # text and can only be a guess dressed as data — measured:
+            # ctappindterr, a court dead since 1907, on live 2020s
+            # strings. Drop the claim; rules 5/5b/6 decide.
+            court = ""
         windows_provided = bool(following_text or preceding_text)
-        if not windows_provided or _adjacent_parenthetical_exists(following_text, preceding_text):
+        if court and (
+            not windows_provided
+            or _adjacent_parenthetical_exists(following_text, preceding_text)
+        ):
             # Either the caller gave no document context (a bare
             # map_citation call — nothing to corroborate against), or an
             # adjacent parenthetical exists that our index cannot read and

@@ -109,15 +109,24 @@ class Disposition(str, Enum):
     AMBIGUOUS_JURISDICTION = "ambiguous_jurisdiction"
     VENDOR = "vendor"
     UNRESOLVED = "unresolved"
-    # Law-section tokens (§/§§ fragments eyecite reports as UnknownCitation
-    # when a statute or regulation cite is split by PDF line breaks). They
-    # are accounted for — never silently dropped — but they are not case
-    # citations, so the verifier keeps them out of the citations table.
+    # Non-key citation material, accounted for but never chain-read: law-
+    # section tokens (§/§§ fragments eyecite reports as UnknownCitation when
+    # a statute or regulation cite is split by PDF line breaks) and North
+    # Carolina's withdrawn 2021–2022 universal citations (real citation
+    # strings with zero presence in the registry key space, 7.8.2f).
     OUT_OF_SCOPE = "out_of_scope"
 
 
 # A law-section fragment: an optional opening bracket, then § (one or more).
 _SECTION_TOKEN = re.compile(r"^[\(\[]?§")
+
+# North Carolina's withdrawn universal citations (7.8.2f). Adopted
+# 2021-01-01, withdrawn 2023-01-13; opinions issued in the window carry
+# permanent "2021-NCSC-165" / "2022-NCCOA-938" identifiers. eyecite is
+# fully blind to them (measured) and the corpus holds ZERO keys under
+# them, so without this scan they vanish from the accounting entirely —
+# the law-sections precedent says classify and disclose instead.
+_NC_UNIVERSAL = re.compile(r"\b20(?:2[0-3])-NC(?:SC|COA)-\d{1,5}\b")
 
 
 _KIND_BY_TYPE: dict[type, str] = {
@@ -372,5 +381,40 @@ def normalize(text: str, *, clean_steps: tuple[str, ...] = CLEAN_STEPS) -> Norma
                 reason=reason,
             )
         )
+
+    # North Carolina universal citations (7.8.2f): eyecite emits nothing
+    # for them, so they are scanned independently and accounted as
+    # out-of-scope — a real citation form with no registry key, never
+    # silently dropped and never a false NOT_FOUND. Spans already covered
+    # by an eyecite citation are skipped (future-proofing: if eyecite ever
+    # learns the form, its row wins).
+    if _NC_UNIVERSAL.search(cleaned):
+        spans = [c.span for c in results]
+        for m in _NC_UNIVERSAL.finditer(cleaned):
+            if any(s < m.end() and m.start() < e for s, e in spans):
+                continue
+            results.append(
+                NormalizedCitation(
+                    as_written=m.group(0),
+                    canonical=None,
+                    registry=None,
+                    disposition=Disposition.OUT_OF_SCOPE,
+                    kind="unknown",
+                    span=(m.start(), m.end()),
+                    group=None,
+                    court=None,
+                    year=None,
+                    plaintiff=None,
+                    defendant=None,
+                    pin_cite=None,
+                    reason=(
+                        "North Carolina universal citation (2021–2022 "
+                        "system, withdrawn January 2023) — not in the "
+                        "registry key space; check this case by its "
+                        "official or regional reporter citation"
+                    ),
+                )
+            )
+        results.sort(key=lambda c: c.span)
 
     return NormalizationResult(cleaned_text=cleaned, citations=results)

@@ -3,8 +3,8 @@
   "spec": "cite-canonical-v1",
   "generator": "generate_vectors.py",
   "note": "Expectations hand-derived from docs/canonical-citation-spec.md; adjudications recorded in DECISIONS.md. Compared fields: as_written, canonical, registry, disposition, kind.",
-  "vector_count": 273,
-  "expectation_rows": 307
+  "vector_count": 304,
+  "expectation_rows": 344
  },
  "vectors": [
   {
@@ -4053,6 +4053,482 @@
      "canonical": "7 Cranch 116",
      "registry": "us-scotus",
      "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ct_app_state_gate-001",
+   "category": "ct_app_state_gate",
+   "text": "State v. Daniels, 439 S.C. 500 (Ct. App. 2023).",
+   "expect": [
+    {
+     "as_written": "439 S.C. 500",
+     "canonical": "439 S.C. 500",
+     "registry": "us-scctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ct_app_state_gate-002",
+   "category": "ct_app_state_gate",
+   "text": "Foster cited 247 W. Va. 590 (Ct. App. 2023).",
+   "expect": [
+    {
+     "as_written": "247 W. Va. 590",
+     "canonical": "247 W. Va. 590",
+     "registry": "us-wvactapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ct_app_state_gate-003",
+   "category": "ct_app_state_gate",
+   "text": "Monahan v. Hogan, 138 Nev. 58 (Ct. App. 2022).",
+   "expect": [
+    {
+     "as_written": "138 Nev. 58",
+     "canonical": "138 Nev. 58",
+     "registry": "us-nevapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ct_app_state_gate-004",
+   "category": "ct_app_state_gate",
+   "text": "State v. Franks, 432 S.C. 58, 79, 849 S.E.2d 580, 591 (Ct. App. 2020).",
+   "expect": [
+    {
+     "as_written": "432 S.C. 58",
+     "canonical": "432 S.C. 58",
+     "registry": "us-sc",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "849 S.E.2d 580",
+     "canonical": "849 S.E.2d 580",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ct_app_state_gate-005",
+   "category": "ct_app_state_gate",
+   "text": "Town of Menasha v. Bastian, 178 Wis. 2d 191, 503 N.W.2d 382 (Ct. App. 1993).",
+   "expect": [
+    {
+     "as_written": "178 Wis. 2d 191",
+     "canonical": "178 Wis. 2d 191",
+     "registry": "us-wis",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "503 N.W.2d 382",
+     "canonical": "503 N.W.2d 382",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ct_app_state_gate-006",
+   "category": "ct_app_state_gate",
+   "text": "Doe v. Roe, 500 S.E.2d 100 (Ct. App. 1998).",
+   "expect": [
+    {
+     "as_written": "500 S.E.2d 100",
+     "canonical": "500 S.E.2d 100",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ct_app_state_gate-007",
+   "category": "ct_app_state_gate",
+   "text": "State v. Sanchez, 181 Ariz. 492, 495 (App. 1995).",
+   "expect": [
+    {
+     "as_written": "181 Ariz. 492",
+     "canonical": "181 Ariz. 492",
+     "registry": "us-arizctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ct_app_state_gate-008",
+   "category": "ct_app_state_gate",
+   "text": "Turbin v. Superior Court, 165 Ariz. 195, 196 (App. 1990).",
+   "expect": [
+    {
+     "as_written": "165 Ariz. 195",
+     "canonical": "165 Ariz. 195",
+     "registry": "us-arizctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-001",
+   "category": "curated_court_forms",
+   "text": "Mayfield v. Commonwealth, 590 S.W.3d 300, 303-05 (Ky. App. 2019).",
+   "expect": [
+    {
+     "as_written": "590 S.W.3d 300",
+     "canonical": "590 S.W.3d 300",
+     "registry": "us-kyctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-002",
+   "category": "curated_court_forms",
+   "text": "Fletcher Props., Inc. v. City of Minneapolis, 931 N.W.2d 410, 429-30 (Minn. App. 2019).",
+   "expect": [
+    {
+     "as_written": "931 N.W.2d 410",
+     "canonical": "931 N.W.2d 410",
+     "registry": "us-minnctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-003",
+   "category": "curated_court_forms",
+   "text": "Corozzo v. Wal-Mart Stores, Inc., 531 S.W.3d 566, 575 (Mo. App. W.D. 2017).",
+   "expect": [
+    {
+     "as_written": "531 S.W.3d 566",
+     "canonical": "531 S.W.3d 566",
+     "registry": "us-moctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-004",
+   "category": "curated_court_forms",
+   "text": "Groh v. Groh, 910 S.W.2d 747 (Mo. App. [W.D.] 1995).",
+   "expect": [
+    {
+     "as_written": "910 S.W.2d 747",
+     "canonical": "910 S.W.2d 747",
+     "registry": "us-moctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-005",
+   "category": "curated_court_forms",
+   "text": "Mo. Mun. League v. Carnahan, 303 S.W.3d 573, 586 (Mo. App. 2010).",
+   "expect": [
+    {
+     "as_written": "303 S.W.3d 573",
+     "canonical": "303 S.W.3d 573",
+     "registry": "us-moctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-006",
+   "category": "curated_court_forms",
+   "text": "J.C.W. v. Wyciskalla, 275 S.W.3d 249 (Mo. banc 2009).",
+   "expect": [
+    {
+     "as_written": "275 S.W.3d 249",
+     "canonical": "275 S.W.3d 249",
+     "registry": "us-mo",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-007",
+   "category": "curated_court_forms",
+   "text": "State v. Hollis, 905 S.E.2d 265, 267 (N.C. App. Ct. 2024).",
+   "expect": [
+    {
+     "as_written": "905 S.E.2d 265",
+     "canonical": "905 S.E.2d 265",
+     "registry": "us-ncctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-008",
+   "category": "curated_court_forms",
+   "text": "Rogele, Inc. v. WCAB, 198 A.3d 1195, 1204 (Pa. Cmwlth. 2018).",
+   "expect": [
+    {
+     "as_written": "198 A.3d 1195",
+     "canonical": "198 A.3d 1195",
+     "registry": "us-pacommwct",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-009",
+   "category": "curated_court_forms",
+   "text": "McCoy v. State, 80 P.3d 757, 764 (Alaska App. 2002).",
+   "expect": [
+    {
+     "as_written": "80 P.3d 757",
+     "canonical": "80 P.3d 757",
+     "registry": "us-alaskactapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-010",
+   "category": "curated_court_forms",
+   "text": "State v. Lee, 71 S.W.3d 299, 303 (Tenn. Crim App. 2001).",
+   "expect": [
+    {
+     "as_written": "71 S.W.3d 299",
+     "canonical": "71 S.W.3d 299",
+     "registry": "us-tenncrimapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-011",
+   "category": "curated_court_forms",
+   "text": "Phillips v. Phillips, 52 Ala. App. 234 (Civ. 1974).",
+   "expect": [
+    {
+     "as_written": "52 Ala. App. 234",
+     "canonical": "52 Ala. App. 234",
+     "registry": "us-alacivapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "paragraph_parenthetical-001",
+   "category": "paragraph_parenthetical",
+   "text": "Esco v. State, 102 So. 3d 1209, 1214 (¶13) (Miss. Ct. App. 2012).",
+   "expect": [
+    {
+     "as_written": "102 So. 3d 1209",
+     "canonical": "102 So. 3d 1209",
+     "registry": "us-missctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "paragraph_parenthetical-002",
+   "category": "paragraph_parenthetical",
+   "text": "Huff-Cook, Inc. v. Dale, 913 So. 2d 988, 990 (¶ 10) (Miss. 2005).",
+   "expect": [
+    {
+     "as_written": "913 So. 2d 988",
+     "canonical": "913 So. 2d 988",
+     "registry": "us-miss",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "la_public_domain-001",
+   "category": "la_public_domain",
+   "text": "State v. Palmer, 45,627 (La. App. 2 Cir. 1/26/11), 57 So. 3d 1099, writ denied, 11-0412 (La. 9/2/11), 68 So. 3d 526.",
+   "expect": [
+    {
+     "as_written": "57 So. 3d 1099",
+     "canonical": "57 So. 3d 1099",
+     "registry": "us-lactapp",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "68 So. 3d 526",
+     "canonical": "68 So. 3d 526",
+     "registry": "us-la",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "la_public_domain-002",
+   "category": "la_public_domain",
+   "text": "Succession of Blythe, 466 So. 2d 500, 501 (La. App. 5 Cir.), writ denied, 469 So. 2d 985 (La. 1985).",
+   "expect": [
+    {
+     "as_written": "466 So. 2d 500",
+     "canonical": "466 So. 2d 500",
+     "registry": "us-lactapp",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "469 So. 2d 985",
+     "canonical": "469 So. 2d 985",
+     "registry": "us-la",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "la_public_domain-003",
+   "category": "la_public_domain",
+   "text": "Lafayette Steel Erector, Inc. v. G. Kendrick LLC, 2022-0892 (La. App. 1st Cir. 8/29/23), 375 So. 3d 464, 474.",
+   "expect": [
+    {
+     "as_written": "375 So. 3d 464",
+     "canonical": "375 So. 3d 464",
+     "registry": "us-lactapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "la_public_domain-004",
+   "category": "la_public_domain",
+   "text": "United States v. Gamma, 100 F.3d 200 (1st Cir. 1996).",
+   "expect": [
+    {
+     "as_written": "100 F.3d 200",
+     "canonical": "100 F.3d 200",
+     "registry": "us-ca1",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ohio_districts-001",
+   "category": "ohio_districts",
+   "text": "Hild v. Samaritan Health Partners, 2023-Ohio-2408, ¶ 87 (2d Dist.).",
+   "expect": [
+    {
+     "as_written": "2023-Ohio-2408",
+     "canonical": "2023 Ohio 2408",
+     "registry": "us-ohioctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ohio_districts-002",
+   "category": "ohio_districts",
+   "text": "State v. Rosa, 2013-Ohio-5867, 6 N.E.3d 57 (7th Dist.).",
+   "expect": [
+    {
+     "as_written": "2013-Ohio-5867",
+     "canonical": "2013 Ohio 5867",
+     "registry": "us-ohioctapp",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "6 N.E.3d 57",
+     "canonical": "6 N.E.3d 57",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "ohio_districts-003",
+   "category": "ohio_districts",
+   "text": "In re Smith, 77 Ohio App.3d 1, 16, 601 N.E.2d 45 (6th Dist.1991).",
+   "expect": [
+    {
+     "as_written": "77 Ohio App.3d 1",
+     "canonical": "77 Ohio App. 3d 1",
+     "registry": "us-ohioctapp",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "601 N.E.2d 45",
+     "canonical": "601 N.E.2d 45",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "nc_universal-001",
+   "category": "nc_universal",
+   "text": "State v. Johnson, 2021-NCSC-165, ¶ 12, was decided that term.",
+   "expect": [
+    {
+     "as_written": "2021-NCSC-165",
+     "canonical": null,
+     "registry": null,
+     "disposition": "out_of_scope",
+     "kind": "unknown"
+    }
+   ]
+  },
+  {
+   "id": "nc_universal-002",
+   "category": "nc_universal",
+   "text": "Vaitovas v. City of Greenville, 2022-NCCOA-169.",
+   "expect": [
+    {
+     "as_written": "2022-NCCOA-169",
+     "canonical": null,
+     "registry": null,
+     "disposition": "out_of_scope",
+     "kind": "unknown"
+    }
+   ]
+  },
+  {
+   "id": "okina_artifacts-001",
+   "category": "okina_artifacts",
+   "text": "Womble Bond Dickinson (US) LLP v. Kim, 153 Hawai i 307, 319, 537 P.3d 1154, 1166 (2023).",
+   "expect": [
+    {
+     "as_written": "537 P.3d 1154",
+     "canonical": "537 P.3d 1154",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
      "kind": "full"
     }
    ]

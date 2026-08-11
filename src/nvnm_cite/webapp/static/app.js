@@ -635,9 +635,9 @@ function buildSummaryChips(report) {
   const sections = report.summary.law_sections_out_of_scope;
   if (sections && sections.count) {
     const c = el("div", "sum-chip");
-    c.title = "Statute and regulation section references. Registries hold case citations only.";
+    c.title = "Out-of-scope references: statute/regulation sections, or citation forms outside the registry key space (e.g. North Carolina's withdrawn 2021\u20132022 universal citations).";
     c.appendChild(el("span", "n", String(sections.count)));
-    c.appendChild(el("span", "l", "§ out of scope"));
+    c.appendChild(el("span", "l", "out of scope"));
     chips.appendChild(c);
   }
 }
