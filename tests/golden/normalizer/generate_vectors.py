@@ -1032,6 +1032,22 @@ vec(
 )
 vec(
     "curated_court_forms",
+    # 7.8.4 live-sweep find: courts-db says "Pa. Super. Ct.", briefs say
+    # "(Pa. Super. YEAR)" — previously swallowed into "Pa.". Caught by the
+    # census classification of the verification run (an in-corpus
+    # pasuperct key NOT_FOUND under us-pa).
+    "Commonwealth v. Kittrell, 19 A.3d 532, 538 (Pa. Super. 2011).",
+    [full("19 A.3d 532", "19 A.3d 532", "us-pasuperct")],
+)
+vec(
+    "curated_court_forms",
+    # Same class: courts-db "Colo. Ct. App." vs the real "(Colo. App.
+    # YEAR)" parenthetical on pre-2012 regional-only Colorado cites.
+    "Henderson v. Master Klean Janitorial, Inc., 70 P.3d 612, 615 (Colo. App. 2003).",
+    [full("70 P.3d 612", "70 P.3d 612", "us-coloctapp")],
+)
+vec(
+    "curated_court_forms",
     "McCoy v. State, 80 P.3d 757, 764 (Alaska App. 2002).",
     [full("80 P.3d 757", "80 P.3d 757", "us-alaskactapp")],
 )

@@ -247,6 +247,14 @@ _CURATED_COURT_FORMS: tuple[tuple[str, str], ...] = (
     ("Tenn. Crim App.", "tenncrimapp"),  # measured period-drop variants in
     ("Tenn Crim. App.", "tenncrimapp"),  # court-authored text (the report)
     ("Pa. Cmwlth.", "pacommwct"),
+    # 7.8.4 live-sweep finds (2026-08-11): courts-db writes "Pa. Super.
+    # Ct." / "Colo. Ct. App.", but the state's actual parenthetical is
+    # "(Pa. Super. 2011)" / "(Colo. App. 2003)" — neither prefix-matches
+    # the courts-db string, so both swallowed into "Pa."/"Colo." (caught
+    # by the census classification of the 45-state verification run:
+    # in-corpus keys NOT_FOUND under the swallowed registry).
+    ("Pa. Super.", "pasuperct"),
+    ("Colo. App.", "coloctapp"),
     ("Alaska App.", "alaskactapp"),
     ("Minn. App.", "minnctapp"),
     ("Kan. App.", "kanctapp"),

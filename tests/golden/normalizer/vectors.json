@@ -3,8 +3,8 @@
   "spec": "cite-canonical-v1",
   "generator": "generate_vectors.py",
   "note": "Expectations hand-derived from docs/canonical-citation-spec.md; adjudications recorded in DECISIONS.md. Compared fields: as_written, canonical, registry, disposition, kind.",
-  "vector_count": 304,
-  "expectation_rows": 344
+  "vector_count": 306,
+  "expectation_rows": 346
  },
  "vectors": [
   {
@@ -4298,6 +4298,34 @@
   {
    "id": "curated_court_forms-009",
    "category": "curated_court_forms",
+   "text": "Commonwealth v. Kittrell, 19 A.3d 532, 538 (Pa. Super. 2011).",
+   "expect": [
+    {
+     "as_written": "19 A.3d 532",
+     "canonical": "19 A.3d 532",
+     "registry": "us-pasuperct",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-010",
+   "category": "curated_court_forms",
+   "text": "Henderson v. Master Klean Janitorial, Inc., 70 P.3d 612, 615 (Colo. App. 2003).",
+   "expect": [
+    {
+     "as_written": "70 P.3d 612",
+     "canonical": "70 P.3d 612",
+     "registry": "us-coloctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "curated_court_forms-011",
+   "category": "curated_court_forms",
    "text": "McCoy v. State, 80 P.3d 757, 764 (Alaska App. 2002).",
    "expect": [
     {
@@ -4310,7 +4338,7 @@
    ]
   },
   {
-   "id": "curated_court_forms-010",
+   "id": "curated_court_forms-012",
    "category": "curated_court_forms",
    "text": "State v. Lee, 71 S.W.3d 299, 303 (Tenn. Crim App. 2001).",
    "expect": [
@@ -4324,7 +4352,7 @@
    ]
   },
   {
-   "id": "curated_court_forms-011",
+   "id": "curated_court_forms-013",
    "category": "curated_court_forms",
    "text": "Phillips v. Phillips, 52 Ala. App. 234 (Civ. 1974).",
    "expect": [

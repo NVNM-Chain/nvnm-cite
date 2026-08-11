@@ -59,7 +59,7 @@ Short cites (`410 U.S. at 120`), `id.`, and `supra` citations do not contain a f
 
 A short form whose antecedent cannot be resolved in the document is reported as **unresolved**, with its own occurrence in the output (implementations must not silently drop it; a dangling `id.` is still a citation the verifier must account for).
 
-## 4. Jurisdiction mapping (amended 2026-08-01 normalizer 1.1.0, 2026-08-02 normalizer 1.2.0, 2026-08-09 normalizer 1.3.0; adjudications in DECISIONS)
+## 4. Jurisdiction mapping (amended 2026-08-01 normalizer 1.1.0, 2026-08-02 normalizer 1.2.0, 2026-08-09 normalizer 1.3.0, 2026-08-11 normalizer 1.4.0; adjudications in DECISIONS)
 
 Every canonical key belongs to a registry. Registry names are courts-db court IDs prefixed `us-`: `us-scotus`, `us-ca11`, `us-nysd`. An explicit court signal always outranks a reporter-derived default. Mapping rules, in order:
 
