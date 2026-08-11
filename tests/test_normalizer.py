@@ -213,3 +213,49 @@ class TestContract:
 
         cite = get_citations("925 F.3d 1339 (11th Cir. 2019)")[0]
         assert map_citation(cite) == ("us-ca11", None)
+
+
+class TestV3RegistryFamilies:
+    """reporter_registries v3 sweep composition (task 7.8.1, 2026-08-11).
+
+    Data pins for the two REGISTRY_FAMILIES additions and the same-state
+    carrier admissions — every routing live-verified against mainnet on
+    2026-08-11 (DECISIONS)."""
+
+    def test_ky_routed_lookup_sweeps_the_old_high_court(self) -> None:
+        # Pre-1976 Kentucky Court of Appeals = the state's HIGHEST court,
+        # cited "(Ky.)" like the modern Supreme Court; the corpus keys its
+        # cases under us-kyctapphigh (21,492 S.W.-family records).
+        from nvnm_cite.normalizer.jurisdiction import lookup_candidates
+
+        assert lookup_candidates("S.W.2d", "us-ky") == ["us-ky", "us-kyctapphigh"]
+
+    def test_ohio_webcite_sweeps_family_then_county_siblings(self) -> None:
+        from nvnm_cite.normalizer.jurisdiction import lookup_candidates
+
+        assert lookup_candidates("Ohio", "us-ohioctapp") == [
+            "us-ohioctapp",
+            "us-ohio",
+            "us-ohioctcl",
+            "us-ohctapp8cuyahog",
+            "us-ohctapp7mahonin",
+            "us-ohctapp10frankl",
+            "us-ohctapp1hamilto",
+            "us-ohctapp11trumbu",
+        ]
+
+    def test_pa_super_family(self) -> None:
+        from nvnm_cite.normalizer.jurisdiction import lookup_candidates
+
+        assert lookup_candidates("Pa. Super.", "us-pasuperct") == [
+            "us-pasuperct",
+            "us-pa",
+        ]
+
+    def test_excluded_nominatives_stay_out_of_the_tables(self) -> None:
+        # Cross-jurisdiction name shares adjudicated OUT in v3: corpus
+        # residence in one state is not proof the STRING is single-state.
+        from nvnm_cite.normalizer.jurisdiction import family_candidates
+
+        for ed in ("Met.", "Sneed", "Mart.", "Walker", "Wall.", "Cranch"):
+            assert family_candidates(ed) == [], ed

@@ -3,8 +3,8 @@
   "spec": "cite-canonical-v1",
   "generator": "generate_vectors.py",
   "note": "Expectations hand-derived from docs/canonical-citation-spec.md; adjudications recorded in DECISIONS.md. Compared fields: as_written, canonical, registry, disposition, kind.",
-  "vector_count": 257,
-  "expectation_rows": 286
+  "vector_count": 273,
+  "expectation_rows": 307
  },
  "vectors": [
   {
@@ -3794,6 +3794,265 @@
      "canonical": "700 S.W.3d 100",
      "registry": null,
      "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-001",
+   "category": "v3_same_state_carriers",
+   "text": "In re Adoption of B.I., 2019-Ohio-2450.",
+   "expect": [
+    {
+     "as_written": "2019-Ohio-2450",
+     "canonical": "2019 Ohio 2450",
+     "registry": "us-ohioctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-002",
+   "category": "v3_same_state_carriers",
+   "text": "Cincinnati v. Beretta U.S.A. Corp., 2002-Ohio-2480, ¶ 8.",
+   "expect": [
+    {
+     "as_written": "2002-Ohio-2480",
+     "canonical": "2002 Ohio 2480",
+     "registry": "us-ohioctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-003",
+   "category": "v3_same_state_carriers",
+   "text": "In re Adoption of B.I., 157 Ohio St.3d 29, 2019-Ohio-2450, 131 N.E.3d 28.",
+   "expect": [
+    {
+     "as_written": "157 Ohio St.3d 29",
+     "canonical": "157 Ohio St. 3d 29",
+     "registry": "us-ohio",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "2019-Ohio-2450",
+     "canonical": "2019 Ohio 2450",
+     "registry": "us-ohioctapp",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "131 N.E.3d 28",
+     "canonical": "131 N.E.3d 28",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-004",
+   "category": "v3_same_state_carriers",
+   "text": "Lane v. State, 2019 Ark. 5, at 4, 564 S.W.3d 524, 529.",
+   "expect": [
+    {
+     "as_written": "2019 Ark. 5",
+     "canonical": "2019 Ark. 5",
+     "registry": "us-ark",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "564 S.W.3d 524",
+     "canonical": "564 S.W.3d 524",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-005",
+   "category": "v3_same_state_carriers",
+   "text": "Slocum v. State, 325 Ark. 38, 924 S.W.2d 237 (1996).",
+   "expect": [
+    {
+     "as_written": "325 Ark. 38",
+     "canonical": "325 Ark. 38",
+     "registry": "us-ark",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "924 S.W.2d 237",
+     "canonical": "924 S.W.2d 237",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-006",
+   "category": "v3_same_state_carriers",
+   "text": "Kellco Custom Homes, Inc. v. Williams, 2024 Ark. App. 205.",
+   "expect": [
+    {
+     "as_written": "2024 Ark. App. 205",
+     "canonical": "2024 Ark. App. 205",
+     "registry": "us-arkctapp",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-007",
+   "category": "v3_same_state_carriers",
+   "text": "Walker v. State, 91 Ark. App. 300, 210 S.W.3d 157 (2005).",
+   "expect": [
+    {
+     "as_written": "91 Ark. App. 300",
+     "canonical": "91 Ark. App. 300",
+     "registry": "us-arkctapp",
+     "disposition": "ok",
+     "kind": "full"
+    },
+    {
+     "as_written": "210 S.W.3d 157",
+     "canonical": "210 S.W.3d 157",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-008",
+   "category": "v3_same_state_carriers",
+   "text": "Ortolano v. City of Nashua, 2025 N.H. 23.",
+   "expect": [
+    {
+     "as_written": "2025 N.H. 23",
+     "canonical": "2025 N.H. 23",
+     "registry": "us-nh",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-009",
+   "category": "v3_same_state_carriers",
+   "text": "Cecere v. Aetna Insurance, 145 N.H. 660 (2001).",
+   "expect": [
+    {
+     "as_written": "145 N.H. 660",
+     "canonical": "145 N.H. 660",
+     "registry": "us-nh",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-010",
+   "category": "v3_same_state_carriers",
+   "text": "Commonwealth v. Slaughter, 2025 PA Super 112.",
+   "expect": [
+    {
+     "as_written": "2025 PA Super 112",
+     "canonical": "2025 Pa. Super. 112",
+     "registry": "us-pasuperct",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-011",
+   "category": "v3_same_state_carriers",
+   "text": "Commonwealth v. Archer, 440 Pa. Super. 380 (1995).",
+   "expect": [
+    {
+     "as_written": "440 Pa. Super. 380",
+     "canonical": "440 Pa. Super. 380",
+     "registry": "us-pasuperct",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-012",
+   "category": "v3_same_state_carriers",
+   "text": "Scott v. Patterson, 1 Wash. 487 (1889).",
+   "expect": [
+    {
+     "as_written": "1 Wash. 487",
+     "canonical": "1 Wash. 487",
+     "registry": "us-wash",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-013",
+   "category": "v3_same_state_carriers",
+   "text": "People's Bank v. Balance Rock Condominium, 1998 Conn. Super. Ct. 1781.",
+   "expect": [
+    {
+     "as_written": "1998 Conn. Super. Ct. 1781",
+     "canonical": "1998 Conn. Super. Ct. 1781",
+     "registry": "us-connsuperct",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-014",
+   "category": "v3_same_state_carriers",
+   "text": "Bennett v. Pittman, 48 Hun 612 (1888).",
+   "expect": [
+    {
+     "as_written": "48 Hun 612",
+     "canonical": "48 Hun 612",
+     "registry": "us-nysupct",
+     "disposition": "ok",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-015",
+   "category": "v3_same_state_carriers",
+   "text": "Snow v. Alley, 10 Met. 263.",
+   "expect": [
+    {
+     "as_written": "10 Met. 263",
+     "canonical": "10 Met. 263",
+     "registry": null,
+     "disposition": "ambiguous_jurisdiction",
+     "kind": "full"
+    }
+   ]
+  },
+  {
+   "id": "v3_same_state_carriers-016",
+   "category": "v3_same_state_carriers",
+   "text": "The Schooner Exchange v. McFaddon, 7 Cranch 116 (1812).",
+   "expect": [
+    {
+     "as_written": "7 Cranch 116",
+     "canonical": "7 Cranch 116",
+     "registry": "us-scotus",
+     "disposition": "ok",
      "kind": "full"
     }
    ]

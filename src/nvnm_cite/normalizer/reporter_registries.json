@@ -1,19 +1,26 @@
 {
  "schema": "nvnm-cite-reporter-registries/v1",
- "generated_at": "2026-08-09T20:53:00Z",
+ "generated_at": "2026-08-11T17:17:45Z",
  "source": "data/mainnet-full-export (mainnet corpus, manifest block 2070234)",
  "guards": {
   "min_records": 100,
   "dominance": 0.995,
-  "single_reporters_db_entry": true,
+  "carrier_rule": "single reporters-db carrier, or multi-carrier with one-state corpus residence (v3, 2026-08-11)",
   "vendor_excluded": true,
   "family_min_share": 0.01,
   "family_cap": 5,
   "family_same_state": true
  },
  "curated_excluded": [
+  "Cranch",
   "Fla. L. Weekly Supp.",
-  "M.J."
+  "Ind. L. Rep.",
+  "M.J.",
+  "Mart.",
+  "Met.",
+  "Sneed",
+  "Walker",
+  "Wall."
  ],
  "curated_added": [
   "T.C."
@@ -280,6 +287,12 @@
    "share": 0.99938,
    "cite_type": "state"
   },
+  "Ark. App.": {
+   "registry": "us-arkctapp",
+   "records": 12802,
+   "share": 0.99953,
+   "cite_type": "neutral+state"
+  },
   "Ark. LEXIS": {
    "registry": "us-ark",
    "records": 43661,
@@ -512,6 +525,12 @@
    "registry": "us-conn",
    "records": 24281,
    "share": 0.99975,
+   "cite_type": "state"
+  },
+  "Conn. Super. Ct.": {
+   "registry": "us-connsuperct",
+   "records": 49365,
+   "share": 1.0,
    "cite_type": "state"
   },
   "Connoly": {
@@ -783,6 +802,12 @@
    "records": 1210,
    "share": 0.99917,
    "cite_type": "scotus_early"
+  },
+  "Hun": {
+   "registry": "us-nysupct",
+   "records": 5551,
+   "share": 0.99731,
+   "cite_type": "state"
   },
   "I. & N. Dec.": {
    "registry": "us-bia",
@@ -2200,6 +2225,12 @@
    "share": 1.0,
    "cite_type": "state"
   },
+  "Wash.": {
+   "registry": "us-wash",
+   "records": 23263,
+   "share": 0.99996,
+   "cite_type": "state"
+  },
   "Wash. 2d": {
    "registry": "us-wash",
    "records": 15669,
@@ -2516,6 +2547,16 @@
      "registry": "us-ariz",
      "records": 1355,
      "share": 0.20493
+    }
+   ]
+  },
+  "Ark.": {
+   "state": "ar",
+   "candidates": [
+    {
+     "registry": "us-ark",
+     "records": 52552,
+     "share": 0.99063
     }
    ]
   },
@@ -3749,6 +3790,21 @@
     }
    ]
   },
+  "N.H.": {
+   "state": "nh",
+   "candidates": [
+    {
+     "registry": "us-nh",
+     "records": 18244,
+     "share": 0.86097
+    },
+    {
+     "registry": "us-nhsuperct",
+     "records": 2940,
+     "share": 0.13874
+    }
+   ]
+  },
   "N.J. Ch. LEXIS": {
    "state": "nj",
    "candidates": [
@@ -4309,6 +4365,26 @@
     }
    ]
   },
+  "Ohio": {
+   "state": "oh",
+   "candidates": [
+    {
+     "registry": "us-ohioctapp",
+     "records": 90130,
+     "share": 0.86105
+    },
+    {
+     "registry": "us-ohio",
+     "records": 11774,
+     "share": 0.11248
+    },
+    {
+     "registry": "us-ohioctcl",
+     "records": 2179,
+     "share": 0.02082
+    }
+   ]
+  },
   "Ohio B.": {
    "state": "oh",
    "candidates": [
@@ -4851,6 +4927,21 @@
      "registry": "us-pa",
      "records": 63313,
      "share": 0.99117
+    }
+   ]
+  },
+  "Pa. Super.": {
+   "state": "pa",
+   "candidates": [
+    {
+     "registry": "us-pasuperct",
+     "records": 53582,
+     "share": 0.92064
+    },
+    {
+     "registry": "us-pa",
+     "records": 4616,
+     "share": 0.07931
     }
    ]
   },
@@ -5530,6 +5621,16 @@
    "us-fladistctapp3",
    "us-fladistctapp4",
    "us-fladistctapp5"
+  ],
+  "us-ky": [
+   "us-kyctapphigh"
+  ],
+  "us-ohioctapp": [
+   "us-ohctapp8cuyahog",
+   "us-ohctapp7mahonin",
+   "us-ohctapp10frankl",
+   "us-ohctapp1hamilto",
+   "us-ohctapp11trumbu"
   ],
   "us-texapp": [
    "us-txctapp1",

@@ -13,8 +13,21 @@ Guards (an edition is included only if ALL hold):
 - the top registry holds >= DOMINANCE of them (stray records in other
   registries are CourtListener attribution noise, e.g. 3 A.D.2d rows filed
   under New Jersey courts against 177,540 in us-nyappdiv);
-- exactly ONE reporters-db reporter carries the edition (excludes shared
-  nominatives like "Cranch", which is both scotus_early and a D.C. reporter);
+- reporters-db carrier rule (v3, 2026-08-11): an edition carried by exactly
+  ONE reporters-db reporter passes as before; an edition carried by SEVERAL
+  is admitted only when every registry holding >= FAMILY_MIN_SHARE of its
+  corpus records maps to ONE state via courts-db — the corpus itself, not
+  reporters-db's noisy mlz_jurisdiction data (Ohio's carrier lists a stray
+  Oregon court; Wash.'s lists Virginia), proves single-state residence.
+  This admits the states that reused a bound-reporter string as their
+  neutral-citation identifier ("Ohio", "Ark.", "Ark. App.", "N.H.",
+  "Pa. Super.", "Wash.", "Conn. Super. Ct.") plus single-state nominative
+  shares ("Hun"). It does NOT by itself catch editions whose OTHER carrier
+  is real in a different jurisdiction but corpus-absent — 19th-century
+  nominative name shares ("Met." is Kentucky's Metcalf AND Massachusetts'
+  Metcalf) and scotus_early nominatives that ride courts-db listing
+  SCOTUS's location as District of Columbia ("Cranch", "Wall.") — those
+  are adjudicated into EXCLUDE below, the M.J. precedent;
 - not a vendor identifier (WL / LEXIS): those are never registry keys;
 - the registry exists in the pinned mainnet manifest.
 
@@ -68,6 +81,24 @@ REGISTRY_FAMILIES = {
     "us-texapp": [f"us-txctapp{n}" for n in range(1, 15)],
     "us-calctapp": [f"us-calctapp{n}d" for n in range(1, 7)],
     "us-fladistctapp": [f"us-fladistctapp{n}" for n in range(1, 7)],
+    # 7.8.1 additions (2026-08-11). us-ky: the pre-1976 Kentucky Court of
+    # Appeals was the state's HIGHEST court; its cases are cited "(Ky.)"
+    # exactly like the modern Supreme Court, but the corpus keys them under
+    # us-kyctapphigh (21,492 S.W.-family records) — so a (Ky.)-routed lookup
+    # must sweep the old high court too. us-ohioctapp: CourtListener
+    # attributes a small share of Ohio COA cases to per-county district
+    # courts (63 registries); the top five by corpus record mass are swept
+    # (cap approved by Albert 2026-08-11, flagged for a later minor
+    # revisit — the other ~58 county registries hold a long tail of
+    # single-to-low-double-digit record counts).
+    "us-ky": ["us-kyctapphigh"],
+    "us-ohioctapp": [
+        "us-ohctapp8cuyahog",
+        "us-ohctapp7mahonin",
+        "us-ohctapp10frankl",
+        "us-ohctapp1hamilto",
+        "us-ohctapp11trumbu",
+    ],
 }
 
 # Jurisdictionally multi-court in reality; corpus dominance is an artifact
@@ -75,6 +106,21 @@ REGISTRY_FAMILIES = {
 EXCLUDE = {
     "M.J.",  # Military Justice Reporter: CAAF + four service courts
     "Fla. L. Weekly Supp.",  # weekly covering many Florida trial courts
+    # v3 carrier-rule adjudications (2026-08-11): multi-carrier editions the
+    # one-state corpus-residence test admits, refused because the OTHER
+    # carrier is real in a different jurisdiction and merely corpus-absent.
+    # Nominative name shares across states:
+    "Met.",  # Metcalf: Kentucky Reports AND Massachusetts Reports
+    "Sneed",  # Sneed: Kentucky Reports AND Tennessee Reports
+    "Mart.",  # Martin: Louisiana Reports AND North Carolina Reports
+    "Walker",  # Walker: Mississippi Reports AND Pennsylvania reports
+    # scotus_early / federal shares that pass the state test only because
+    # courts-db lists SCOTUS's location as District of Columbia (so
+    # _court_state_table maps scotus -> dc; flagged for Session-2 review):
+    "Cranch",  # Cranch's SCOTUS Reports AND D.C. Court of Appeals / circuit reporters
+    "Wall.",  # Wallace's SCOTUS Reports AND Wallace's Circuit Court Reports
+    # Same-string periodical in a different legal universe:
+    "Ind. L. Rep.",  # Indiana Law Reporter (1881) AND the Indian Law Reporter (tribal)
 }
 
 # Definitionally single-court editions the corpus lacks (CourtListener stores
@@ -101,6 +147,28 @@ def rdb_entries(edition: str) -> list[tuple[str, str | None]]:
         for entry in entries
         if edition in entry.get("editions", {})
     ]
+
+
+def single_state_home(
+    regs: Counter,
+    total: int,
+    court_state: dict[str, str],
+    manifest_names: set[str],
+) -> str | None:
+    """The one courts-db state every >= FAMILY_MIN_SHARE registry of this
+    edition's corpus records maps to, or None (multi-state spread, federal
+    or otherwise state-less courts, or nothing above the share floor)."""
+    candidates = [
+        reg
+        for reg, n in regs.most_common()
+        if n / total >= FAMILY_MIN_SHARE and reg in manifest_names
+    ]
+    if not candidates:
+        return None
+    states = {court_state.get(reg.removeprefix("us-")) for reg in candidates}
+    if len(states) != 1:
+        return None
+    return states.pop()
 
 
 def scan_corpus() -> dict[str, Counter]:
@@ -133,6 +201,10 @@ def main() -> int:
     manifest_names = set(manifest.all_registries())
     ed_regs = scan_corpus()
 
+    from nvnm_cite.normalizer.jurisdiction import _court_state_table
+
+    court_state = _court_state_table()
+
     table: dict[str, dict] = {}
     for ed, regs in sorted(ed_regs.items()):
         if is_vendor(ed) or ed in EXCLUDE:
@@ -144,13 +216,15 @@ def main() -> int:
         if top_reg not in manifest_names:
             continue
         entries = rdb_entries(ed)
-        if len(entries) != 1 or entries[0][1] in ("specialty_west", "specialty_lexis"):
+        if not entries or any(t in ("specialty_west", "specialty_lexis") for _, t in entries):
             continue
+        if len(entries) > 1 and single_state_home(regs, total, court_state, manifest_names) is None:
+            continue  # multi-carrier without one-state corpus residence: refuse
         table[ed] = {
             "registry": top_reg,
             "records": top_n,
             "share": round(top_n / total, 5),
-            "cite_type": entries[0][1],
+            "cite_type": "+".join(sorted({t for _, t in entries if t})),
         }
     for ed, reg in CURATED_ADD.items():
         if reg not in manifest_names:
@@ -159,12 +233,10 @@ def main() -> int:
         table[ed] = {"registry": reg, "records": 0, "share": None, "cite_type": "curated"}
 
     # Same-state families (rule 5b) for editions the dominance guard keeps
-    # out of the table. Same entry guards (non-vendor, not excluded, one
-    # reporters-db reporter, noise floor); the extra condition is that every
-    # >= FAMILY_MIN_SHARE registry maps to ONE state via courts-db.
-    from nvnm_cite.normalizer.jurisdiction import _court_state_table
-
-    court_state = _court_state_table()
+    # out of the table. Same entry guards (non-vendor, not excluded, noise
+    # floor, carrier rule); the same-state candidate check below IS the
+    # corpus one-state-residence proof, so multi-carrier editions need no
+    # separate call here.
     families: dict[str, dict] = {}
     for ed, regs in sorted(ed_regs.items()):
         if ed in table or is_vendor(ed) or ed in EXCLUDE:
@@ -173,7 +245,7 @@ def main() -> int:
         if total < MIN_RECORDS:
             continue
         entries = rdb_entries(ed)
-        if len(entries) != 1 or entries[0][1] in ("specialty_west", "specialty_lexis"):
+        if not entries or any(t in ("specialty_west", "specialty_lexis") for _, t in entries):
             continue
         candidates = [
             (reg, n)
@@ -220,7 +292,8 @@ def main() -> int:
         "guards": {
             "min_records": MIN_RECORDS,
             "dominance": DOMINANCE,
-            "single_reporters_db_entry": True,
+            "carrier_rule": "single reporters-db carrier, or multi-carrier "
+            "with one-state corpus residence (v3, 2026-08-11)",
             "vendor_excluded": True,
             "family_min_share": FAMILY_MIN_SHARE,
             "family_cap": FAMILY_CAP,

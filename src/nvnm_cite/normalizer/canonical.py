@@ -73,7 +73,20 @@ from nvnm_cite.normalizer.jurisdiction import map_citation, vendor_in_key_space,
 # sits in one state's registries route to the dominant one and the
 # verifier sweeps the siblings before reporting a miss. The
 # cite-canonical/v1 KEY format is unchanged.
-NORMALIZER_VERSION = "1.3.0"
+# 1.4.0 (2026-08-11 onward, the remaining-45-states rollout, Phase 7.8;
+# evidence: the 45-state citation-practice report + corpus census + live
+# calibration): (a) reporter_registries v3 — the single-carrier guard is
+# relaxed to admit editions carried by several reporters-db reporters when
+# every >=1% registry of their corpus records sits in ONE state (states
+# that reused a bound-reporter string as their neutral identifier: "Ohio"
+# webcite, "Ark.", "Ark. App.", "N.H.", "Pa. Super.", "Wash.",
+# "Conn. Super. Ct.", "Hun"); cross-jurisdiction nominative shares
+# ("Met.", "Sneed", "Mart.", "Walker", "Wall.", "Cranch",
+# "Ind. L. Rep.") are curated EXCLUDEs; (b) registry families gain
+# us-ky -> us-kyctapphigh (the pre-1976 high court, cited "(Ky.)") and
+# us-ohioctapp -> the top five per-county sibling registries. The
+# cite-canonical/v1 KEY format is unchanged.
+NORMALIZER_VERSION = "1.4.0"
 CANONICAL_SPEC = "cite-canonical-v1"
 
 # all_whitespace repairs line-break-mangled cites ("410\nU. S. 113");

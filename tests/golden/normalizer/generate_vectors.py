@@ -788,6 +788,138 @@ vec(
     [full("700 S.W.3d 100", "700 S.W.3d 100", None, AMB)],
 )
 
+# --- 15. Normalizer 1.4.0 / task 7.8.1 (2026-08-11): reporter_registries v3
+# Remaining-45-states rollout, Session 1 (data only; DECISIONS 2026-08-11).
+# The v3 carrier rule admits editions carried by SEVERAL reporters-db
+# reporters when every >=1% registry of their corpus records sits in ONE
+# state — the states that reused a bound-reporter string as their
+# neutral-citation identifier. Every bare form below refused to route
+# before v3; every routing below was verified with a live mainnet keyed
+# read on 2026-08-11.
+# (a) Ohio's webcite is the state's universal modern citation form (110k
+# corpus records, 10.7k from 2024+ alone; written hyphenated, keyed in
+# space form). Family us-ohioctapp/.86, us-ohio/.11, us-ohioctcl: the
+# mapper routes to the dominant candidate and the VERIFIER sweeps the
+# family (the Supreme Court's own 2019-Ohio-2450 answers from us-ohio on
+# the second read; the Court of Claims' 2002-Ohio-3234 from us-ohioctcl
+# on the third).
+vec(
+    "v3_same_state_carriers",
+    "In re Adoption of B.I., 2019-Ohio-2450.",
+    [full("2019-Ohio-2450", "2019 Ohio 2450", "us-ohioctapp")],
+)
+vec(
+    "v3_same_state_carriers",
+    "Cincinnati v. Beretta U.S.A. Corp., 2002-Ohio-2480, ¶ 8.",
+    [full("2002-Ohio-2480", "2002 Ohio 2480", "us-ohioctapp")],
+)
+vec(
+    "v3_same_state_carriers",
+    # The Ohio triple-parallel run: official reporter (edition table),
+    # webcite (v3 family), bare regional (honestly ambiguous, rule 6).
+    "In re Adoption of B.I., 157 Ohio St.3d 29, 2019-Ohio-2450, 131 N.E.3d 28.",
+    [
+        full("157 Ohio St.3d 29", "157 Ohio St. 3d 29", "us-ohio"),
+        full("2019-Ohio-2450", "2019 Ohio 2450", "us-ohioctapp"),
+        full("131 N.E.3d 28", "131 N.E.3d 28", None, AMB),
+    ],
+)
+# (b) Arkansas discontinued its bound reporters in 2009 and reused "Ark."
+# / "Ark. App." as the official electronic citation (volume = year). Both
+# eras share the edition strings, so one admission covers both.
+vec(
+    "v3_same_state_carriers",
+    "Lane v. State, 2019 Ark. 5, at 4, 564 S.W.3d 524, 529.",
+    [
+        full("2019 Ark. 5", "2019 Ark. 5", "us-ark"),
+        full("564 S.W.3d 524", "564 S.W.3d 524", None, AMB),
+    ],
+)
+vec(
+    "v3_same_state_carriers",
+    "Slocum v. State, 325 Ark. 38, 924 S.W.2d 237 (1996).",
+    [
+        full("325 Ark. 38", "325 Ark. 38", "us-ark"),
+        full("924 S.W.2d 237", "924 S.W.2d 237", None, AMB),
+    ],
+)
+vec(
+    "v3_same_state_carriers",
+    "Kellco Custom Homes, Inc. v. Williams, 2024 Ark. App. 205.",
+    [full("2024 Ark. App. 205", "2024 Ark. App. 205", "us-arkctapp")],
+)
+vec(
+    "v3_same_state_carriers",
+    "Walker v. State, 91 Ark. App. 300, 210 S.W.3d 157 (2005).",
+    [
+        full("91 Ark. App. 300", "91 Ark. App. 300", "us-arkctapp"),
+        full("210 S.W.3d 157", "210 S.W.3d 157", None, AMB),
+    ],
+)
+# (c) New Hampshire: bound N.H. Reports + the court-assigned "2025 N.H. 23"
+# neutral share the edition string (family us-nh/us-nhsuperct).
+vec(
+    "v3_same_state_carriers",
+    "Ortolano v. City of Nashua, 2025 N.H. 23.",
+    [full("2025 N.H. 23", "2025 N.H. 23", "us-nh")],
+)
+vec(
+    "v3_same_state_carriers",
+    "Cecere v. Aetna Insurance, 145 N.H. 660 (2001).",
+    [full("145 N.H. 660", "145 N.H. 660", "us-nh")],
+)
+# (d) Pennsylvania Superior Court: the bound Pa. Super. reports + the
+# "2025 PA Super 112" header identifier share the edition (family
+# us-pasuperct/.92, us-pa).
+vec(
+    "v3_same_state_carriers",
+    "Commonwealth v. Slaughter, 2025 PA Super 112.",
+    [full("2025 PA Super 112", "2025 Pa. Super. 112", "us-pasuperct")],
+)
+vec(
+    "v3_same_state_carriers",
+    "Commonwealth v. Archer, 440 Pa. Super. 380 (1995).",
+    [full("440 Pa. Super. 380", "440 Pa. Super. 380", "us-pasuperct")],
+)
+# (e) Washington first-series and Connecticut Superior Court Reports (bound
+# + format-neutral carriers, both one state); Hun's Reports (two carriers,
+# both New York).
+vec(
+    "v3_same_state_carriers",
+    "Scott v. Patterson, 1 Wash. 487 (1889).",
+    [full("1 Wash. 487", "1 Wash. 487", "us-wash")],
+)
+vec(
+    "v3_same_state_carriers",
+    "People's Bank v. Balance Rock Condominium, 1998 Conn. Super. Ct. 1781.",
+    [full("1998 Conn. Super. Ct. 1781", "1998 Conn. Super. Ct. 1781", "us-connsuperct")],
+)
+vec(
+    "v3_same_state_carriers",
+    "Bennett v. Pittman, 48 Hun 612 (1888).",
+    [full("48 Hun 612", "48 Hun 612", "us-nysupct")],
+)
+# (f) Adjudicated EXCLUDES stay refused: cross-state nominative name shares
+# ("Met." is Kentucky's Metcalf AND Massachusetts' Metcalf) and the
+# scotus_early nominatives that would ride courts-db's SCOTUS-location-is-DC
+# quirk ("Cranch", "Wall."). Corpus residence in one state is not proof the
+# STRING is single-state in the wild.
+vec(
+    "v3_same_state_carriers",
+    "Snow v. Alley, 10 Met. 263.",
+    [full("10 Met. 263", "10 Met. 263", None, AMB)],
+)
+vec(
+    "v3_same_state_carriers",
+    # Bare Cranch nevertheless ROUTES — via rule 2, eyecite's own
+    # scotus_early court metadata, unchanged since 1.0. The v3 EXCLUDE only
+    # keeps Cranch out of the inference TABLES, where the corpus one-state
+    # test would have booked SCOTUS under state=dc (the courts-db
+    # SCOTUS-location quirk).
+    "The Schooner Exchange v. McFaddon, 7 Cranch 116 (1812).",
+    [full("7 Cranch 116", "7 Cranch 116", "us-scotus")],
+)
+
 
 def main() -> None:
     out = Path(__file__).parent / "vectors.json"
