@@ -100,3 +100,39 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  tag:
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      !contains(github.event.head_commit.message, '[skip tag]')
+    needs: [test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      # Version lives in pyproject.toml (bumped in the PR). This job only
+      # writes a git tag — never a commit — so it cannot retrigger itself.
+      - name: Tag pyproject version
+        run: |
+          set -euo pipefail
+          git fetch --tags --force origin
+          VER=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [[ ! "${VER}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::pyproject version is not MAJOR.MINOR.PATCH: ${VER}"
+            exit 1
+          fi
+          TAG="v${VER}"
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "${TAG} already exists; skip"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "${TAG}"
+          git push origin "${TAG}"

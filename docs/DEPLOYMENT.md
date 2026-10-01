@@ -8,8 +8,13 @@ database, a volume, a secret, or a backup.
 
 - `ghcr.io/nvnm-chain/nvnm-cite` — built and pushed by
   [.github/workflows/ci.yml](../.github/workflows/ci.yml). Every push to
-  `main` publishes `latest` plus a `sha-<commit>` tag; `v*` git tags publish
-  semver tags. Platforms: `linux/amd64` and `linux/arm64`.
+  `main` publishes `latest` plus a `sha-<commit>` tag; a human-pushed `v*`
+  git tag publishes the matching semver image. After tests pass on `main`,
+  CI tags HEAD as `v` plus the version already in `pyproject.toml` if that
+  tag does not exist. Bump in the PR with `make bump-patch` (or
+  `bump-minor` / `bump-major` / `make bump VERSION=X.Y.Z`); that updates
+  every hardcoded copy. CI never edits `pyproject.toml` and never pushes a
+  commit. Put `[skip tag]` in the merge commit to skip it. Platforms: `linux/amd64` and `linux/arm64`.
 - Before anything is pushed, CI runs the full test suite and a container
   smoke test: the image must boot, serve `/`, and report a reachable
   mainnet RPC, the right chain id, full manifest coverage, and telemetry off.

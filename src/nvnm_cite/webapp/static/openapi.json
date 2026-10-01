@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "NVNM Cite web API",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "Citation existence verification and filing receipts on NVNM Chain. Court registries hold canonical US case citations in plaintext; POST a legal document to /api/check and every citation in it is checked against the chain live. A VERIFIED status asserts that a record for the canonical citation exists in the named registry at the block read. The service asserts existence only, never that a case is good law or supports a proposition.\n\nConventions: no authentication. POST bodies are raw file bytes (not multipart); Content-Length is required (chunked transfer is rejected with 411); the upload cap is 30 MB. Custom X-* request header values are URL-decoded server side, so percent-encode non-ASCII values. All errors are `{\"error\": \"message\"}` with a meaningful HTTP status. A 502 means the chain RPC could not be consulted and is never a statement about any citation. Chain lookups return the exact eth_call needed to replay the answer against any NVNM Chain RPC, so no trust in this server is required.\n\nTutorial with worked examples: /agents.md. Discovery: /llms.txt.",
     "contact": {
       "url": "https://www.nvnmcite.com/agents.md"

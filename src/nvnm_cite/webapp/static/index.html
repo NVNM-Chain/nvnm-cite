@@ -1,13 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NVNM Cite — Citation verification &amp; filing receipts</title>
-<link rel="stylesheet" href="/app.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c3354' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v17M7 20h10M12 5.5 5 7.5M12 5.5l7 2M5 7.5l-2.6 5.7a3.4 3.4 0 0 0 5.2 0L5 7.5ZM19 7.5l-2.6 5.7a3.4 3.4 0 0 0 5.2 0L19 7.5Z'/%3E%3C/svg%3E">
-<script src="/app.js" defer></script>
-</head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NVNM Cite — Citation verification &amp; filing receipts</title>
+  <link rel="stylesheet" href="/app.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c3354' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v17M7 20h10M12 5.5 5 7.5M12 5.5l7 2M5 7.5l-2.6 5.7a3.4 3.4 0 0 0 5.2 0L5 7.5ZM19 7.5l-2.6 5.7a3.4 3.4 0 0 0 5.2 0L19 7.5Z'/%3E%3C/svg%3E">
+
+  <!-- Google tag is injected by app.js only on https://www.nvnmcite.com.
+       CSP forbids the official inline snippet. Event names live on
+       controls as data-ga-event. Never attach file bytes, citations,
+       hashes, wallet, firm, or case as parameters. -->
+  <script src="/app.js" defer></script>
+
+  </head>
 <body>
 
 <svg class="sprite" aria-hidden="true" focusable="false">
@@ -86,7 +92,7 @@
 
     <div class="alt-action">
       <div class="alt-links">
-        <button id="paste-toggle" class="linklike" type="button">…or paste text instead</button>
+        <button id="paste-toggle" class="linklike" type="button" data-ga-event="paste_area_opened">…or paste text instead</button>
         <button id="sample-run" class="linklike sample-link" type="button">…or try it with the brief from <em>Mata v.&nbsp;Avianca</em> — the case where ChatGPT invented a citation</button>
       </div>
       <div id="paste-area" class="paste-area hidden">
@@ -124,7 +130,7 @@
           <tbody></tbody>
         </table>
       </div>
-      <details class="json-details" id="check-replay">
+      <details class="json-details" id="check-replay" data-ga-event="check_replay_opened">
         <summary>Replay these lookups against any node</summary>
         <p class="hint">Each checked citation is one keyed <span class="mono">records()</span> read against
         NVNM&nbsp;Chain. This page does not invent the answers — re-run any of these against an independent
@@ -142,7 +148,7 @@
         </dl>
       </div>
       <div class="next-step">
-        <button id="to-record" class="btn btn-primary" type="button">Continue to record verification&nbsp;→</button>
+        <button id="to-record" class="btn btn-primary" type="button" data-ga-event="continue_to_record_verification_click">Continue to record verification&nbsp;→</button>
         <p class="hint">Recording is optional and explicit: nothing has touched the chain yet.</p>
       </div>
     </div>
@@ -169,7 +175,7 @@
       <div>
         <strong>No checked document yet.</strong>
         <p>Run a citation check first; its report is what the receipt attests to.
-        <button id="record-gocheck" class="linklike" type="button">Go to Check citations</button></p>
+        <button id="record-gocheck" class="linklike" type="button" data-ga-event="record_go_to_check_click">Go to Check citations</button></p>
       </div>
     </div>
 
@@ -182,7 +188,7 @@
           <strong>This checked “document” is pasted text.</strong>
           <p>A receipt would attest the pasted text — not the file you will file. A receipt over pasted
           bytes will never match a filed document.
-          <button id="paste-gocheck" class="linklike" type="button">Upload the final file on Check citations</button></p>
+          <button id="paste-gocheck" class="linklike" type="button" data-ga-event="paste_upload_final_file_click">Upload the final file on Check citations</button></p>
         </div>
       </div>
 
@@ -207,7 +213,7 @@
       </div>
 
       <div class="action-row">
-        <button id="my-registries-btn" class="btn btn-outline" type="button" disabled>My registries</button>
+        <button id="my-registries-btn" class="btn btn-outline" type="button" disabled data-ga-event="my_registries_click">My registries</button>
         <p class="hint">Lists the receipt registries this wallet already created on this chain, with their
         permanent #ids — registry names are not unique, so the #id is what identifies a registry.</p>
       </div>
@@ -220,7 +226,7 @@
         </div>
         <div class="regline-row">
           <code id="regline-text" class="regline-text pending">Enter the filer and case above — the registry line is generated from them.</code>
-          <button id="regline-copy" class="btn btn-outline" type="button" disabled>Copy line</button>
+          <button id="regline-copy" class="btn btn-outline" type="button" disabled data-ga-event="registry_line_copied">Copy line</button>
         </div>
         <p class="hint">Opposing counsel and clerks find the receipt through this line: it names the registry,
         owned by your wallet, where the receipt lives. The document you check and anchor below must be the
@@ -231,7 +237,7 @@
       <div id="wallet-callout"></div>
 
       <div class="action-row">
-        <button id="prepare-btn" class="btn btn-primary" type="button">Prepare receipt — live chain re-check</button>
+        <button id="prepare-btn" class="btn btn-primary" type="button" data-ga-event="receipt_prepare_started">Prepare receipt — live chain re-check</button>
         <p class="hint hidden" id="prepare-gate">Waiting on the steps above — recording needs a checked document and a
         connected wallet on NVNM&nbsp;Chain. Checking and verifying never need a wallet.</p>
         <p class="hint">This re-checks the exact file against NVNM&nbsp;Chain at the current head block and
@@ -273,12 +279,12 @@
             creating wallet becomes its admin (self-sovereign — no NVNM gatekeeper), and the chain assigns the
             registry its permanent <strong>#id</strong> on confirmation — that #id goes on the filing:</p>
             <pre class="codeblock"><code></code></pre>
-            <button class="btn btn-outline" type="button">Create this registry with wallet</button>
+            <button class="btn btn-outline" type="button" data-ga-event="registry_create_click">Create this registry with wallet</button>
           </div>
         </div>
 
         <div class="action-row">
-          <button id="anchor-btn" class="btn btn-primary" type="button" disabled>Sign &amp; anchor with wallet</button>
+          <button id="anchor-btn" class="btn btn-primary" type="button" disabled data-ga-event="receipt_sign_click">Sign &amp; anchor with wallet</button>
           <p class="hint">Your wallet shows the exact transaction before anything is sent. Gas is paid in the
           chain’s USD-pegged token; an anchor costs well under a cent.</p>
         </div>
@@ -336,7 +342,7 @@
     </div>
 
     <div class="alt-action">
-      <button id="hash-toggle" class="linklike" type="button">…or paste a SHA-256 hash</button>
+      <button id="hash-toggle" class="linklike" type="button" data-ga-event="verify_hash_area_opened">…or paste a SHA-256 hash</button>
       <div id="hash-area" class="paste-area hidden">
         <div class="field-row field-row-inline">
           <label for="hash-input" class="visually-hidden">SHA-256 hash</label>
@@ -350,7 +356,7 @@
     <div id="verify-error" class="error hidden" role="alert"></div>
     <div id="verify-result" class="hidden"></div>
 
-    <details class="json-details replay-details hidden" id="replay-details">
+    <details class="json-details replay-details hidden" id="replay-details" data-ga-event="verify_replay_opened">
       <summary>Don’t trust this page? Replay the lookup yourself</summary>
       <p class="hint">The registry is public. This exact query — generated from your lookup —
       returns the same record from any NVNM Chain RPC; this page adds nothing you cannot reproduce:</p>
@@ -439,8 +445,8 @@
     and courts (confirm a filing was checked); malpractice insurers and legal-ops (proof-of-process). Checking
     and verifying need no wallet or account; recording a receipt uses a wallet, normally handled by the firm’s
     tool or agent. AI agents get the same API this page uses, documented at
-    <a href="/agents.md">agents.md</a> (machine-readable contract at <a href="/openapi.json">openapi.json</a>,
-    discovery at <a href="/llms.txt">llms.txt</a>).</p>
+    <a href="/agents.md" data-ga-event="footer_dev_link" data-ga-link="agents.md">agents.md</a> (machine-readable contract at <a href="/openapi.json" data-ga-event="footer_dev_link" data-ga-link="openapi.json">openapi.json</a>,
+    discovery at <a href="/llms.txt" data-ga-event="footer_dev_link" data-ga-link="llms.txt">llms.txt</a>).</p>
 
     <h3 class="overline">Live status</h3>
     <div id="about-status" class="kv"></div>
@@ -467,10 +473,10 @@
 
     <h3 class="overline">FAQ for lawyers</h3>
     <div class="faq">
-      <details><summary>If a citation comes back “verified,” is it safe to cite?</summary>
+      <details data-ga-event="faq_opened" data-ga-question="verified-safe-to-cite"><summary>If a citation comes back “verified,” is it safe to cite?</summary>
         <p>It’s a real, published decision. You must still confirm it’s good law and on point — verification is
         existence only.</p></details>
-      <details><summary>What does “not found” mean — is my citation definitely fake?</summary>
+      <details data-ga-event="faq_opened" data-ga-question="not-found-meaning"><summary>What does “not found” mean — is my citation definitely fake?</summary>
         <p>No record matched under that citation in the court’s registry. Before concluding it is fabricated,
         check three things. First, the volume and page as written — typos in briefs are real (one merits brief
         we tested cited “575 U.S.” for a case reported at 579 U.S.). Second, whether the case is recorded under
@@ -480,32 +486,32 @@
         record is still being measured, and it thins for recent state decisions — so a real, recent case can
         be honestly absent. Treat the miss as a flag to verify, never as proof of fabrication, and never
         delete a citation on this signal alone.</p></details>
-      <details><summary>Why did several citations collapse into one row?</summary>
+      <details data-ga-event="faq_opened" data-ga-question="citations-collapsed"><summary>Why did several citations collapse into one row?</summary>
         <p>Briefs cite the same case by several reporters in a run — “133 Ohio St.3d 10, 2012-Ohio-5270,
         979 N.E.2d 1229” is one authority, not three citations. It gets one row: the strongest result
         presents, and the other reporters stay listed under it with their own outcomes.</p></details>
-      <details><summary>What are the “Id./supra unresolved” and “out of scope” counts above the table?</summary>
+      <details data-ga-event="faq_opened" data-ga-question="unresolved-counts"><summary>What are the “Id./supra unresolved” and “out of scope” counts above the table?</summary>
         <p>References that are not checkable case citations: <em>Id.</em> and <em>supra</em> references whose
         antecedent could not be traced, and statute or regulation section references. The registries hold case
         citations only, so these are counted — nothing is silently dropped — but they are not verdicts on
         anything.</p></details>
-      <details><summary>Is my document made public or stored anywhere?</summary>
+      <details data-ga-event="faq_opened" data-ga-question="document-stored"><summary>Is my document made public or stored anywhere?</summary>
         <p>No. It’s parsed in memory to find its citations and discarded immediately — never stored, never put
         on chain. Only a fingerprint (and, if you record, the check tally) can go on chain, and only when you
         choose.</p></details>
-      <details><summary>What exactly does the receipt prove?</summary>
+      <details data-ga-event="faq_opened" data-ga-question="receipt-proves"><summary>What exactly does the receipt prove?</summary>
         <p>That a citation check was performed, at a chain-stamped time, over the exact document with that
         fingerprint, by a specific wallet. Tamper-evident proof of process — not a ruling on your brief.</p></details>
-      <details><summary>Is the timestamp legally meaningful?</summary>
+      <details data-ga-event="faq_opened" data-ga-question="timestamp-legal"><summary>Is the timestamp legally meaningful?</summary>
         <p>It’s an immutable, independently-verifiable record; evidentiary weight is for the court, but it
         can’t be backdated or altered after the fact.</p></details>
-      <details><summary>What if NVNM&nbsp;Cite shuts down?</summary>
+      <details data-ga-event="faq_opened" data-ga-question="if-nvnm-shuts-down"><summary>What if NVNM&nbsp;Cite shuts down?</summary>
         <p>Receipts live on the public chain and stay verifiable by anyone; the registries are public and
         rebuildable from the chain.</p></details>
-      <details><summary>Do I need crypto to use this?</summary>
+      <details data-ga-event="faq_opened" data-ga-question="need-crypto"><summary>Do I need crypto to use this?</summary>
         <p>Not to check or verify. Recording a receipt uses a wallet, typically managed for you by the firm or
         its agent.</p></details>
-      <details><summary>How much does it cost?</summary>
+      <details data-ga-event="faq_opened" data-ga-question="how-much-cost"><summary>How much does it cost?</summary>
         <p>Checking and verifying are free. Recording costs a small network fee (fractions of a cent
         today).</p></details>
     </div>
@@ -515,8 +521,8 @@
 
     <h3 class="overline">Attribution</h3>
     <div id="about-attribution" class="attribution">
-      <p>Case data: <a href="https://www.courtlistener.com" rel="noopener">CourtListener</a> /
-      <a href="https://free.law" rel="noopener">Free Law Project</a>. Citation parsing builds on
+      <p>Case data: <a href="https://www.courtlistener.com" rel="noopener" data-ga-event="outbound_click" data-ga-link="courtlistener">CourtListener</a> /
+      <a href="https://free.law" rel="noopener" data-ga-event="outbound_click" data-ga-link="free-law-project">Free Law Project</a>. Citation parsing builds on
       Free Law Project’s eyecite, reporters-db, and courts-db. Citation text and metadata are
       reproduced from the public record; registry curation and normalization by NVNM&nbsp;Cite.</p>
     </div>
@@ -530,9 +536,9 @@
     <p>Anchoring precompile <span class="mono">0x0000…0A00</span></p>
     <p class="footer-ethic">Provenance, not truth.</p>
     <p>Case data: CourtListener / Free Law Project</p>
-    <p>For AI agents: <a href="/agents.md">agents.md</a> · <a href="/openapi.json">openapi.json</a> · <a href="/llms.txt">llms.txt</a></p>
+    <p>For AI agents: <a href="/agents.md" data-ga-event="footer_dev_link" data-ga-link="agents.md">agents.md</a> · <a href="/openapi.json" data-ga-event="footer_dev_link" data-ga-link="openapi.json">openapi.json</a> · <a href="/llms.txt" data-ga-event="footer_dev_link" data-ga-link="llms.txt">llms.txt</a></p>
     <p>This page never sees a private key.</p>
-    <p>Feedback or questions? Contact us on X: <a href="https://x.com/NVNM_Chain" rel="noopener">@NVNM_Chain</a></p>
+    <p>Feedback or questions? Contact us on X: <a href="https://x.com/NVNM_Chain" rel="noopener" data-ga-event="outbound_click" data-ga-link="x-nvnm-chain">@NVNM_Chain</a></p>
   </div>
 </footer>
 

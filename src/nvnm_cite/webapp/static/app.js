@@ -80,6 +80,93 @@ const TALLY_STATUS = {
 
 const $ = (id) => document.getElementById(id);
 
+/* Analytics: event name + non-content params only. Never send file bytes,
+ * citation text, SHA-256, wallet address, firm, or case. Wallet events
+ * are connect/disconnect only — no MetaMask link, network, or account
+ * fields. Gathering is locked to the production origin. */
+const GA_MEASUREMENT_ID = "G-HDWV8PZ2QK";
+const GA_ORIGIN = "https://www.nvnmcite.com";
+const TAB_PAGE = {
+  check: { page_path: "/check", page_title: "Check citations" },
+  record: { page_path: "/record", page_title: "Record verification" },
+  verify: { page_path: "/verify", page_title: "Verify a receipt" },
+  inspect: { page_path: "/inspect", page_title: "Inspect a transaction" },
+  about: { page_path: "/about", page_title: "About & status" },
+};
+
+function gaEnabled() { return location.origin === GA_ORIGIN; }
+
+function gtag() {
+  if (!gaEnabled()) return;
+  (window.dataLayer = window.dataLayer || []).push(arguments);
+}
+
+function track(name, params) {
+  if (!gaEnabled()) return;
+  try { gtag("event", name, params || {}); } catch (_) { /* analytics must never break the page */ }
+}
+
+function trackPageView(name) {
+  const page = TAB_PAGE[name];
+  if (!page) return;
+  track("page_view", {
+    page_path: page.page_path,
+    page_title: page.page_title,
+    page_location: `${location.origin}${page.page_path}`,
+  });
+}
+
+function fileKind(filename) {
+  const ext = String(filename || "").split(".").pop().toLowerCase();
+  if (ext === "pdf") return "pdf";
+  if (ext === "docx") return "docx";
+  if (ext === "md") return "md";
+  if (ext === "txt" || ext === "text") return "txt";
+  return "other";
+}
+
+function errorClass(err) {
+  const m = String((err && err.message) || err || "");
+  if (/413|too large|max/i.test(m)) return "too_large";
+  if (/unsupported|file type|accept/i.test(m)) return "unsupported_type";
+  if (/network|fetch|unreachable|failed to fetch|timeout/i.test(m)) return "network";
+  return "request";
+}
+
+function gaParamsFrom(node) {
+  const params = {};
+  if (node.dataset.gaMethod) params.method = node.dataset.gaMethod;
+  if (node.dataset.gaLink) params.link = node.dataset.gaLink;
+  if (node.dataset.gaQuestion) params.question = node.dataset.gaQuestion;
+  return params;
+}
+
+function checkMethod(source) {
+  return source === "paste" || source === "sample" ? source : "upload";
+}
+
+function initGa() {
+  if (!gaEnabled()) return;
+  const s = document.createElement("script");
+  s.async = true;
+  s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_MEASUREMENT_ID;
+  document.head.appendChild(s);
+  gtag("js", new Date());
+  gtag("config", GA_MEASUREMENT_ID, { send_page_view: false });
+  document.addEventListener("click", (e) => {
+    const node = e.target.closest("[data-ga-event]");
+    if (!node || node.closest("details[data-ga-event]")) return;
+    track(node.getAttribute("data-ga-event"), gaParamsFrom(node));
+  });
+  document.addEventListener("toggle", (e) => {
+    const node = e.target;
+    if (!node || node.tagName !== "DETAILS" || !node.open) return;
+    const name = node.getAttribute("data-ga-event");
+    if (!name) return;
+    track(name, gaParamsFrom(node));
+  }, true);
+}
+
 function el(tag, cls, text) {
   const node = document.createElement(tag);
   if (cls) node.className = cls;
@@ -273,15 +360,17 @@ function activateTab(name) {
   if (history.replaceState) history.replaceState(null, "", `#${name}`);
   scrollActiveTabIntoView();
   updFades();
+  trackPageView(name);
 }
 
 function initTabs() {
   tabsEl.addEventListener("click", (e) => {
     const btn = e.target.closest(".tab");
-    if (btn) activateTab(btn.dataset.tab);
+    if (btn && !btn.classList.contains("active")) activateTab(btn.dataset.tab);
   });
   const fromHash = location.hash.replace("#", "");
   if (["check", "record", "verify", "inspect", "about"].includes(fromHash)) activateTab(fromHash);
+  else trackPageView("check");
   window.addEventListener("scroll", updStuck, { passive: true });
   tabsEl.addEventListener("scroll", updFades, { passive: true });
   window.addEventListener("resize", updFades);
@@ -614,6 +703,7 @@ function buildSummaryChips(report) {
         if (filterSet.has(s)) filterSet.delete(s);
         else filterSet.add(s);
         if (filterSet.has("NOT_COVERED")) coveredExpanded = true;
+        track("check_filter_chip_click", { status: TALLY_STATUS[s] || s });
         renderCheckTable(report);
         buildSummaryChips(report);
       });
@@ -731,7 +821,11 @@ function renderCheckTable(report) {
     btn.appendChild(chipFor("NOT_COVERED"));
     btn.appendChild(el("span", null,
       `${covered.length} ${covered.length === 1 ? "citation" : "citations"} outside the covered registries — ${coveredExpanded ? "hide" : "show"}`));
-    btn.addEventListener("click", () => { coveredExpanded = !coveredExpanded; renderCheckTable(report); });
+    btn.addEventListener("click", () => {
+      coveredExpanded = !coveredExpanded;
+      if (coveredExpanded) track("check_not_covered_expanded");
+      renderCheckTable(report);
+    });
     td.appendChild(btn);
     trG.appendChild(td);
     tbody.appendChild(trG);
@@ -794,11 +888,18 @@ function renderCheck(report) {
   hide("check-error");
   show("check-result");
   syncRecordPanel();
+  const by = (report.summary && report.summary.by_status) || {};
+  track("check_citations_completed", {
+    empty: empty,
+    verified: by.VERIFIED || 0,
+    not_found: by.NOT_FOUND || 0,
+  });
 }
 
 async function runCheck(bytes, filename, source) {
   hide("check-result", "check-error");
   setCheckProgress(true);
+  track("check_citations_started", { method: checkMethod(source), file_type: fileKind(filename) });
   try {
     const report = await apiPostBytes("/api/check", bytes, filename);
     lastFile = { bytes, name: filename };  // retained in page memory to prepare a receipt
@@ -809,21 +910,25 @@ async function runCheck(bytes, filename, source) {
   } catch (err) {
     setCheckProgress(false);
     showError("check-error", err);
+    track("check_citations_failed", { error_class: errorClass(err) });
   }
 }
 
 async function runSample() {
   hide("check-result", "check-error");
   setCheckProgress(true);
+  let bytes;
   try {
     const res = await fetch("/sample-mata-avianca.txt");
     if (!res.ok) throw new Error(`could not load the bundled sample (${res.status})`);
-    const bytes = await res.arrayBuffer();
-    await runCheck(bytes, "mata-v-avianca-sample.txt", "sample");
+    bytes = await res.arrayBuffer();
   } catch (err) {
     setCheckProgress(false);
     showError("check-error", err);
+    track("check_citations_failed", { error_class: errorClass(err), method: "sample" });
+    return;
   }
+  await runCheck(bytes, "mata-v-avianca-sample.txt", "sample");
 }
 
 function initCheck() {
@@ -863,6 +968,7 @@ function disarmDisconnect() {
 async function refreshWalletState() {
   const eth = providerOrNull();
   const btn = $("wallet-btn");
+  const wasConnected = !!wallet.address;
   disarmDisconnect();
   btn.className = "btn btn-outline btn-wallet";
   btn.disabled = false;
@@ -873,6 +979,7 @@ async function refreshWalletState() {
     btn.title = "Install MetaMask (metamask.io) to record receipts. Checking and verifying never need a wallet.";
     wallet.address = null;
     wallet.chainOk = false;
+    if (wasConnected) track("wallet_disconnected");
     syncRecordPanel();
     return;
   }
@@ -904,6 +1011,10 @@ async function refreshWalletState() {
     btn.textContent = "Connect wallet";
     btn.title = "Connect a wallet to record receipts. Checking and verifying never need a wallet.";
   }
+  // Disconnect is a lost session (button, MetaMask revoke, accountsChanged
+  // to empty). Connect is only the explicit grant in connectWallet — a
+  // returning visit that already has eth_accounts must not count.
+  if (!wallet.address && wasConnected) track("wallet_disconnected");
   syncRecordPanel();
 }
 
@@ -918,7 +1029,9 @@ async function connectWallet() {
   } catch (err) {
     if (err && err.code !== 4001) alert(`Wallet error: ${err.message || err}`);
   }
-  refreshWalletState();
+  const hadAddress = !!wallet.address;
+  await refreshWalletState();
+  if (wallet.address && !hadAddress) track("wallet_connected");
 }
 
 async function disconnectWallet() {
@@ -1101,16 +1214,19 @@ function syncRecordPanel() {
 
 async function prepareReceipt() {
   if (!lastReport || !lastFile) {
+    track("receipt_prepare_blocked", { reason: "no_doc" });
     showError("prepare-error", new Error("Check a document file first — a receipt anchors the exact bytes you will file."));
     return;
   }
   if (!wallet.address) {
+    track("receipt_prepare_blocked", { reason: "no_wallet" });
     showError("prepare-error", new Error("Connect a wallet first — the receipt records the attesting address."));
     return;
   }
   const firm = $("firm-input").value.trim();
   const matter = $("case-input").value.trim();
   if (!firm || !matter) {
+    track("receipt_prepare_blocked", { reason: "missing_fields" });
     showError("prepare-error", new Error("Enter the filer/firm and the case/matter — together they name the receipt registry."));
     return;
   }
@@ -1129,10 +1245,16 @@ async function prepareReceipt() {
     // creator + name, and surfaces any same-name ambiguity for a human pick.
     if (chosenRegistryId) headers["X-Registry-Id"] = String(chosenRegistryId);
     prepared = await apiPostBytes("/api/receipt/prepare", lastFile.bytes, lastFile.name, headers);
+    track("receipt_prepare_completed", {
+      registry_line: prepared.registry_line_found || "none",
+      setup_shown: !!prepared.setup,
+      ambiguous: !!prepared.ambiguous,
+    });
     renderPrepared(prepared);
     setSteps();
   } catch (err) {
     showError("prepare-error", err);
+    track("receipt_prepare_blocked", { reason: "request" });
   } finally {
     hide("prepare-busy");
   }
@@ -1302,7 +1424,7 @@ function renderPrepared(p) {
   show("prepare-result");
 }
 
-async function sendTx(tx, statusBoxId, onMined) {
+async function sendTx(tx, statusBoxId, onMined, kind) {
   const eth = providerOrNull();
   const box = clear($(statusBoxId));
   box.classList.remove("hidden");
@@ -1314,6 +1436,8 @@ async function sendTx(tx, statusBoxId, onMined) {
     });
   } catch (err) {
     if (err && err.code === 4001) {
+      if (kind === "registry") track("registry_create_rejected");
+      if (kind === "anchor") track("receipt_sign_rejected");
       box.appendChild(calloutWarnNote(
         "Signature request declined in wallet.",
         "Nothing was sent and nothing was recorded. Press “Sign & anchor” again when ready.",
@@ -1350,6 +1474,7 @@ async function createReceiptRegistry() {
   if (!prepared || !prepared.setup) return;
   await sendTx(prepared.setup.tx, "anchor-status", (box, info) => {
     if (info.success && info.registry_id) {
+      track("registry_created");
       // v1.2.0: the record calldata keys on the numeric #id, which only
       // exists NOW — the server decoded it from the AddRegistry event in
       // this tx's receipt. Pin it and genuinely re-prepare: the next
@@ -1364,10 +1489,11 @@ async function createReceiptRegistry() {
       box.appendChild(banner("bad", "i-alert", "Created, but the id could not be read",
         "The creation confirmed but no AddRegistry event was found in the receipt. Use “My registries” to find the new #id, then prepare again."));
     } else {
+      track("registry_create_reverted");
       box.appendChild(banner("bad", "i-alert", "Registry creation failed",
         "The creation transaction reverted. Check the chain status and try again."));
     }
-  });
+  }, "registry");
 }
 
 async function anchorReceipt() {
@@ -1377,6 +1503,7 @@ async function anchorReceipt() {
   await sendTx(prepared.tx, "anchor-status", (box, info, hash) => {
     if (!info.success) {
       outcome = "bad";
+      track("receipt_sign_reverted");
       const b = banner("bad", "i-alert", "Transaction reverted", "");
       const sub = b.querySelector(".rb-sub");
       sub.appendChild(document.createTextNode("Anchoring transaction "));
@@ -1386,6 +1513,7 @@ async function anchorReceipt() {
       return;
     }
     outcome = "ok";
+    track("receipt_signed_anchored");
     const sha = prepared.document_sha256;
     const registryRef = `#${prepared.registry_id}`;
     const regDisplay = `${registryRef} — ${prepared.registry}`;
@@ -1424,9 +1552,11 @@ async function anchorReceipt() {
     const actions = el("div", "rb-actions");
     const a1 = el("a", "btn btn-outline", "View on Blockscout ");
     a1.href = `${EXPLORER}/tx/${hash}`; a1.target = "_blank"; a1.rel = "noopener";
+    a1.setAttribute("data-ga-event", "receipt_view_explorer_click");
     a1.appendChild(icon("i-linkout"));
     actions.appendChild(a1);
     const a2 = el("button", "btn btn-outline", "Verify it now (free lookup)"); a2.type = "button";
+    a2.setAttribute("data-ga-event", "receipt_verify_now_click");
     a2.addEventListener("click", () => {
       activateTab("verify");
       $("verify-registry").value = registryRef;
@@ -1435,11 +1565,12 @@ async function anchorReceipt() {
     });
     actions.appendChild(a2);
     const a3 = el("button", "btn btn-outline", "Decode the transaction"); a3.type = "button";
+    a3.setAttribute("data-ga-event", "receipt_decode_tx_click");
     a3.addEventListener("click", () => { activateTab("inspect"); $("tx-input").value = hash; inspectTx(hash); });
     actions.appendChild(a3);
     b.appendChild(actions);
     box.appendChild(b);
-  });
+  }, "anchor");
   if (outcome === "ok") stepState("step-anchor-state", "ok", "done");
   else if (outcome === "bad") stepState("step-anchor-state", "bad", "failed");
   else stepState("step-anchor-state", "", "waiting"); // declined or still pending
@@ -1609,7 +1740,8 @@ function renderLookup(res) {
       btn.type = "button";
       btn.addEventListener("click", () => {
         $("verify-registry").value = `#${cand.id}`;
-        lookupHash(`#${cand.id}`, res.sha256);
+        track("verify_registry_candidate_click");
+        lookupHash(`#${cand.id}`, res.sha256, "hash");
       });
       actions.appendChild(btn);
     });
@@ -1657,18 +1789,28 @@ function renderLookup(res) {
   show("verify-result");
 }
 
-async function lookupHash(registry, sha) {
+async function lookupHash(registry, sha, method) {
   hide("verify-result", "verify-error");
   show("verify-busy");
+  const scoped = !!registry;
+  const how = method || "hash";
   try {
     // No registry -> chain-wide search: the server sweeps every receipts
     // registry for this fingerprint. With one -> the single keyed read.
     const qs = registry
       ? `registry=${encodeURIComponent(registry)}&sha256=${encodeURIComponent(sha)}`
       : `sha256=${encodeURIComponent(sha)}`;
-    renderLookup(await apiGet(`/api/receipt/lookup?${qs}`));
+    const res = await apiGet(`/api/receipt/lookup?${qs}`);
+    renderLookup(res);
+    let outcome = "error";
+    if (res.ambiguous) outcome = "ambiguous";
+    else if (res.registry_exists === false) outcome = "no_such_registry";
+    else if (res.found) outcome = "found";
+    else outcome = "not_found";
+    track("verify_receipt_lookup", { method: how, scoped, outcome });
   } catch (err) {
     showError("verify-error", err);
+    track("verify_receipt_lookup", { method: how, scoped, outcome: "error" });
   } finally {
     hide("verify-busy");
   }
@@ -1688,7 +1830,7 @@ function initVerify() {
     try {
       const sha = await sha256HexOf(await f.arrayBuffer());
       $("hash-input").value = sha;
-      await lookupHash(verifyRegistryValue(), sha);
+      await lookupHash(verifyRegistryValue(), sha, "upload");
     } catch (err) {
       hide("verify-busy");
       showError("verify-error", err);
@@ -1697,8 +1839,11 @@ function initVerify() {
   $("hash-toggle").addEventListener("click", () => $("hash-area").classList.toggle("hidden"));
   $("hash-lookup").addEventListener("click", () => {
     const sha = $("hash-input").value.trim().toLowerCase();
-    if (/^[0-9a-f]{64}$/.test(sha)) lookupHash(verifyRegistryValue(), sha);
-    else showError("verify-error", new Error("That is not a 64-character hex SHA-256."));
+    if (/^[0-9a-f]{64}$/.test(sha)) lookupHash(verifyRegistryValue(), sha, "hash");
+    else {
+      showError("verify-error", new Error("That is not a 64-character hex SHA-256."));
+      track("verify_receipt_lookup", { method: "hash", scoped: !!verifyRegistryValue(), outcome: "bad_hash" });
+    }
   });
   $("hash-input").addEventListener("keydown", (e) => { if (e.key === "Enter") $("hash-lookup").click(); });
 }
@@ -1815,13 +1960,25 @@ function renderInspect(info) {
   show("inspect-result");
 }
 
+function inspectOutcome(info) {
+  if (!info.found) return "not_found";
+  if (info.pending) return "pending";
+  if (!info.success) return "reverted";
+  if (info.decoded && info.decoded.function) return "confirmed";
+  if (info.decoded) return "unknown_selector";
+  return "confirmed";
+}
+
 async function inspectTx(hash) {
   hide("inspect-result", "inspect-error");
   show("inspect-busy");
   try {
-    renderInspect(await apiGet(`/api/tx?hash=${encodeURIComponent(hash)}`));
+    const info = await apiGet(`/api/tx?hash=${encodeURIComponent(hash)}`);
+    renderInspect(info);
+    track("inspect_transaction_decode", { outcome: inspectOutcome(info) });
   } catch (err) {
     showError("inspect-error", err);
+    track("inspect_transaction_decode", { outcome: "error" });
   } finally {
     hide("inspect-busy");
   }
@@ -1831,13 +1988,17 @@ function initInspect() {
   $("tx-inspect").addEventListener("click", () => {
     const h = $("tx-input").value.trim().toLowerCase();
     if (/^0x[0-9a-f]{64}$/.test(h)) inspectTx(h);
-    else showError("inspect-error", new Error("Expected a 0x-prefixed 64-hex-character transaction hash."));
+    else {
+      showError("inspect-error", new Error("Expected a 0x-prefixed 64-hex-character transaction hash."));
+      track("inspect_transaction_decode", { outcome: "bad_format" });
+    }
   });
   $("tx-input").addEventListener("keydown", (e) => { if (e.key === "Enter") $("tx-inspect").click(); });
 }
 
 /* ---------- boot ---------- */
 
+initGa();
 initTabs();
 initCheck();
 initWallet();

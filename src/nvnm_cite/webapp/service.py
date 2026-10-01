@@ -61,7 +61,7 @@ from nvnm_cite.verifier.extract import ExtractError, extract_text
 from nvnm_cite.verifier.resolver import Resolver
 from nvnm_cite.webapp.localindex import LocalIndex
 
-WEBAPP_VERSION = "0.2.0"
+WEBAPP_VERSION = "0.2.1"
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _ADDRESS_RE = re.compile(r"^0x[0-9a-fA-F]{40}$")
