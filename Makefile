@@ -1,5 +1,6 @@
 # Package version lives in pyproject.toml and a few hardcoded copies.
-# Bump here in the PR; CI tags vX.Y.Z after merge. Does not commit or tag.
+# Bump here in the PR (also refreshes uv.lock); CI tags vX.Y.Z after merge.
+# Does not commit or tag.
 
 .PHONY: version bump-patch bump-minor bump-major bump
 

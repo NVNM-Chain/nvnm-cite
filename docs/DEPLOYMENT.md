@@ -13,7 +13,7 @@ database, a volume, a secret, or a backup.
   CI tags HEAD as `v` plus the version already in `pyproject.toml` if that
   tag does not exist. Bump in the PR with `make bump-patch` (or
   `bump-minor` / `bump-major` / `make bump VERSION=X.Y.Z`); that updates
-  every hardcoded copy. CI never edits `pyproject.toml` and never pushes a
+  every hardcoded copy and refreshes `uv.lock`. CI never edits `pyproject.toml` and never pushes a
   commit. Put `[skip tag]` in the merge commit to skip it. Platforms: `linux/amd64` and `linux/arm64`.
 - Before anything is pushed, CI runs the full test suite and a container
   smoke test: the image must boot, serve `/`, and report a reachable

@@ -1021,6 +1021,7 @@ async function refreshWalletState() {
 async function connectWallet() {
   const eth = providerOrNull();
   if (!eth || !NET) return;
+  const hadAddress = !!wallet.address;
   setUserDisconnected(false);
   try {
     await eth.request({ method: "eth_requestAccounts" });
@@ -1029,7 +1030,6 @@ async function connectWallet() {
   } catch (err) {
     if (err && err.code !== 4001) alert(`Wallet error: ${err.message || err}`);
   }
-  const hadAddress = !!wallet.address;
   await refreshWalletState();
   if (wallet.address && !hadAddress) track("wallet_connected");
 }

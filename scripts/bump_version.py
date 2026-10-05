@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import argparse
 import re
+import shutil
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -63,6 +65,10 @@ def apply(old: str, new: str) -> None:
         f'"version": "{old}"',
         f'"version": "{new}"',
     )
+    uv = shutil.which("uv")
+    if not uv:
+        raise SystemExit("uv not found; needed to refresh uv.lock")
+    subprocess.run([uv, "lock"], cwd=ROOT, check=True)
 
 
 def main() -> None:
