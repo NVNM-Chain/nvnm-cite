@@ -152,7 +152,11 @@ function initGa() {
   s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_MEASUREMENT_ID;
   document.head.appendChild(s);
   gtag("js", new Date());
-  gtag("config", GA_MEASUREMENT_ID, { send_page_view: false });
+  gtag("config", GA_MEASUREMENT_ID, {
+    send_page_view: false,
+    allow_google_signals: false,
+    allow_ad_personalization_signals: false,
+  });
   document.addEventListener("click", (e) => {
     const node = e.target.closest("[data-ga-event]");
     if (!node || node.closest("details[data-ga-event]")) return;
@@ -327,6 +331,10 @@ let chosenRegistryId = null; // pinned receipts-registry #id (picker choice or p
 let wallet = { address: null, chainOk: false, detected: false, confirmingDisconnect: false };
 let filterSet = new Set();      // statuses the summary-chip filters keep visible
 let coveredExpanded = false;    // NOT COVERED disclosure state
+function setCoveredExpanded(on) {
+  if (on && !coveredExpanded) track("check_not_covered_expanded");
+  coveredExpanded = !!on;
+}
 
 /* ---------- tabs (sticky bar + overflow cues, round 2 P1-3/P1-4) ---------- */
 
@@ -702,7 +710,7 @@ function buildSummaryChips(report) {
       c.addEventListener("click", () => {
         if (filterSet.has(s)) filterSet.delete(s);
         else filterSet.add(s);
-        if (filterSet.has("NOT_COVERED")) coveredExpanded = true;
+        if (filterSet.has("NOT_COVERED")) setCoveredExpanded(true);
         track("check_filter_chip_click", { status: TALLY_STATUS[s] || s });
         renderCheckTable(report);
         buildSummaryChips(report);
@@ -822,8 +830,7 @@ function renderCheckTable(report) {
     btn.appendChild(el("span", null,
       `${covered.length} ${covered.length === 1 ? "citation" : "citations"} outside the covered registries — ${coveredExpanded ? "hide" : "show"}`));
     btn.addEventListener("click", () => {
-      coveredExpanded = !coveredExpanded;
-      if (coveredExpanded) track("check_not_covered_expanded");
+      setCoveredExpanded(!coveredExpanded);
       renderCheckTable(report);
     });
     td.appendChild(btn);
@@ -888,12 +895,6 @@ function renderCheck(report) {
   hide("check-error");
   show("check-result");
   syncRecordPanel();
-  const by = (report.summary && report.summary.by_status) || {};
-  track("check_citations_completed", {
-    empty: empty,
-    verified: by.VERIFIED || 0,
-    not_found: by.NOT_FOUND || 0,
-  });
 }
 
 async function runCheck(bytes, filename, source) {
@@ -906,7 +907,19 @@ async function runCheck(bytes, filename, source) {
     lastSource = source || "file";
     prepared = null;           // a new document invalidates any prepared receipt
     chosenRegistryId = null;   // ...and any pinned registry choice
-    renderCheck(report);
+    const empty = !report.citations || report.citations.length === 0;
+    const by = (report.summary && report.summary.by_status) || {};
+    track("check_citations_completed", {
+      empty: empty,
+      verified: by.VERIFIED || 0,
+      not_found: by.NOT_FOUND || 0,
+    });
+    try {
+      renderCheck(report);
+    } catch (err) {
+      setCheckProgress(false);
+      showError("check-error", err);
+    }
   } catch (err) {
     setCheckProgress(false);
     showError("check-error", err);
@@ -965,7 +978,18 @@ function disarmDisconnect() {
   wallet.confirmingDisconnect = false;
 }
 
-async function refreshWalletState() {
+/* Provider events (accountsChanged / chainChanged) and the explicit
+ * disconnect refresh overlap: two in-flight snapshots of wasConnected
+ * both emit wallet_disconnected. Queue each caller behind the previous
+ * critical section — joining the in-flight promise would drop a refresh
+ * whose eth_accounts ran before revoke finished. */
+let walletRefreshTail = Promise.resolve();
+function refreshWalletState() {
+  walletRefreshTail = walletRefreshTail.then(applyWalletState, applyWalletState);
+  return walletRefreshTail;
+}
+
+async function applyWalletState() {
   const eth = providerOrNull();
   const btn = $("wallet-btn");
   const wasConnected = !!wallet.address;
@@ -1212,7 +1236,8 @@ function syncRecordPanel() {
   updRegline();
 }
 
-async function prepareReceipt() {
+async function prepareReceipt(opts) {
+  const auto = !!(opts && opts.auto === true);
   if (!lastReport || !lastFile) {
     track("receipt_prepare_blocked", { reason: "no_doc" });
     showError("prepare-error", new Error("Check a document file first — a receipt anchors the exact bytes you will file."));
@@ -1245,11 +1270,15 @@ async function prepareReceipt() {
     // creator + name, and surfaces any same-name ambiguity for a human pick.
     if (chosenRegistryId) headers["X-Registry-Id"] = String(chosenRegistryId);
     prepared = await apiPostBytes("/api/receipt/prepare", lastFile.bytes, lastFile.name, headers);
-    track("receipt_prepare_completed", {
-      registry_line: prepared.registry_line_found || "none",
-      setup_shown: !!prepared.setup,
-      ambiguous: !!prepared.ambiguous,
-    });
+    if (auto) {
+      track("receipt_reprepared_after_create");
+    } else {
+      track("receipt_prepare_completed", {
+        registry_line: prepared.registry_line_found || "none",
+        setup_shown: !!prepared.setup,
+        ambiguous: !!prepared.ambiguous,
+      });
+    }
     renderPrepared(prepared);
     setSteps();
   } catch (err) {
@@ -1484,7 +1513,7 @@ async function createReceiptRegistry() {
       box.appendChild(banner("ok", "i-seal",
         `Registry #${info.registry_id} (${prepared.registry}) created`,
         `Confirmed in block ${info.block.toLocaleString("en-US")}. Put the registry line (with #${info.registry_id}) on the filing, then the receipt below re-prepares against the new registry.`));
-      prepareReceipt();
+      prepareReceipt({ auto: true });
     } else if (info.success) {
       box.appendChild(banner("bad", "i-alert", "Created, but the id could not be read",
         "The creation confirmed but no AddRegistry event was found in the receipt. Use “My registries” to find the new #id, then prepare again."));
@@ -1801,13 +1830,16 @@ async function lookupHash(registry, sha, method) {
       ? `registry=${encodeURIComponent(registry)}&sha256=${encodeURIComponent(sha)}`
       : `sha256=${encodeURIComponent(sha)}`;
     const res = await apiGet(`/api/receipt/lookup?${qs}`);
-    renderLookup(res);
-    let outcome = "error";
+    let outcome = "not_found";
     if (res.ambiguous) outcome = "ambiguous";
     else if (res.registry_exists === false) outcome = "no_such_registry";
     else if (res.found) outcome = "found";
-    else outcome = "not_found";
     track("verify_receipt_lookup", { method: how, scoped, outcome });
+    try {
+      renderLookup(res);
+    } catch (err) {
+      showError("verify-error", err);
+    }
   } catch (err) {
     showError("verify-error", err);
     track("verify_receipt_lookup", { method: how, scoped, outcome: "error" });
@@ -1834,6 +1866,7 @@ function initVerify() {
     } catch (err) {
       hide("verify-busy");
       showError("verify-error", err);
+      track("verify_receipt_lookup", { method: "upload", scoped: !!verifyRegistryValue(), outcome: "bad_file" });
     }
   });
   $("hash-toggle").addEventListener("click", () => $("hash-area").classList.toggle("hidden"));
@@ -1974,8 +2007,12 @@ async function inspectTx(hash) {
   show("inspect-busy");
   try {
     const info = await apiGet(`/api/tx?hash=${encodeURIComponent(hash)}`);
-    renderInspect(info);
     track("inspect_transaction_decode", { outcome: inspectOutcome(info) });
+    try {
+      renderInspect(info);
+    } catch (err) {
+      showError("inspect-error", err);
+    }
   } catch (err) {
     showError("inspect-error", err);
     track("inspect_transaction_decode", { outcome: "error" });

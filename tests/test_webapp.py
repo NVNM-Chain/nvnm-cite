@@ -705,10 +705,25 @@ def test_server_static_and_csp(live_server):
     assert b"location.origin === GA_ORIGIN" in js
     assert b"googletagmanager.com/gtag/js" in js
     assert b"send_page_view: false" in js
+    assert b"allow_google_signals: false" in js
+    assert b"allow_ad_personalization_signals: false" in js
+    assert b'outcome: "bad_file"' in js
+    assert b"check_not_covered_expanded" in js
+    assert b"function setCoveredExpanded" in js
+    assert b"receipt_prepare_completed" in js
+    assert b"receipt_reprepared_after_create" in js
+    assert b"prepareReceipt({ auto: true })" in js
     assert b"check_citations_started" in js
     assert b"check_citations_completed" in js
     assert b"verify_receipt_lookup" in js
     assert b"inspect_transaction_decode" in js
+    for fn, track_needle, render_needle in (
+        (b"async function runCheck", b'track("check_citations_completed"', b"renderCheck(report)"),
+        (b"async function lookupHash", b'track("verify_receipt_lookup"', b"renderLookup(res)"),
+        (b"async function inspectTx", b"inspectOutcome(info)", b"renderInspect(info)"),
+    ):
+        chunk = js[js.find(fn):]
+        assert chunk.find(track_needle) < chunk.find(render_needle), fn
     assert b'method: "sample"' in js
     assert b'page_path: "/check"' in js
     assert b'page_path: "/#check"' not in js
@@ -716,6 +731,7 @@ def test_server_static_and_csp(live_server):
     assert b"if (wallet.address && !wasConnected) track(\"wallet_connected\")" not in js
     assert b"if (wallet.address && !hadAddress) track(\"wallet_connected\")" in js
     assert b'track("wallet_disconnected")' in js
+    assert b"walletRefreshTail.then(applyWalletState, applyWalletState)" in js
     assert b'track("wallet_connect_click")' not in js
     assert b'track("wallet_wrong_network")' not in js
     assert b'track("wallet_switch_network")' not in js
