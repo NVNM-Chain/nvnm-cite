@@ -11,6 +11,7 @@ import hashlib
 import http.client
 import io
 import json
+import re
 import sqlite3
 import threading
 import zipfile
@@ -687,9 +688,61 @@ def _request(addr, method, path, body=None, headers=None):
 def test_server_static_and_csp(live_server):
     res, data = _request(live_server, "GET", "/")
     assert res.status == 200 and b"NVNM" in data
-    assert "default-src 'self'" in (res.getheader("Content-Security-Policy") or "")
-    res, _ = _request(live_server, "GET", "/app.js")
+    csp = res.getheader("Content-Security-Policy") or ""
+    assert "default-src 'self'" in csp
+    assert "https://www.googletagmanager.com" in csp
+    assert "https://*.google-analytics.com" in csp
+    assert "https://*.analytics.google.com" in csp
+    assert "unsafe-inline" not in csp
+    assert b"googletagmanager.com/gtag/js" not in data  # injected only on production origin
+    assert b"G-HDWV8PZ2QK" not in data  # measurement id lives in app.js only
+    assert b'data-ga-event="continue_to_record_verification_click"' in data
+    assert b'data-ga-event="footer_dev_link"' in data
+    res, js = _request(live_server, "GET", "/app.js")
     assert res.status == 200
+    assert b"G-HDWV8PZ2QK" in js
+    assert b'GA_ORIGIN = "https://www.nvnmcite.com"' in js
+    assert b"location.origin === GA_ORIGIN" in js
+    assert b"googletagmanager.com/gtag/js" in js
+    assert b"send_page_view: false" in js
+    assert b"allow_google_signals: false" in js
+    assert b"allow_ad_personalization_signals: false" in js
+    assert b'outcome: "bad_file"' in js
+    assert b"check_not_covered_expanded" in js
+    assert b"function setCoveredExpanded" in js
+    assert b"receipt_prepare_completed" in js
+    assert b"receipt_reprepared_after_create" in js
+    assert b"prepareReceipt({ auto: true })" in js
+    assert b"check_citations_started" in js
+    assert b"check_citations_completed" in js
+    assert b"verify_receipt_lookup" in js
+    assert b"inspect_transaction_decode" in js
+    for fn, track_needle, render_needle in (
+        (b"async function runCheck", b'track("check_citations_completed"', b"renderCheck(report)"),
+        (b"async function lookupHash", b'track("verify_receipt_lookup"', b"renderLookup(res)"),
+        (b"async function inspectTx", b"inspectOutcome(info)", b"renderInspect(info)"),
+    ):
+        chunk = js[js.find(fn):]
+        assert chunk.find(track_needle) < chunk.find(render_needle), fn
+    assert b'method: "sample"' in js
+    assert b'page_path: "/check"' in js
+    assert b'page_path: "/#check"' not in js
+    assert b'track("wallet_connected")' in js
+    assert b"if (wallet.address && !wasConnected) track(\"wallet_connected\")" not in js
+    assert b"if (wallet.address && !hadAddress) track(\"wallet_connected\")" in js
+    assert b'track("wallet_disconnected")' in js
+    assert b"walletRefreshTail.then(applyWalletState, applyWalletState)" in js
+    assert b'track("wallet_connect_click")' not in js
+    assert b'track("wallet_wrong_network")' not in js
+    assert b'track("wallet_switch_network")' not in js
+    assert b'data-ga-link", "metamask"' not in js
+    assert b"wallet_switch_network_click" not in js
+    for call in re.findall(rb"\btrack\((.*?)\)", js, flags=re.S):
+        for needle in (
+            b"sha256", b"canonical", b"as_written", b"wallet.address",
+            b"metamask", b"name_mismatch", b"extraction_warning",
+        ):
+            assert needle not in call, call[:240]
     res, _ = _request(live_server, "GET", "/../pyproject.toml")
     assert res.status == 404
     res, _ = _request(live_server, "GET", "/nope.css")
