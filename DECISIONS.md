@@ -598,3 +598,11 @@ Albert: the same-day hostname/WAF troubleshooting writeup drafted into `docs/DEP
 - **Clean shutdown:** SIGTERM to the running server produced the graceful exit (the k8s-stop path).
 
 No code changes were needed or made; this session is verification + this record only.
+
+## 2026-10-06: Devnet (nvnm-dryrun-1) is a third network profile
+
+Live-probed `https://evm.nvnm.dryrun.mantrachain.dev`: EVM chain id 262144 (`0x40000`), Cosmos chain id `nvnm-dryrun-1`, gas token `wmantraUSD`, node-suggested gas 45 gwei, Blockscout `https://blockscout.nvnm.dryrun.mantrachain.dev`. The binary is `nvnmchaind` v1.3.0; the anchoring module consensus version is still 2, and `registries()` / `records()` decode with the vendored v1.2.0 ABI. Precompile address unchanged (`0x…0A00`).
+
+The court corpus is present, same creator `nvnm14a3em3mr9mvta9ccgk80wn0dxgzt5lkt2r8trx`, same 2,114 `us-*` names, but every court registry id is the mainnet id minus 1 (`us-ca1`=68, `us-scotus`=81, `us-wyo`=2181, contiguous). Roe's recordId is unchanged: `records(81, "410 U.S. 113")` → 138702. The mainnet manifest must not be used on this chain. One extra official registry, `Metropolis Innovation Tower`, is outside the court export. No devnet manifest is shipped on the INV-43058 test branch, so manifest-backed commands (check, verify, web app, sync) do not work on devnet there.
+
+Signing: `NVNM_DEVNET_KEY`, same posture as the testnet dev key (may live in `.env`, no `WRITE_OK` gate). It is never substituted for `NVNM_TESTNET_KEY` or `NVNM_MAINNET_KEY`. Default network stays mainnet; devnet is opt-in. Devnet EVM `history_serve_window` is 8192 blocks, so historical `eth_call`s older than that window are not served.

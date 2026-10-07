@@ -628,12 +628,12 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--state", type=Path, default=Path("data/load_state.sqlite"))
     p_run.add_argument("--depth", type=int, default=DEFAULT_DEPTH)
     p_run.add_argument("--max-records", type=int, default=None, help="stop after N submissions (probe runs)")
-    p_run.add_argument("--network", choices=["mainnet", "testnet"], default=None)
+    p_run.add_argument("--network", choices=["mainnet", "testnet", "devnet"], default=None)
 
     p_stat = sub.add_parser("status", help="checkpoint counters and balance")
     p_stat.add_argument("--state", type=Path, default=Path("data/load_state.sqlite"))
     p_stat.add_argument("--offline", action="store_true", help="skip RPC reads")
-    p_stat.add_argument("--network", choices=["mainnet", "testnet"], default=None)
+    p_stat.add_argument("--network", choices=["mainnet", "testnet", "devnet"], default=None)
 
     args = parser.parse_args(argv)
     load_dotenv()

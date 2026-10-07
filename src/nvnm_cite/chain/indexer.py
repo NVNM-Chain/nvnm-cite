@@ -242,7 +242,7 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="comma-separated registry names (resolved via the pinned manifest) or numeric ids",
     )
-    parser.add_argument("--network", choices=["mainnet", "testnet"], default=None)
+    parser.add_argument("--network", choices=["mainnet", "testnet", "devnet"], default=None)
     parser.add_argument("--rpc", default=None, help="RPC URL (default: the network's)")
     args = parser.parse_args(argv)
 
