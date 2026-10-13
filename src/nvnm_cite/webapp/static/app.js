@@ -84,8 +84,8 @@ const $ = (id) => document.getElementById(id);
  * citation text, SHA-256, wallet address, firm, or case. Wallet events
  * are connect/disconnect only — no MetaMask link, network, or account
  * fields. Gathering is locked to the production origin. */
-const GA_MEASUREMENT_ID = "G-HDWV8PZ2QK";
-const GA_ORIGIN = "https://www.nvnmcite.com";
+const GA_MEASUREMENT_ID = "G-W3CF78P4EQ";
+const GA_ORIGIN = "https://nvnmcite-devus01.dev01.inveniam.io";
 const TAB_PAGE = {
   check: { page_path: "/check", page_title: "Check citations" },
   record: { page_path: "/record", page_title: "Record verification" },
