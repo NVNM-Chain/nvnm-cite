@@ -12,7 +12,10 @@ def test_profiles_pin_chain_constants():
     assert config.TESTNET.chain_id == 787111
     assert config.TESTNET.cosmos_chain_id == "nvnm-testnet-1"
     assert config.TESTNET.gas_token == "wmantraUSD"
-
+    assert config.DEVNET.chain_id == 262144
+    assert config.DEVNET.cosmos_chain_id == "nvnm-dryrun-1"
+    assert config.DEVNET.gas_token == "wmantraUSD"
+    assert config.DEVNET.rpc_env == "NVNM_DEVNET_RPC"
 
 def test_get_network_precedence(monkeypatch):
     monkeypatch.delenv("NVNM_NETWORK", raising=False)
@@ -21,8 +24,9 @@ def test_get_network_precedence(monkeypatch):
     monkeypatch.setenv("NVNM_NETWORK", "testnet")
     assert config.get_network() is config.TESTNET
     assert config.get_network("mainnet") is config.MAINNET  # explicit arg wins
+    assert config.get_network("devnet") is config.DEVNET
     with pytest.raises(ValueError):
-        config.get_network("devnet")
+        config.get_network("no-such")
 
 
 def test_rpc_env_override(monkeypatch):
@@ -54,6 +58,21 @@ def test_signing_context_testnet(monkeypatch):
     key, chain_id = config.signing_context(config.TESTNET)
     assert key == int("11" * 32, 16)
     assert chain_id == 787111
+
+
+def test_signing_context_devnet(monkeypatch):
+    monkeypatch.delenv("NVNM_TESTNET_KEY", raising=False)
+    monkeypatch.setenv("NVNM_DEVNET_KEY", "0x" + "33" * 32)
+    key, chain_id = config.signing_context(config.DEVNET)
+    assert key == int("33" * 32, 16)
+    assert chain_id == 262144
+
+
+def test_devnet_signing_does_not_reuse_testnet_key(monkeypatch):
+    monkeypatch.setenv("NVNM_TESTNET_KEY", "0x" + "11" * 32)
+    monkeypatch.delenv("NVNM_DEVNET_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="NVNM_DEVNET_KEY is not set"):
+        config.signing_context(config.DEVNET)
 
 
 def test_signing_context_mainnet_optin(monkeypatch):

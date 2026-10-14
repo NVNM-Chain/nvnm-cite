@@ -31,7 +31,7 @@ def test_testnet_manifest_pins_pilot_pair():
 
 def test_load_manifest_unknown_network():
     with pytest.raises(FileNotFoundError):
-        load_manifest("devnet")
+        load_manifest("no-such-network")
 
 
 class _FakeRpc:

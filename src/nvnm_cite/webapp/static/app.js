@@ -35,7 +35,9 @@ function chainParams() {
   // wallet_addEthereumChain params, built from the server-fed network block.
   return {
     chainId: NET.chain_id_hex,
-    chainName: NET.key === "mainnet" ? "NVNM Chain" : "NVNM Chain Testnet",
+    chainName: NET.key === "mainnet" ? "NVNM Chain"
+      : NET.key === "devnet" ? "NVNM Chain Devnet"
+      : "NVNM Chain Testnet",
     nativeCurrency: {
       name: NET.gas_token.name,
       symbol: NET.gas_token.symbol,
@@ -84,8 +86,8 @@ const $ = (id) => document.getElementById(id);
  * citation text, SHA-256, wallet address, firm, or case. Wallet events
  * are connect/disconnect only — no MetaMask link, network, or account
  * fields. Gathering is locked to the production origin. */
-const GA_MEASUREMENT_ID = "G-HDWV8PZ2QK";
-const GA_ORIGIN = "https://www.nvnmcite.com";
+const GA_MEASUREMENT_ID = "G-DK3RTGBVTQ";
+const GA_ORIGIN = "https://nvnmcite-devus01.dev01.inveniam.io";
 const TAB_PAGE = {
   check: { page_path: "/check", page_title: "Check citations" },
   record: { page_path: "/record", page_title: "Record verification" },
@@ -404,10 +406,12 @@ async function loadStatus() {
     if (st.constants.rpc_url) RPC_URL = st.constants.rpc_url;
   }
 
-  // Network badge (next to the wordmark): mainnet vs testnet, server-fed.
+  // Network badge (next to the wordmark): server-fed. Devnet reuses the
+  // testnet badge styling; only the label distinguishes it.
   const netBadge = $("net-badge");
   if (netBadge && NET) {
-    netBadge.textContent = NET.key === "mainnet" ? "Mainnet" : "Testnet";
+    const badgeLabel = NET.key === "mainnet" ? "Mainnet" : NET.key === "devnet" ? "Devnet" : "Testnet";
+    netBadge.textContent = badgeLabel;
     netBadge.className = "badge " + (NET.key === "mainnet" ? "badge-mainnet" : "badge-testnet");
   }
 

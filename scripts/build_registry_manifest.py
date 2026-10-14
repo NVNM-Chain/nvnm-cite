@@ -48,6 +48,12 @@ EXPECT = {
         "require_full_export": False,
         "spot_checks": [("us-scotus", "410 U.S. 113", None)],
     },
+    "devnet": {
+        "count": 2114,
+        "id_range": (68, 2181),
+        "require_full_export": True,
+        "spot_checks": [("us-scotus", "410 U.S. 113", 138702)],
+    },
 }
 
 
@@ -70,7 +76,7 @@ def enumerate_registries(rpc: EvmRpc) -> list[pc.Registry]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--network", choices=["mainnet", "testnet"], required=True)
+    ap.add_argument("--network", choices=["mainnet", "testnet", "devnet"], required=True)
     ap.add_argument("--rpc", help="override the network's default RPC URL")
     args = ap.parse_args()
 
@@ -84,9 +90,14 @@ def main() -> int:
         return 1
     block = rpc.block_number()
 
-    export_names = {
-        entry["name"] for entry in json.loads(EXPORT_REGISTRIES.read_text())
-    }
+    if EXPORT_REGISTRIES.exists():
+        export_names = {
+            entry["name"] for entry in json.loads(EXPORT_REGISTRIES.read_text())
+        }
+    else:
+        from nvnm_cite.chain.registrymap import load_manifest
+
+        export_names = set(load_manifest("mainnet").ids)
     print(f"{network.key}: export lists {len(export_names)} court registries")
 
     all_regs = enumerate_registries(rpc)
