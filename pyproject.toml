@@ -1,6 +1,6 @@
 [project]
 name = "nvnm-cite"
-version = "0.2.0"
+version = "0.2.1"
 description = "Citation existence verification and filing receipts on NVNM Chain"
 readme = "README.md"
 requires-python = ">=3.11"

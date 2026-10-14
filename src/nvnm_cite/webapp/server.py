@@ -53,8 +53,13 @@ _STATIC_TYPES = {
     ".md": "text/markdown; charset=utf-8",  # agents.md (agent-facing tutorial)
 }
 _CSP = (
-    "default-src 'self'; script-src 'self'; style-src 'self'; "
-    "img-src 'self' data:; font-src 'self'; connect-src 'self'; "
+    "default-src 'self'; "
+    "script-src 'self' https://www.googletagmanager.com; "
+    "style-src 'self'; "
+    "img-src 'self' data: https://*.google-analytics.com https://www.googletagmanager.com; "
+    "font-src 'self'; "
+    "connect-src 'self' https://*.google-analytics.com https://analytics.google.com "
+    "https://*.analytics.google.com https://www.googletagmanager.com; "
     "form-action 'none'; base-uri 'none'; frame-ancestors 'none'"
 )
 
@@ -106,7 +111,7 @@ class Services:
 class Handler(BaseHTTPRequestHandler):
     services: Services  # injected by build_server
     protocol_version = "HTTP/1.1"
-    server_version = "nvnm-cite-web/0.2.0"
+    server_version = "nvnm-cite-web/0.2.1"
 
     # --- plumbing ---
 
