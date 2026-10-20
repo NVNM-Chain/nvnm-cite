@@ -111,7 +111,7 @@ class Services:
 class Handler(BaseHTTPRequestHandler):
     services: Services  # injected by build_server
     protocol_version = "HTTP/1.1"
-    server_version = "nvnm-cite-web/0.2.1"
+    server_version = "nvnm-cite-web/1.0.1"
 
     # --- plumbing ---
 
