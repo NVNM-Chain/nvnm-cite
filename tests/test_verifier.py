@@ -362,7 +362,7 @@ class _RpcStub:
 
 
 def test_chainresolver_keyed_miss_is_none():
-    err = RpcError("eth_call", 3, "collections: not found: key 'us-scotus/999 U.S. 1'")
+    err = RpcError("eth_call", 3, "execution reverted: record does not exist")
     resolver = ChainResolver(lambda: _RpcStub(error=err))
     res = resolver.resolve(737, "999 U.S. 1")
     assert res.record is None  # genuine absence -> NOT_FOUND upstream
@@ -383,6 +383,7 @@ def test_chainresolver_non_miss_rpc_error_propagates():
 
 
 def test_is_keyed_miss_marker():
-    assert pc.is_keyed_miss(RpcError("eth_call", 3, "collections: not found: key 'x'"))
+    assert pc.is_keyed_miss(RpcError("eth_call", 3, "execution reverted: record does not exist"))
+    assert pc.is_keyed_miss(RpcError("eth_call", 3, "execution reverted: registry does not exist"))
     assert not pc.is_keyed_miss(RpcError("eth_call", 3, "execution reverted"))
     assert not pc.is_keyed_miss(ConnectionRefusedError("down"))

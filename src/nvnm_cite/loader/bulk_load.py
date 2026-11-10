@@ -17,8 +17,8 @@ Idempotency doctrine (DECISIONS (a)): duplicates create VERSIONS and
 estimateGas does not flag them, so the checkpoint DB is the ONLY guard.
 Never blind-resubmit. On resume, wait for the mempool to drain (pending
 nonce == latest nonce), then re-verify ONLY the rows left 'submitted' via
-keyed records() reads, treating the keyed-miss RpcError ("collections: not
-found") as not-loaded. Steady state never pre-checks existence per record
+keyed records() reads, treating the keyed-miss RpcError ("record does not
+exist") as not-loaded. Steady state never pre-checks existence per record
 (that would double RPC traffic for nothing).
 
 Failure doctrine: a failed send halts everything queued behind it (nonce
@@ -47,6 +47,7 @@ from nvnm_cite.chain.precompile import (
     build_add_record,
     build_records_query,
     decode_records_result,
+    is_keyed_miss,
 )
 from nvnm_cite.chain.rpc import EvmRpc, RpcError
 from nvnm_cite.chain.secp256k1 import address_from_private_key
@@ -54,7 +55,6 @@ from nvnm_cite.chain.signer import LegacyTransaction, sign_transaction
 from nvnm_cite.config import get_network, load_dotenv, signing_context
 from nvnm_cite.loader.records import CaseRow, RecordError, render_record
 
-GAS_FLOOR = 40_000_000_000  # 40 gwei chain floor
 STUCK_SECONDS = 180.0  # account nonce not advancing -> re-send head at +25%
 DEFAULT_DEPTH = 50
 # L1 pays fees in nUSD (TIP-20, 6 decimals). The native-balance RPC returns a
@@ -63,17 +63,21 @@ NUSD_ADDRESS = "0x20C0000000000000000000000000000000000000"
 TIP20_DECIMALS = 6
 BALANCE_HALT_NUSD_BASE_UNITS = 10**TIP20_DECIMALS  # halt cleanly below 1 nUSD
 BALANCE_OF_SELECTOR = keccak_256(b"balanceOf(address)")[:4]
+# Gas price + balance re-read cadence. At ~0.006 nUSD per L1 record, 50 sends
+# cost well under the 1 nUSD floor, so the halt fires before the account is dry.
+REFRESH_EVERY = 50
 
 # Gas limit from the measured curve instead of a per-record estimateGas
 # round-trip (2026-06-11 optimization, Albert's call: the first live run
 # confirmed at ~0.76 tx/s with estimate+send+receipt per record all serial
-# HTTP). Phase 0 measured ~70k intercept + ~76 gas per payload-string byte,
-# exact to the unit at 256 B and 1,024 B; the live load's 89,526 average
-# sits on the same line. 75k + 80/byte plus 30% headroom clears the worst
-# 2048 B metadata row with margin; unused limit is refunded, and reconcile
-# is the ground truth for anything gas can get wrong.
-GAS_BASE = 75_000
-GAS_PER_BYTE = 80
+# HTTP). L1 devnet 787222 (2026-11-10): eth_estimateGas for a NEW addRecord
+# key runs 2.88M at 51 payload-string bytes to 19.07M at 2,041 B, steeper per
+# byte for small payloads, and a sent tx used within 2% of its estimate.
+# 3.0M + 8.5k/byte lies above every measured point; 30% headroom on top. L1
+# charges gas used, and reconcile is the ground truth for anything gas can
+# get wrong.
+GAS_BASE = 3_000_000
+GAS_PER_BYTE = 8_500
 GAS_HEADROOM_PCT = 30
 RECEIPT_SAMPLE = 50  # receipt-check every Nth nonce: revert detection
 
@@ -308,7 +312,7 @@ def chain_has_key(
             rpc_retry(log, "records()", lambda: rpc.eth_call(PRECOMPILE_ADDRESS, calldata))
         )
     except RpcError as err:
-        if "not found" in err.message:
+        if is_keyed_miss(err):
             return False
         raise
     return bool(rows)
@@ -387,7 +391,7 @@ def run_load(
     signal.signal(signal.SIGTERM, _signal)
 
     nonce = rpc.get_transaction_count(address, "pending")
-    gas_price = max(rpc.gas_price(), GAS_FLOOR)
+    gas_price = rpc.gas_price()
     inflight: deque[InFlight] = deque()
     counters = {"confirmed": 0, "resent": 0}
     started = time.monotonic()
@@ -477,8 +481,8 @@ def run_load(
                         submitted_since_refresh += 1
                         if remaining is not None:
                             remaining -= 1
-                    if submitted_since_refresh >= 500:
-                        gas_price = max(rpc_retry(log, "gasPrice", rpc.gas_price), GAS_FLOOR)
+                    if submitted_since_refresh >= REFRESH_EVERY:
+                        gas_price = rpc_retry(log, "gasPrice", rpc.gas_price)
                         submitted_since_refresh = 0
                         balance = rpc_retry(log, "balance", lambda: nusd_balance(rpc, address))
                         if balance < BALANCE_HALT_NUSD_BASE_UNITS:
@@ -644,12 +648,12 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--state", type=Path, default=Path("data/load_state.sqlite"))
     p_run.add_argument("--depth", type=int, default=DEFAULT_DEPTH)
     p_run.add_argument("--max-records", type=int, default=None, help="stop after N submissions (probe runs)")
-    p_run.add_argument("--network", choices=["mainnet", "testnet"], default=None)
+    p_run.add_argument("--network", choices=["mainnet", "testnet", "devnet"], default=None)
 
     p_stat = sub.add_parser("status", help="checkpoint counters and balance")
     p_stat.add_argument("--state", type=Path, default=Path("data/load_state.sqlite"))
     p_stat.add_argument("--offline", action="store_true", help="skip RPC reads")
-    p_stat.add_argument("--network", choices=["mainnet", "testnet"], default=None)
+    p_stat.add_argument("--network", choices=["mainnet", "testnet", "devnet"], default=None)
 
     args = parser.parse_args(argv)
     load_dotenv()

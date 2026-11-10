@@ -16,7 +16,7 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8787, help="port (default 8787)")
     parser.add_argument(
         "--network",
-        choices=["mainnet", "testnet"],
+        choices=["mainnet", "testnet", "devnet"],
         default=None,
         help="which NVNM Chain network to serve against (default: mainnet, or NVNM_NETWORK)",
     )

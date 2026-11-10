@@ -659,7 +659,7 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("path", help="path to the document (.pdf, .docx, .txt, .md)")
     check.add_argument(
         "--network",
-        choices=["mainnet", "testnet"],
+        choices=["mainnet", "testnet", "devnet"],
         default=None,
         help="which NVNM Chain network to read (default: mainnet, or NVNM_NETWORK)",
     )
@@ -688,8 +688,9 @@ def build_parser() -> argparse.ArgumentParser:
             "Check a document, then record a minimal, non-enumerating receipt on "
             "NVNM Chain. Without --anchor this is a dry run that only shows the plan; "
             "with --anchor it sends the transaction(s). Signing goes through "
-            "config.signing_context: NVNM_TESTNET_KEY on testnet; on mainnet the "
-            "explicit NVNM_MAINNET_WRITE_OK=1 + NVNM_MAINNET_KEY ops pair."
+            "config.signing_context: NVNM_TESTNET_KEY on testnet, NVNM_DEVNET_KEY "
+            "on devnet; on mainnet the explicit NVNM_MAINNET_WRITE_OK=1 + "
+            "NVNM_MAINNET_KEY ops pair."
         ),
     )
     anchor.add_argument("path", help="path to the document (.pdf, .docx, .txt, .md)")
@@ -703,7 +704,7 @@ def build_parser() -> argparse.ArgumentParser:
     anchor.add_argument("--agent", default=None, help="attesting wallet address (default: derived from the signing key)")
     anchor.add_argument(
         "--network",
-        choices=["mainnet", "testnet"],
+        choices=["mainnet", "testnet", "devnet"],
         default=None,
         help="which network to anchor on (default: mainnet, or NVNM_NETWORK; mainnet writes still need the signing opt-in pair)",
     )
@@ -734,7 +735,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     verify.add_argument(
         "--network",
-        choices=["mainnet", "testnet"],
+        choices=["mainnet", "testnet", "devnet"],
         default=None,
         help="which network to verify against (default: mainnet, or NVNM_NETWORK)",
     )
@@ -751,7 +752,7 @@ def build_parser() -> argparse.ArgumentParser:
             "not unique on chain. Exits nonzero on drift."
         ),
     )
-    manifest.add_argument("--network", choices=["mainnet", "testnet"], default=None)
+    manifest.add_argument("--network", choices=["mainnet", "testnet", "devnet"], default=None)
     manifest.add_argument("--rpc", default=None, help="EVM RPC URL (default: the selected network's public RPC)")
     manifest.add_argument("--json", action="store_true", help="emit JSON")
     manifest.set_defaults(func=cmd_manifest_verify)
