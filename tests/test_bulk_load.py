@@ -109,10 +109,12 @@ class FakeRpc:
 
     BASE_NONCE = 270  # mid-stream account, matches phase-0 reality
 
-    def __init__(self) -> None:
+    def __init__(self, nusd_balance: int = 3_000 * 10**6) -> None:
         self.receipts: dict[str, dict] = {}
         self.confirmed_calldata: list[bytes] = []
         self.block = 1_600_000
+        self.nusd_balance = nusd_balance
+        self.balance_calls: list[tuple[str, bytes]] = []
 
     def chain_id(self) -> int:
         return TESTNET_CHAIN_ID
@@ -138,8 +140,11 @@ class FakeRpc:
     def get_transaction_receipt(self, tx_hash: str) -> dict | None:
         return self.receipts.get(tx_hash)
 
-    def get_balance(self, _address: str) -> int:
-        return 3_000 * 10**18
+    def eth_call(self, to: str, data: bytes, block: str = "latest") -> bytes:
+        if to.lower() == bl.NUSD_ADDRESS.lower() and data[:4] == bytes.fromhex("70a08231"):
+            self.balance_calls.append((to, data))
+            return self.nusd_balance.to_bytes(32, "big")
+        raise AssertionError(f"unexpected eth_call to {to}")
 
 
 def seed_state(path: Path, n: int) -> None:
@@ -211,4 +216,54 @@ def test_recover_submitted_settles_by_keyed_read(tmp_path: Path, monkeypatch) ->
     statuses = dict(db.execute("SELECT position, status FROM load_state"))
     assert statuses == {1: "confirmed", 2: "pending", 3: "pending"}
     assert db.execute("SELECT nonce FROM load_state WHERE position=2").fetchone() == (None,)
+    db.close()
+
+
+def test_nusd_balance_reads_balance_of() -> None:
+    rpc = FakeRpc(nusd_balance=1_500_000)
+    address = "0x" + "ab" * 20
+    assert bl.nusd_balance(rpc, address) == 1_500_000
+    to, data = rpc.balance_calls[0]
+    assert to == bl.NUSD_ADDRESS
+    assert data == bytes.fromhex("70a08231") + bytes(12) + bytes.fromhex("ab" * 20)
+
+
+def test_run_load_halts_below_one_nusd(tmp_path: Path) -> None:
+    state_path = tmp_path / "load_state.sqlite"
+    seed_state(state_path, 520)
+    db = open_state(state_path)
+    logs: list[str] = []
+    # 999,999 base units is one under 1 nUSD.
+    counters = run_load(
+        db,
+        FakeRpc(nusd_balance=999_999),
+        TEST_KEY,
+        TESTNET_CHAIN_ID,
+        {"us-ca11": 738},
+        depth=50,
+        log=logs.append,
+    )
+    statuses = dict(db.execute("SELECT status, COUNT(*) FROM load_state GROUP BY status"))
+    assert statuses["pending"] == 20
+    assert statuses.get("confirmed", 0) + statuses.get("submitted", 0) == 500
+    assert counters["confirmed"] == statuses.get("confirmed", 0)
+    assert any("0.999999 nUSD below halt floor" in line for line in logs)
+    db.close()
+
+
+def test_run_load_continues_at_exactly_one_nusd(tmp_path: Path) -> None:
+    state_path = tmp_path / "load_state.sqlite"
+    seed_state(state_path, 520)
+    db = open_state(state_path)
+    # Exactly 1 nUSD must not halt: an 18-decimal floor or a `<=` compare would.
+    counters = run_load(
+        db,
+        FakeRpc(nusd_balance=10**6),
+        TEST_KEY,
+        TESTNET_CHAIN_ID,
+        {"us-ca11": 738},
+        depth=50,
+        log=lambda s: None,
+    )
+    assert counters["confirmed"] == 520
     db.close()

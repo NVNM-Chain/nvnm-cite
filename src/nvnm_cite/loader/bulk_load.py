@@ -41,6 +41,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypeVar
 
+from nvnm_cite.chain.keccak import keccak_256
 from nvnm_cite.chain.precompile import (
     PRECOMPILE_ADDRESS,
     build_add_record,
@@ -56,7 +57,12 @@ from nvnm_cite.loader.records import CaseRow, RecordError, render_record
 GAS_FLOOR = 40_000_000_000  # 40 gwei chain floor
 STUCK_SECONDS = 180.0  # account nonce not advancing -> re-send head at +25%
 DEFAULT_DEPTH = 50
-BALANCE_HALT_WEI = 10**18  # halt cleanly below 1 wmantraUSD
+# L1 pays fees in nUSD (TIP-20, 6 decimals). The native-balance RPC returns a
+# fixed placeholder on L1, so it is never the fee balance.
+NUSD_ADDRESS = "0x20C0000000000000000000000000000000000000"
+TIP20_DECIMALS = 6
+BALANCE_HALT_NUSD_BASE_UNITS = 10**TIP20_DECIMALS  # halt cleanly below 1 nUSD
+BALANCE_OF_SELECTOR = keccak_256(b"balanceOf(address)")[:4]
 
 # Gas limit from the measured curve instead of a per-record estimateGas
 # round-trip (2026-06-11 optimization, Albert's call: the first live run
@@ -112,6 +118,15 @@ T = TypeVar("T")
 # answered) and is never retried here -- the caller decides what it means.
 _TRANSPORT_ERRORS = (OSError, http.client.HTTPException, ValueError)
 _RETRY_SCHEDULE = (1, 2, 5, 15, 30)
+
+
+def nusd_balance(rpc: EvmRpc, address: str) -> int:
+    """Spendable fee balance in nUSD base units (6 decimals).
+
+    An empty result (no code at the token address, as on L2) decodes to 0, so
+    a missing token halts the load instead of looking funded."""
+    data = BALANCE_OF_SELECTOR + bytes(12) + bytes.fromhex(address.removeprefix("0x"))
+    return int.from_bytes(rpc.eth_call(NUSD_ADDRESS, data), "big")
 
 
 def rpc_retry(log: Callable[[str], None], label: str, call: Callable[[], T]) -> T:
@@ -465,9 +480,11 @@ def run_load(
                     if submitted_since_refresh >= 500:
                         gas_price = max(rpc_retry(log, "gasPrice", rpc.gas_price), GAS_FLOOR)
                         submitted_since_refresh = 0
-                        balance = rpc_retry(log, "balance", lambda: rpc.get_balance(address))
-                        if balance < BALANCE_HALT_WEI:
-                            raise Halt(f"balance {balance / 1e18:.3f} below halt floor")
+                        balance = rpc_retry(log, "balance", lambda: nusd_balance(rpc, address))
+                        if balance < BALANCE_HALT_NUSD_BASE_UNITS:
+                            raise Halt(
+                                f"balance {balance / 10**TIP20_DECIMALS:.6f} nUSD below halt floor"
+                            )
             if not inflight:
                 if stop["flag"] or (remaining is not None and remaining <= 0):
                     break
@@ -585,7 +602,6 @@ def print_status(
     db: sqlite3.Connection,
     rpc: EvmRpc | None,
     address: str | None,
-    token: str = "wmantraUSD",
 ) -> None:
     print("load_state:")
     for status, count in db.execute(
@@ -604,8 +620,8 @@ def print_status(
     if gas[0]:
         print(f"  measured: {gas[0]:,} records, avg {gas[2]:,.0f} gas")
     if rpc is not None and address is not None:
-        balance = rpc.get_balance(address)
-        print(f"  balance: {balance / 1e18:.3f} {token} ({address})")
+        balance = nusd_balance(rpc, address)
+        print(f"  balance: {balance / 10**TIP20_DECIMALS:.6f} nUSD ({address})")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -657,7 +673,7 @@ def main(argv: list[str] | None = None) -> int:
         key, chain_id = signing_context(network)
         registry_ids = load_manifest(network.key).all_registries()
         run_load(db, rpc, key, chain_id, registry_ids, depth=args.depth, max_records=args.max_records)
-        print_status(db, rpc, address_from_private_key(key), token=network.gas_token)
+        print_status(db, rpc, address_from_private_key(key))
         db.close()
         return 0
 
@@ -668,7 +684,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         rpc = EvmRpc(network.rpc_url())
         key, _ = signing_context(network)
-        print_status(db, rpc, address_from_private_key(key), token=network.gas_token)
+        print_status(db, rpc, address_from_private_key(key))
     db.close()
     return 0
 

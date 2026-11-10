@@ -384,7 +384,7 @@ def main(argv: list[str] | None = None) -> int:
         key, chain_id = signing_context(network)
         registry_ids = load_manifest(network.key).all_registries()
         run_load(db, rpc, key, chain_id, registry_ids)
-        print_status(db, rpc, address_from_private_key(key), token=network.gas_token)
+        print_status(db, rpc, address_from_private_key(key))
     elif args.submit and not total_appended:
         print("\n--submit: nothing new to load")
 
