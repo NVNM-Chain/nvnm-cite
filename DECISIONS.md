@@ -598,3 +598,15 @@ Albert: the same-day hostname/WAF troubleshooting writeup drafted into `docs/DEP
 - **Clean shutdown:** SIGTERM to the running server produced the graceful exit (the k8s-stop path).
 
 No code changes were needed or made; this session is verification + this record only.
+
+## 2026-11-09 — INV-43948: Cite reads the L1 fee balance from nUSD, not the native balance
+
+On L1 the native balance is not spendable gas. `eth_getBalance` returns the same placeholder for every address, and inside the EVM the native balance and `msg.value` are 0. Fees are paid in nUSD, the TIP-20 at `0x20C0000000000000000000000000000000000000`, with 6 decimals. Gas prices stay in attodollars per gas (10^-18 USD). A price per gas cannot be written in 6-decimal units, so a fee converts only as a total: `ceil(base_fee * gas_used / 10^12)` (docs.nvnmchain.io, "Token balances and fees"). A type-0 transaction pays its `gas_price`, so for the loader's sends that is `ceil(gas_price * gas_used / 10^12)`. The nUSD address on the unreleased L1 mainnet is not verified; the docs give it for the L1 networks that exist today.
+
+The bulk loader was the only code that treated the native balance as the fee balance (`run_load` halted below `10**18`; `print_status` divided by `1e18`). On L1 that placeholder sits above any such floor, so the halt could never fire. Both now read nUSD `balanceOf` in base units and halt below 1 nUSD (`10**6`). The status line prints that balance with six decimal places. `EvmRpc.get_balance` is deleted; Cite does not call the native-balance RPC. No scaling of nUSD up to 18 decimals.
+
+The receipt anchor has no balance preflight and keeps none: a send with too little nUSD is rejected by the chain, and the rejection amount is already in nUSD base units. `eth_estimateGas` without a gas price still returns a gas number for an unfunded account, so a successful estimate does not mean the account can pay. The webapp estimate is a permission probe, not a funds check, and is unchanged.
+
+L1-only, by choice: there is no L2 fallback, and `get_network()` is unchanged. On L2, `0x20C0…` has no code, so the read decodes to 0 and a loader run halts at its first balance check. Cite is not switched to L1 here.
+
+Not this change: the 40 gwei `GAS_FLOOR` is what a type-0 transaction pays, far above the L1 base fee. The loader's fixed gas limit is L2-calibrated and cannot cover an L1 `addRecord` (about 3.65M gas estimated against a 108k limit), which blocks pointing the loader at L1. The balance halt runs only every 500 sends. The MCP-server half of INV-43948 is outside this Cite change.
