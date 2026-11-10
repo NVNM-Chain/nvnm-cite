@@ -23,15 +23,17 @@ def test_mainnet_manifest_pins_live_verified_ids():
     assert ids == list(range(69, 2183))  # contiguous block, no gaps
 
 
-def test_testnet_manifest_pins_pilot_pair():
-    m = load_manifest("testnet")
-    assert m.chain_id == 787111
-    assert m.all_registries() == {"us-scotus": 737, "us-ca11": 738}
+@pytest.mark.parametrize("network, chain_id", [("testnet", 787223), ("devnet", 787222)])
+def test_l1_manifests_carry_the_mainnet_ids(network, chain_id):
+    m = load_manifest(network)
+    assert m.chain_id == chain_id
+    assert m.creator == ADMIN
+    assert m.all_registries() == load_manifest("mainnet").all_registries()
 
 
 def test_load_manifest_unknown_network():
     with pytest.raises(FileNotFoundError):
-        load_manifest("devnet")
+        load_manifest("no-such-network")
 
 
 class _FakeRpc:

@@ -4,10 +4,10 @@ Values are loaded, never logged. Code in this package must not print
 private keys or token values; callers get parsed values only.
 
 Network selection: every chain-facing entry point resolves a Network
-profile via get_network(). Reads may target either network; SIGNING is
+profile via get_network(). Reads may target any profile; SIGNING is
 network-gated through signing_context() — mainnet signing requires an
 explicit opt-in pair of environment variables that never appear in .env,
-so the ambient testnet key can never sign chain 1611.
+so the ambient testnet or devnet key can never sign mainnet.
 """
 
 from __future__ import annotations
@@ -21,9 +21,9 @@ from nvnm_cite.chain.signer import parse_private_key
 
 @dataclass(frozen=True)
 class Network:
-    key: str  # "mainnet" | "testnet"
+    key: str  # "mainnet" | "testnet" | "devnet"
     chain_id: int
-    cosmos_chain_id: str
+    cosmos_chain_id: str  # L1 has no Cosmos chain: holds the L1 network name
     rpc_default: str
     rpc_env: str  # env var that overrides rpc_default
     explorer: str
@@ -45,18 +45,30 @@ MAINNET = Network(
     label="NVNM Chain mainnet (nvnm-1)",
 )
 
+# L1 constants: docs.nvnmchain.io "Network Details", live-verified 2026-11-10.
 TESTNET = Network(
     key="testnet",
-    chain_id=787111,
-    cosmos_chain_id="nvnm-testnet-1",
-    rpc_default="https://evm.testnet.nvnmchain.io",
+    chain_id=787223,
+    cosmos_chain_id="nvnm-next-testnet-1",
+    rpc_default="https://rpc.nvnm.testnet.nvnmchain.io",
     rpc_env="NVNM_TESTNET_RPC",
-    explorer="https://explorer.evm.testnet.nvnmchain.io",
-    gas_token="wmantraUSD",
-    label="NVNM Chain testnet (nvnm-testnet-1)",
+    explorer="https://explorer.nvnm.testnet.nvnmchain.io",
+    gas_token="nUSD",
+    label="NVNM Chain testnet (nvnm-next-testnet-1)",
 )
 
-NETWORKS: dict[str, Network] = {"mainnet": MAINNET, "testnet": TESTNET}
+DEVNET = Network(
+    key="devnet",
+    chain_id=787222,
+    cosmos_chain_id="nvnm-next-devnet-1",
+    rpc_default="https://rpc.nvnm.canary.mantrachain.dev",
+    rpc_env="NVNM_DEVNET_RPC",
+    explorer="https://explorer.nvnm.canary.mantrachain.dev",
+    gas_token="nUSD",
+    label="NVNM Chain devnet (nvnm-next-devnet-1)",
+)
+
+NETWORKS: dict[str, Network] = {"mainnet": MAINNET, "testnet": TESTNET, "devnet": DEVNET}
 
 # Deprecated aliases; migration-era call sites only. New code takes a Network.
 TESTNET_CHAIN_ID = TESTNET.chain_id
@@ -91,26 +103,37 @@ def testnet_rpc() -> str:
     return TESTNET.rpc_url()
 
 
-def testnet_private_key() -> int:
-    raw = os.environ.get("NVNM_TESTNET_KEY", "")
+def _env_private_key(env_name: str) -> int:
+    raw = os.environ.get(env_name, "")
     if not raw:
         raise RuntimeError(
-            "NVNM_TESTNET_KEY is not set; copy .env.example to .env and fill it in"
+            f"{env_name} is not set; copy .env.example to .env and fill it in"
         )
     return parse_private_key(raw)
+
+
+def testnet_private_key() -> int:
+    return _env_private_key("NVNM_TESTNET_KEY")
+
+
+def devnet_private_key() -> int:
+    return _env_private_key("NVNM_DEVNET_KEY")
 
 
 def signing_context(network: Network) -> tuple[int, int]:
     """The single gate for transaction signing: returns (private_key, chain_id).
 
-    Testnet reads NVNM_TESTNET_KEY (the .env dev key). Mainnet refuses
-    unless BOTH NVNM_MAINNET_WRITE_OK=1 and NVNM_MAINNET_KEY are set —
-    deliberately distinct variables that are never placed in .env, so a
-    session or a misconfigured tool cannot sign chain 1611 with the
-    ambient dev key. Mainnet writes are a human-gated ops action.
+    Testnet reads NVNM_TESTNET_KEY and devnet reads NVNM_DEVNET_KEY; those
+    keys are never substituted for each other. Mainnet refuses unless BOTH
+    NVNM_MAINNET_WRITE_OK=1 and NVNM_MAINNET_KEY are set — deliberately
+    distinct variables that are never placed in .env, so a session or a
+    misconfigured tool cannot sign mainnet with an ambient dev key.
+    Mainnet writes are a human-gated ops action.
     """
     if network.key == "testnet":
         return testnet_private_key(), network.chain_id
+    if network.key == "devnet":
+        return devnet_private_key(), network.chain_id
     if network.key == "mainnet":
         if os.environ.get("NVNM_MAINNET_WRITE_OK") != "1":
             raise RuntimeError(

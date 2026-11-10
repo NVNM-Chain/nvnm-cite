@@ -445,7 +445,7 @@ def test_receipt_prepare_builds_minimal_v1(monkeypatch):
     assert out["registry_exists"] is True
     assert out["agent"] == {"address": AGENT_ADDR}
     assert f"registry #{REG_ID}" in out["registry_line"]
-    assert out["chain"]["chain_id"] == 787111
+    assert out["chain"]["chain_id"] == TESTNET.chain_id
 
     receipt = json.loads(out["receipt"]["json"])
     assert receipt["schema"] == "nvnm-cite-receipt/v1"  # LOCKED, not -draft

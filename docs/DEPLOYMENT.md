@@ -53,7 +53,7 @@ All optional — the image defaults are the production configuration.
 
 | Variable | Default | Notes |
 |---|---|---|
-| `NVNM_NETWORK` | `mainnet` | `testnet` runs an instance against NVNM testnet. |
+| `NVNM_NETWORK` | `mainnet` | `testnet` / `devnet` runs an instance against NVNM L1 testnet (787223) / devnet (787222). |
 | `NVNM_MAINNET_RPC` | `https://evm.nvnmchain.io` | RPC URL override. |
 
 Telemetry (aggregate by-citation lookup counts) is **off** because the image
@@ -70,7 +70,7 @@ free and read-only, so rehearsing a real filing against mainnet is safe.
   10 s, probed with a 4 s RPC timeout so it fails fast instead of hanging).
 - **The alert that matters is RPC reachability**:
   `.chain.rpc_ok == false` (RPC unreachable) or
-  `.chain.chain_id_ok == false` (RPC serving something other than chain 1611).
+  `.chain.chain_id_ok == false` (RPC serving a chain other than the selected network's, 1611 on mainnet).
 - `.registries["us-scotus"].name_matches_manifest == true` is a live
   integrity check of the pinned registry manifest; false means the chain and
   the app's trust anchor disagree and is alert-worthy.

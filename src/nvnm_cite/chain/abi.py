@@ -170,7 +170,8 @@ def _decode_dynamic(entry: Entry, blob: bytes) -> Any:
     kind = entry["type"]
     if kind == "string":
         length = int.from_bytes(blob[:_WORD], "big")
-        return blob[_WORD : _WORD + length].decode("utf-8")
+        # Any wallet can store arbitrary bytes on L1; one bad registry must not break every listing.
+        return blob[_WORD : _WORD + length].decode("utf-8", errors="replace")
     if kind == "bytes":
         length = int.from_bytes(blob[:_WORD], "big")
         return bytes(blob[_WORD : _WORD + length])

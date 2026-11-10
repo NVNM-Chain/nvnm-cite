@@ -32,7 +32,7 @@ Two phases deserve an extra line pasted after the kickoff prompt: Phase 0 (paste
 
 1. [uv](https://docs.astral.sh/uv/) manages the environment (`uv sync`, `uv run pytest`).
 2. Copy `.env.example` to `.env` and fill in the values yourself. Never paste keys into chat; never commit `.env`.
-3. Chain WRITES from development run against NVNM **testnet** (chain id 787111) only; reads default to **mainnet** (chain id 1611), which now holds the full 2,114-registry corpus. Mainnet is never written from a session (`config.signing_context` enforces it).
+3. Chain WRITES from development run against NVNM L1 **testnet** (chain id 787223) or **devnet** (787222) only; reads default to **mainnet** (chain id 1611), which now holds the full 2,114-registry corpus. Mainnet is never written from a session (`config.signing_context` enforces it).
 
 ## Web demo
 

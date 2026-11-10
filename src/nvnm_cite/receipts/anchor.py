@@ -45,7 +45,6 @@ from nvnm_cite.receipts.schema import (
 from nvnm_cite.verifier.check import check_document
 from nvnm_cite.verifier.resolver import ChainResolver
 
-GAS_FLOOR = 40_000_000_000  # 40 gwei chain floor (DECISIONS 2026-06-10)
 GAS_HEADROOM_PCT = 25
 
 
@@ -239,7 +238,7 @@ def _send_one(
 ) -> dict:
     address = address_from_private_key(key)
     nonce = rpc.get_transaction_count(address, "pending")
-    gas_price = max(rpc.gas_price(), GAS_FLOOR)
+    gas_price = rpc.gas_price()
     gas = rpc.estimate_gas(address, pc.PRECOMPILE_ADDRESS, calldata)
     tx = LegacyTransaction(
         nonce=nonce,

@@ -7,7 +7,10 @@ import hashlib
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 import nvnm_cite.loader.bulk_load as bl
+from nvnm_cite.chain.rpc import RpcError
 from nvnm_cite.config import TESTNET_CHAIN_ID
 from nvnm_cite.loader.bulk_load import open_state, prepare, recover_submitted, run_load
 
@@ -219,6 +222,19 @@ def test_recover_submitted_settles_by_keyed_read(tmp_path: Path, monkeypatch) ->
     db.close()
 
 
+def test_chain_has_key_treats_l1_revert_as_miss() -> None:
+    class MissRpc:
+        def __init__(self, message: str) -> None:
+            self.message = message
+
+        def eth_call(self, to, data, block="latest"):
+            raise RpcError("eth_call", 3, self.message)
+
+    assert bl.chain_has_key(MissRpc("execution reverted: record does not exist"), 2228, "1 U.S. 1") is False
+    with pytest.raises(RpcError):
+        bl.chain_has_key(MissRpc("execution reverted: unauthorized"), 2228, "1 U.S. 1")
+
+
 def test_nusd_balance_reads_balance_of() -> None:
     rpc = FakeRpc(nusd_balance=1_500_000)
     address = "0x" + "ab" * 20
@@ -230,7 +246,7 @@ def test_nusd_balance_reads_balance_of() -> None:
 
 def test_run_load_halts_below_one_nusd(tmp_path: Path) -> None:
     state_path = tmp_path / "load_state.sqlite"
-    seed_state(state_path, 520)
+    seed_state(state_path, bl.REFRESH_EVERY + 20)
     db = open_state(state_path)
     logs: list[str] = []
     # 999,999 base units is one under 1 nUSD.
@@ -245,7 +261,7 @@ def test_run_load_halts_below_one_nusd(tmp_path: Path) -> None:
     )
     statuses = dict(db.execute("SELECT status, COUNT(*) FROM load_state GROUP BY status"))
     assert statuses["pending"] == 20
-    assert statuses.get("confirmed", 0) + statuses.get("submitted", 0) == 500
+    assert statuses.get("confirmed", 0) + statuses.get("submitted", 0) == bl.REFRESH_EVERY
     assert counters["confirmed"] == statuses.get("confirmed", 0)
     assert any("0.999999 nUSD below halt floor" in line for line in logs)
     db.close()
@@ -253,7 +269,7 @@ def test_run_load_halts_below_one_nusd(tmp_path: Path) -> None:
 
 def test_run_load_continues_at_exactly_one_nusd(tmp_path: Path) -> None:
     state_path = tmp_path / "load_state.sqlite"
-    seed_state(state_path, 520)
+    seed_state(state_path, 3 * bl.REFRESH_EVERY)
     db = open_state(state_path)
     # Exactly 1 nUSD must not halt: an 18-decimal floor or a `<=` compare would.
     counters = run_load(
@@ -265,5 +281,14 @@ def test_run_load_continues_at_exactly_one_nusd(tmp_path: Path) -> None:
         depth=50,
         log=lambda s: None,
     )
-    assert counters["confirmed"] == 520
+    assert counters["confirmed"] == 3 * bl.REFRESH_EVERY
     db.close()
+
+
+def test_gas_curve_covers_measured_l1_estimates() -> None:
+    # eth_estimateGas for new addRecord keys on L1 devnet 787222, 2026-11-10.
+    measured = (
+        (51, 2_881_904), (141, 3_909_015), (541, 6_992_341), (1_041, 11_103_056), (2_041, 19_067_973),
+    )
+    for payload_bytes, estimate in measured:
+        assert bl.GAS_BASE + bl.GAS_PER_BYTE * payload_bytes >= estimate

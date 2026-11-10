@@ -157,6 +157,15 @@ def test_decode_registries_result() -> None:
     assert page == Page(next_key=b"", total=3)
 
 
+def test_decode_registries_result_tolerates_invalid_utf8() -> None:
+    # L1 testnet holds third-party registries with non-UTF-8 names; listing must not crash.
+    blob = next(r for r in load_golden()["results"] if r["desc"] == "registries-result")
+    data = bytes.fromhex(blob["blob"].removeprefix("0x")).replace(b"us-scotus", b"\x8bs-scotus")
+    registries, _ = decode_registries_result(data)
+    assert registries[0].name == "\ufffds-scotus"
+    assert registries[0].id == 82
+
+
 def test_decode_add_registry_log_from_golden() -> None:
     golden_log = load_golden()["logs"][0]
     assert golden_log["event"] == "AddRegistry"

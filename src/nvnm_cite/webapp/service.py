@@ -826,6 +826,7 @@ class StatusService:
                 "gas_token": {
                     "name": self.network.gas_token,
                     "symbol": self.network.gas_token,
+                    # Wallets require 18; L1 gas is priced in attodollars, so 18 is also the fee unit.
                     "decimals": 18,
                 },
                 "gas_price_gwei": gas_price_gwei,

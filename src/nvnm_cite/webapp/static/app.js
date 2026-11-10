@@ -30,12 +30,13 @@ let EXPLORER = "";
 let RPC_URL = "";
 
 function netChainId() { return NET ? NET.chain_id : null; }
+function netName() { return NET.key[0].toUpperCase() + NET.key.slice(1); }
 
 function chainParams() {
   // wallet_addEthereumChain params, built from the server-fed network block.
   return {
     chainId: NET.chain_id_hex,
-    chainName: NET.key === "mainnet" ? "NVNM Chain" : "NVNM Chain Testnet",
+    chainName: NET.key === "mainnet" ? "NVNM Chain" : `NVNM Chain ${netName()}`,
     nativeCurrency: {
       name: NET.gas_token.name,
       symbol: NET.gas_token.symbol,
@@ -47,8 +48,9 @@ function chainParams() {
 }
 
 function gasCostText(gas, priceGwei) {
-  const gwei = priceGwei || (NET && NET.gas_price_gwei) || 40;
+  const gwei = priceGwei || (NET && NET.gas_price_gwei);
   const token = NET ? NET.gas_token.symbol : "";
+  if (!gwei) return `~${gas.toLocaleString("en-US")} gas`;
   return `~${gas.toLocaleString("en-US")} gas ≈ ${(gas * gwei * 1e-9).toFixed(4)} ${token} at ${gwei} gwei`;
 }
 
@@ -407,7 +409,7 @@ async function loadStatus() {
   // Network badge (next to the wordmark): mainnet vs testnet, server-fed.
   const netBadge = $("net-badge");
   if (netBadge && NET) {
-    netBadge.textContent = NET.key === "mainnet" ? "Mainnet" : "Testnet";
+    netBadge.textContent = netName();
     netBadge.className = "badge " + (NET.key === "mainnet" ? "badge-mainnet" : "badge-testnet");
   }
 
