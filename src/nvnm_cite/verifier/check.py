@@ -11,7 +11,7 @@ NOT_COVERED / AMBIGUOUS_JURISDICTION / UNPARSEABLE. NOT_FOUND comes ONLY
 from a keyed miss on a covered registry; a dead RPC raises out of here and
 is never reported as NOT_FOUND (the Resolver enforces this). Coverage is
 the pinned per-network registry manifest (Albert's decision 2026-07-31:
-every court registry the official attestor loaded — 2,114 on mainnet;
+every court registry the official attestor loaded — 2,114 on each shipped profile;
 supersedes the fixed pilot pair of 2026-06-14): a citation that maps
 outside it is NOT_COVERED without a chain read. Chain calls key on the
 manifest's numeric registryId (anchoring v1.2.0: names are non-unique).

@@ -3,14 +3,16 @@
 Under anchoring v1.2.0 registry names are NON-UNIQUE and every chain call
 keys on the numeric registryId. Anyone can create a registry named
 "us-scotus"; what makes ours authoritative is the PUBLISHED id + creator
-pair. These manifests pin that mapping per network, generated read-only by
-scripts/build_registry_manifest.py from a creator-filtered enumeration of
-registries() cross-checked against the bulk-load export, and checked in
-beside the vendored ABI. Runtime resolution goes through the pinned map,
-never through a live name search; diff_against_chain() exists to DETECT
-drift, not to follow it silently.
+pair. These manifests pin that mapping per network profile, generated
+read-only by scripts/build_registry_manifest.py from a creator-filtered
+enumeration of registries() cross-checked against the court-name list, and
+checked in beside the vendored ABI. Runtime resolution goes through the
+pinned map, never through a live name search; diff_against_chain() exists
+to DETECT drift, not to follow it silently. A manifest whose network key
+or chain id disagrees with its profile is refused.
 
-Stdlib only, like the rest of chain/.
+Stdlib only, like the rest of chain/. The profile check imports config
+lazily so config can finish loading its JSON before this module runs.
 """
 
 from __future__ import annotations
@@ -101,7 +103,7 @@ def _parse(raw: str) -> RegistryManifest:
 
 @lru_cache(maxsize=4)
 def load_manifest(network_key: str) -> RegistryManifest:
-    """Load the pinned manifest for "mainnet" or "testnet" (package data)."""
+    """Load the pinned manifest for a shipped network profile."""
     filename = f"registry_manifest_{network_key}.json"
     raw = resources.files("nvnm_cite.chain").joinpath(filename).read_text()
     manifest = _parse(raw)
@@ -109,4 +111,13 @@ def load_manifest(network_key: str) -> RegistryManifest:
         raise ValueError(
             f"manifest {filename} claims network {manifest.network!r}"
         )
+    from nvnm_cite import config
+
+    try:
+        profile = config.NETWORKS[network_key]
+    except KeyError:
+        raise ValueError(f"no profile for manifest network {network_key!r}") from None
+    config.match_manifest(
+        profile, chain_id=manifest.chain_id, manifest_network=manifest.network
+    )
     return manifest

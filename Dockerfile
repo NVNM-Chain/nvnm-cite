@@ -53,7 +53,7 @@ ENV PATH="/app/.venv/bin:${PATH}" \
 USER nvnm
 EXPOSE 8787
 
-# Reads default to mainnet (NVNM_NETWORK=testnet for a staging instance).
+# Default network is testnet. Set NVNM_NETWORK to another shipped profile.
 # /app/data is an OPTIONAL local index mount (status-panel counts only; the
 # chain is the lookup authority). No --telemetry flag: telemetry stays OFF,
 # which is the required production posture unless explicitly decided otherwise.

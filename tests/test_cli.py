@@ -143,9 +143,8 @@ def test_anchor_dry_run_does_not_send(brief_file, monkeypatch, capsys):
     assert "will be CREATED" in out
 
 
-def test_anchor_defaults_to_mainnet(brief_file, monkeypatch, capsys):
-    """No --network means mainnet, like every other command (Albert
-    2026-08-06: everything runs mainnet, demos included; testnet is opt-in)."""
+def test_anchor_defaults_to_testnet(brief_file, monkeypatch, capsys):
+    """No --network means testnet, the same default as every other command."""
     monkeypatch.delenv("NVNM_NETWORK", raising=False)
     seen = {}
 
@@ -157,7 +156,7 @@ def test_anchor_defaults_to_mainnet(brief_file, monkeypatch, capsys):
     monkeypatch.setattr(cli, "find_receipt_registries", lambda *a, **k: [])
     rc = cli.main(["anchor", str(brief_file), "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
     assert rc == 0
-    assert seen["chain_id"] == 1611
+    assert seen["chain_id"] == 787223
 
 
 def test_anchor_ambiguous_registries_require_explicit_id(brief_file, monkeypatch, capsys):

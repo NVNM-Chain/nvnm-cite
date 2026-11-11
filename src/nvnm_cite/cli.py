@@ -24,7 +24,7 @@ from nvnm_cite.chain.bech32 import eth_to_bech32
 from nvnm_cite.chain.registrymap import load_manifest
 from nvnm_cite.chain.rpc import EvmRpc, RpcError
 from nvnm_cite.chain.secp256k1 import address_from_private_key
-from nvnm_cite.config import get_network, load_dotenv, signing_context
+from nvnm_cite.config import get_network, load_dotenv, network_choices, signing_context
 from nvnm_cite.receipts.anchor import find_receipt_registries, prepare_anchor, registry_line
 from nvnm_cite.receipts.anchor import send as anchor_send
 from nvnm_cite.receipts.chainio import ChainReader
@@ -335,11 +335,6 @@ def cmd_anchor(args: argparse.Namespace) -> int:
         return 2
 
     load_dotenv()
-    # Anchoring WRITES. Mainnet is the default like every other command
-    # (Albert 2026-08-06: everything runs mainnet, demos included; testnet is
-    # opt-in via --network testnet). The signing_context opt-in pair still
-    # gates every mainnet signature, so the flipped default cannot make the
-    # ambient dev key sign chain 1611.
     network = get_network(args.network)
     rpc_url = args.rpc or network.rpc_url()
     rpc_factory = lambda: EvmRpc(rpc_url)  # noqa: E731
@@ -659,9 +654,9 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("path", help="path to the document (.pdf, .docx, .txt, .md)")
     check.add_argument(
         "--network",
-        choices=["mainnet", "testnet", "devnet"],
+        choices=network_choices(),
         default=None,
-        help="which NVNM Chain network to read (default: mainnet, or NVNM_NETWORK)",
+        help="which NVNM Chain network to read (default: testnet, or NVNM_NETWORK)",
     )
     check.add_argument(
         "--rpc",
@@ -688,9 +683,8 @@ def build_parser() -> argparse.ArgumentParser:
             "Check a document, then record a minimal, non-enumerating receipt on "
             "NVNM Chain. Without --anchor this is a dry run that only shows the plan; "
             "with --anchor it sends the transaction(s). Signing goes through "
-            "config.signing_context: NVNM_TESTNET_KEY on testnet, NVNM_DEVNET_KEY "
-            "on devnet; on mainnet the explicit NVNM_MAINNET_WRITE_OK=1 + "
-            "NVNM_MAINNET_KEY ops pair."
+            "config.signing_context, which reads the profile's key_env "
+            "(NVNM_TESTNET_KEY on testnet, NVNM_DEVNET_KEY on devnet)."
         ),
     )
     anchor.add_argument("path", help="path to the document (.pdf, .docx, .txt, .md)")
@@ -704,9 +698,9 @@ def build_parser() -> argparse.ArgumentParser:
     anchor.add_argument("--agent", default=None, help="attesting wallet address (default: derived from the signing key)")
     anchor.add_argument(
         "--network",
-        choices=["mainnet", "testnet", "devnet"],
+        choices=network_choices(),
         default=None,
-        help="which network to anchor on (default: mainnet, or NVNM_NETWORK; mainnet writes still need the signing opt-in pair)",
+        help="which network to anchor on (default: testnet, or NVNM_NETWORK)",
     )
     anchor.add_argument("--rpc", default=None, help="EVM RPC URL (default: the selected network's public RPC)")
     anchor.add_argument("--anchor", action="store_true", help="actually send the transaction(s) (default: dry-run plan only)")
@@ -735,9 +729,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     verify.add_argument(
         "--network",
-        choices=["mainnet", "testnet", "devnet"],
+        choices=network_choices(),
         default=None,
-        help="which network to verify against (default: mainnet, or NVNM_NETWORK)",
+        help="which network to verify against (default: testnet, or NVNM_NETWORK)",
     )
     verify.add_argument("--rpc", default=None, help="EVM RPC URL (default: the selected network's public RPC)")
     verify.add_argument("--json", action="store_true", help="emit the full JSON result")
@@ -752,7 +746,7 @@ def build_parser() -> argparse.ArgumentParser:
             "not unique on chain. Exits nonzero on drift."
         ),
     )
-    manifest.add_argument("--network", choices=["mainnet", "testnet", "devnet"], default=None)
+    manifest.add_argument("--network", choices=network_choices(), default=None)
     manifest.add_argument("--rpc", default=None, help="EVM RPC URL (default: the selected network's public RPC)")
     manifest.add_argument("--json", action="store_true", help="emit JSON")
     manifest.set_defaults(func=cmd_manifest_verify)
