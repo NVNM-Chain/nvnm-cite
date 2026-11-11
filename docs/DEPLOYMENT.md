@@ -17,7 +17,7 @@ database, a volume, a secret, or a backup.
   commit. Put `[skip tag]` in the merge commit to skip it. Platforms: `linux/amd64` and `linux/arm64`.
 - Before anything is pushed, CI runs the full test suite and a container
   smoke test: the image must boot, serve `/`, and report a reachable
-  mainnet RPC, the right chain id, full manifest coverage, and telemetry off.
+  RPC, a chain id matching the selected profile, full manifest coverage, and telemetry off.
 - The GHCR package is linked to this public repo and is publicly pullable
   (verified 2026-08-04): no registry credentials are needed to pull.
 
@@ -37,9 +37,8 @@ docker run --rm -p 8787:8787 ghcr.io/nvnm-chain/nvnm-cite:latest
 - **No secrets.** The server never holds keys and never signs anything; the
   one write path (recording a filing receipt) is signed in the user's own
   browser wallet, with the user's own gas. Never mount a `.env` into it.
-- Only runtime dependency: the public NVNM Chain mainnet RPC
-  `https://evm.nvnmchain.io`. Chain reads are free. MANTRA knows this site
-  reads their mainnet RPC.
+- Only runtime dependency: the RPC of the selected network. The image default
+  is testnet. Chain reads are free.
 - Runs as non-root (uid 10001) and handles SIGTERM with a clean shutdown.
   `readOnlyRootFilesystem` is fine; if enabled, mount an emptyDir at `/tmp`
   (PDF parsing may use it).
@@ -49,19 +48,21 @@ docker run --rm -p 8787:8787 ghcr.io/nvnm-chain/nvnm-cite:latest
 
 ## Configuration
 
-All optional — the image defaults are the production configuration.
+The image defaults to testnet. Set `NVNM_NETWORK` explicitly in the
+production deploy; a value with no shipped profile stops the app at boot.
 
 | Variable | Default | Notes |
 |---|---|---|
-| `NVNM_NETWORK` | `mainnet` | `testnet` / `devnet` runs an instance against NVNM L1 testnet (787223) / devnet (787222). |
-| `NVNM_MAINNET_RPC` | `https://evm.nvnmchain.io` | RPC URL override. |
+| `NVNM_NETWORK` | `testnet` | `devnet` selects the other shipped profile. One process serves one network. |
+| `NVNM_TESTNET_RPC` / `NVNM_DEVNET_RPC` | the profile's `rpc_default` | RPC URL override for the selected profile. |
 
 Telemetry (aggregate by-citation lookup counts) is **off** because the image
 CMD passes no `--telemetry` flag. Leave it off; turning it on is a product
 decision, not an ops setting.
 
-A staging hostname can run the exact production image unchanged — reads are
-free and read-only, so rehearsing a real filing against mainnet is safe.
+A second hostname can run the same image with `NVNM_NETWORK=devnet`. Reads
+are free. Set `NVNM_NETWORK` in the deploy that rolls the image so the
+target is explicit.
 
 ## Health and monitoring
 
@@ -70,7 +71,7 @@ free and read-only, so rehearsing a real filing against mainnet is safe.
   10 s, probed with a 4 s RPC timeout so it fails fast instead of hanging).
 - **The alert that matters is RPC reachability**:
   `.chain.rpc_ok == false` (RPC unreachable) or
-  `.chain.chain_id_ok == false` (RPC serving a chain other than the selected network's, 1611 on mainnet).
+  `.chain.chain_id_ok == false` (RPC chain id is not the selected profile's).
 - `.registries["us-scotus"].name_matches_manifest == true` is a live
   integrity check of the pinned registry manifest; false means the chain and
   the app's trust anchor disagree and is alert-worthy.

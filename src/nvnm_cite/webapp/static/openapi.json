@@ -740,7 +740,7 @@
               "label": {"type": "string"},
               "chain_id": {"type": "integer"},
               "chain_id_hex": {"type": "string"},
-              "cosmos_chain_id": {"type": "string"},
+              "network_name": {"type": "string"},
               "rpc_urls": {"type": "array", "items": {"type": "string"}},
               "public_rpc": {"type": "string", "description": "Where to broadcast signed transactions and replay proof eth_calls."},
               "explorer": {"type": "string"},

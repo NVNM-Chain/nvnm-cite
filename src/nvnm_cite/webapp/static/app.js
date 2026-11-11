@@ -9,8 +9,7 @@
  *
  * Network identity (chain id, RPC, explorer, gas token) is SERVER-FED via
  * /api/status's `network` block — nothing chain-specific is hardcoded
- * here, so the same page serves mainnet (the production default) and
- * testnet. Wallet actions are gated until that block has loaded.
+ * here. Wallet actions are gated until that block has loaded.
  *
  * Anchoring v1.2.0: registry names are NOT unique on chain; the numeric
  * registry #id is the canonical reference. The discovery line on a filing
@@ -30,13 +29,12 @@ let EXPLORER = "";
 let RPC_URL = "";
 
 function netChainId() { return NET ? NET.chain_id : null; }
-function netName() { return NET.key[0].toUpperCase() + NET.key.slice(1); }
 
 function chainParams() {
   // wallet_addEthereumChain params, built from the server-fed network block.
   return {
     chainId: NET.chain_id_hex,
-    chainName: NET.key === "mainnet" ? "NVNM Chain" : `NVNM Chain ${netName()}`,
+    chainName: NET.label,
     nativeCurrency: {
       name: NET.gas_token.name,
       symbol: NET.gas_token.symbol,
@@ -406,11 +404,11 @@ async function loadStatus() {
     if (st.constants.rpc_url) RPC_URL = st.constants.rpc_url;
   }
 
-  // Network badge (next to the wordmark): mainnet vs testnet, server-fed.
+  // Network badge (next to the wordmark): the profile key, server-fed.
   const netBadge = $("net-badge");
   if (netBadge && NET) {
-    netBadge.textContent = netName();
-    netBadge.className = "badge " + (NET.key === "mainnet" ? "badge-mainnet" : "badge-testnet");
+    netBadge.textContent = NET.key;
+    netBadge.className = "badge badge-network";
   }
 
   const badge = $("chain-badge");
@@ -497,9 +495,9 @@ async function loadStatus() {
 }
 
 /* Coverage rendering: the authoritative coverage figure is the pinned
-   registry MANIFEST (st.coverage — creator-verified name→id map; 2,114
-   registries on mainnet). The local-index table below it shows only the
-   locally synced/mirrored subset, honestly labeled. */
+   registry MANIFEST (st.coverage — creator-verified name→id map). The
+   local-index table below it shows only the locally synced/mirrored
+   subset, honestly labeled. */
 function renderCoverage(st) {
   const rows = st.index && st.index.registries ? st.index.registries : [];
   const liveNames = Object.keys(st.registries || {});

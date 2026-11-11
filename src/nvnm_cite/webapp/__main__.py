@@ -6,7 +6,7 @@ import argparse
 import signal
 from pathlib import Path
 
-from nvnm_cite.config import get_network, load_dotenv
+from nvnm_cite.config import get_network, load_dotenv, network_choices
 from nvnm_cite.webapp.server import build_server
 
 
@@ -16,9 +16,9 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8787, help="port (default 8787)")
     parser.add_argument(
         "--network",
-        choices=["mainnet", "testnet", "devnet"],
+        choices=network_choices(),
         default=None,
-        help="which NVNM Chain network to serve against (default: mainnet, or NVNM_NETWORK)",
+        help="which NVNM Chain network to serve against (default: testnet, or NVNM_NETWORK)",
     )
     parser.add_argument("--rpc", default=None, help="EVM RPC URL (default: the selected network's)")
     parser.add_argument("--data-dir", default="data", help="directory holding corpus.sqlite / chain_index.sqlite")

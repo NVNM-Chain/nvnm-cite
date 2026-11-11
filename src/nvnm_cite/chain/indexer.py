@@ -243,11 +243,11 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="comma-separated registry names (resolved via the pinned manifest) or numeric ids",
     )
-    parser.add_argument("--network", choices=["mainnet", "testnet", "devnet"], default=None)
+    from nvnm_cite.config import get_network, load_dotenv, network_choices
+
+    parser.add_argument("--network", choices=network_choices(), default=None)
     parser.add_argument("--rpc", default=None, help="RPC URL (default: the network's)")
     args = parser.parse_args(argv)
-
-    from nvnm_cite.config import get_network, load_dotenv
 
     load_dotenv()
     network = get_network(args.network)

@@ -52,30 +52,21 @@ from nvnm_cite.chain.precompile import (
 from nvnm_cite.chain.rpc import EvmRpc, RpcError
 from nvnm_cite.chain.secp256k1 import address_from_private_key
 from nvnm_cite.chain.signer import LegacyTransaction, sign_transaction
-from nvnm_cite.config import get_network, load_dotenv, signing_context
+from nvnm_cite.config import TESTNET, get_network, load_dotenv, network_choices, signing_context
 from nvnm_cite.loader.records import CaseRow, RecordError, render_record
 
 STUCK_SECONDS = 180.0  # account nonce not advancing -> re-send head at +25%
 DEFAULT_DEPTH = 50
-# L1 pays fees in nUSD (TIP-20, 6 decimals). The native-balance RPC returns a
-# fixed placeholder on L1, so it is never the fee balance.
-NUSD_ADDRESS = "0x20C0000000000000000000000000000000000000"
-TIP20_DECIMALS = 6
-BALANCE_HALT_NUSD_BASE_UNITS = 10**TIP20_DECIMALS  # halt cleanly below 1 nUSD
+# The native balance is not the fee balance. A type-0 send debits
+# ceil(gas_limit * gas_price / 10**(18 - fee_token_decimals)) base units
+# (DECISIONS 2026-11-09): gas price is 18-decimal. The token address and
+# decimals come from the network profile.
 BALANCE_OF_SELECTOR = keccak_256(b"balanceOf(address)")[:4]
-# Gas price + balance re-read cadence. At ~0.006 nUSD per L1 record, 50 sends
-# cost well under the 1 nUSD floor, so the halt fires before the account is dry.
-REFRESH_EVERY = 50
 
 # Gas limit from the measured curve instead of a per-record estimateGas
-# round-trip (2026-06-11 optimization, Albert's call: the first live run
-# confirmed at ~0.76 tx/s with estimate+send+receipt per record all serial
-# HTTP). L1 devnet 787222 (2026-11-10): eth_estimateGas for a NEW addRecord
-# key runs 2.88M at 51 payload-string bytes to 19.07M at 2,041 B, steeper per
-# byte for small payloads, and a sent tx used within 2% of its estimate.
-# 3.0M + 8.5k/byte lies above every measured point; 30% headroom on top. L1
-# charges gas used, and reconcile is the ground truth for anything gas can
-# get wrong.
+# round-trip. shortcut: measured for the shipped profiles; remeasure before
+# a bulk load on a network whose gas schedule differs. Reconcile is the
+# ground truth for anything gas can get wrong.
 GAS_BASE = 3_000_000
 GAS_PER_BYTE = 8_500
 GAS_HEADROOM_PCT = 30
@@ -124,13 +115,26 @@ _TRANSPORT_ERRORS = (OSError, http.client.HTTPException, ValueError)
 _RETRY_SCHEDULE = (1, 2, 5, 15, 30)
 
 
-def nusd_balance(rpc: EvmRpc, address: str) -> int:
-    """Spendable fee balance in nUSD base units (6 decimals).
+def get_balance(rpc: EvmRpc, address: str, token: str) -> int:
+    """Spendable fee-token balance in base units.
 
-    An empty result (no code at the token address, as on L2) decodes to 0, so
-    a missing token halts the load instead of looking funded."""
+    An empty result (no code at the token address) decodes to 0, so a missing
+    token halts the load instead of looking funded."""
     data = BALANCE_OF_SELECTOR + bytes(12) + bytes.fromhex(address.removeprefix("0x"))
-    return int.from_bytes(rpc.eth_call(NUSD_ADDRESS, data), "big")
+    return int.from_bytes(rpc.eth_call(token, data), "big")
+
+
+def fee_base_units(gas: int, gas_price: int, *, decimals: int = 6) -> int:
+    """Token base units a type-0 tx can debit."""
+    scale = 10 ** (18 - decimals)
+    return (gas * gas_price + scale - 1) // scale
+
+
+def record_gas_limit(uri: str, checksum: str, metadata: str) -> int:
+    payload_bytes = len((uri + checksum + "cite-canonical-v1" + metadata).encode("utf-8"))
+    gas = GAS_BASE + GAS_PER_BYTE * payload_bytes
+    headroom = gas * GAS_HEADROOM_PCT // 100
+    return gas + headroom
 
 
 def rpc_retry(log: Callable[[str], None], label: str, call: Callable[[], T]) -> T:
@@ -294,6 +298,7 @@ class InFlight:
     tx_hash: str
     raw: bytes
     gas_price: int
+    gas_limit: int
     sent_at: float
 
 
@@ -371,9 +376,22 @@ def run_load(
     depth: int = DEFAULT_DEPTH,
     log=lambda s: print(s, flush=True),
     max_records: int | None = None,
+    fee_token: str | None = None,
+    fee_decimals: int | None = None,
 ) -> dict[str, int]:
     """``key``/``chain_id`` come from config.signing_context (the one signing
-    gate); ``registry_ids`` is the pinned manifest's name -> id map."""
+    gate); ``registry_ids`` is the pinned manifest's name -> id map.
+
+    ``fee_token`` and ``fee_decimals`` come from the selected profile. When
+    omitted they fall back to the testnet profile, which is what the offline
+    tests exercise.
+    """
+    token = fee_token if fee_token is not None else TESTNET.fee_token
+    decimals = fee_decimals if fee_decimals is not None else TESTNET.fee_token_decimals
+
+    def fee_of(gas_limit: int, price: int) -> int:
+        return fee_base_units(gas_limit, price, decimals=decimals)
+
     address = address_from_private_key(key)
     live_chain = rpc.chain_id()
     if live_chain != chain_id:
@@ -396,7 +414,12 @@ def run_load(
     counters = {"confirmed": 0, "resent": 0}
     started = time.monotonic()
     last_log = started
-    submitted_since_refresh = 0
+
+    def halt_if_unaffordable(next_fee: int, reserved_fees: int, balance: int) -> None:
+        if balance - reserved_fees < next_fee:
+            raise Halt(
+                f"next fee {next_fee} base units exceeds balance {balance} with {reserved_fees} reserved"
+            )
 
     def fetch_pending(limit: int) -> list[tuple]:
         return db.execute(
@@ -419,14 +442,11 @@ def run_load(
         # revert -- nothing a per-record estimate would catch is left.
         # (v1.2.0: the registry name left the payload; the uint64 id is in
         # the static tuple head and is covered by GAS_BASE.)
-        payload_bytes = len(
-            (uri + checksum + "cite-canonical-v1" + metadata).encode("utf-8")
-        )
-        gas = GAS_BASE + GAS_PER_BYTE * payload_bytes
+        gas_limit = record_gas_limit(uri, checksum, metadata)
         tx = LegacyTransaction(
             nonce=use_nonce,
             gas_price=gas_price,
-            gas_limit=gas + gas * GAS_HEADROOM_PCT // 100,
+            gas_limit=gas_limit,
             to=PRECOMPILE_ADDRESS,
             value=0,
             data=calldata,
@@ -461,34 +481,34 @@ def run_load(
             (use_nonce, tx_hash, _now(), position),
         )
         db.commit()
-        return InFlight(use_nonce, position, tx_hash, signed.raw, gas_price, time.monotonic())
+        return InFlight(
+            use_nonce, position, tx_hash, signed.raw, gas_price, gas_limit, time.monotonic()
+        )
 
     remaining = max_records
     try:
         while not (stop["flag"] and not inflight):
             # Fill the pipeline.
             if not stop["flag"]:
-                want = depth - len(inflight)
+                open_slots = depth - len(inflight)
                 if remaining is not None:
-                    want = min(want, remaining)
-                if want > 0:
-                    rows = fetch_pending(want)
-                    if not rows and not inflight:
+                    open_slots = min(open_slots, remaining)
+                if open_slots > 0:
+                    pending_rows = fetch_pending(open_slots)
+                    if not pending_rows and not inflight:
                         break
-                    for row in rows:
-                        inflight.append(submit(row, nonce))
-                        nonce += 1
-                        submitted_since_refresh += 1
-                        if remaining is not None:
-                            remaining -= 1
-                    if submitted_since_refresh >= REFRESH_EVERY:
+                    if pending_rows:
                         gas_price = rpc_retry(log, "gasPrice", rpc.gas_price)
-                        submitted_since_refresh = 0
-                        balance = rpc_retry(log, "balance", lambda: nusd_balance(rpc, address))
-                        if balance < BALANCE_HALT_NUSD_BASE_UNITS:
-                            raise Halt(
-                                f"balance {balance / 10**TIP20_DECIMALS:.6f} nUSD below halt floor"
-                            )
+                        balance = rpc_retry(log, "balance", lambda: get_balance(rpc, address, token))
+                        for row in pending_rows:
+                            _position, _registry, checksum, uri, metadata = row
+                            next_fee = fee_of(record_gas_limit(uri, checksum, metadata), gas_price)
+                            reserved_fees = sum(fee_of(tx.gas_limit, tx.gas_price) for tx in inflight)
+                            halt_if_unaffordable(next_fee, reserved_fees, balance)
+                            inflight.append(submit(row, nonce))
+                            nonce += 1
+                            if remaining is not None:
+                                remaining -= 1
             if not inflight:
                 if stop["flag"] or (remaining is not None and remaining <= 0):
                     break
@@ -558,6 +578,13 @@ def run_load(
                         "SELECT position, registry, checksum, uri, metadata FROM load_state WHERE position=?",
                         (head.position,),
                     ).fetchone()
+                    _position, _registry, checksum, uri, metadata = row
+                    next_fee = fee_of(record_gas_limit(uri, checksum, metadata), new_price)
+                    balance = rpc_retry(log, "balance", lambda: get_balance(rpc, address, token))
+                    reserved_fees = sum(
+                        fee_of(tx.gas_limit, tx.gas_price) for tx in inflight if tx is not head
+                    )
+                    halt_if_unaffordable(next_fee, reserved_fees, balance)
                     saved_price = gas_price
                     gas_price = new_price
                     try:
@@ -606,6 +633,9 @@ def print_status(
     db: sqlite3.Connection,
     rpc: EvmRpc | None,
     address: str | None,
+    token_symbol: str,
+    fee_token: str,
+    fee_decimals: int,
 ) -> None:
     print("load_state:")
     for status, count in db.execute(
@@ -624,8 +654,8 @@ def print_status(
     if gas[0]:
         print(f"  measured: {gas[0]:,} records, avg {gas[2]:,.0f} gas")
     if rpc is not None and address is not None:
-        balance = nusd_balance(rpc, address)
-        print(f"  balance: {balance / 10**TIP20_DECIMALS:.6f} nUSD ({address})")
+        balance = get_balance(rpc, address, fee_token)
+        print(f"  balance: {balance / 10**fee_decimals:.{fee_decimals}f} {token_symbol} ({address})")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -648,12 +678,12 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--state", type=Path, default=Path("data/load_state.sqlite"))
     p_run.add_argument("--depth", type=int, default=DEFAULT_DEPTH)
     p_run.add_argument("--max-records", type=int, default=None, help="stop after N submissions (probe runs)")
-    p_run.add_argument("--network", choices=["mainnet", "testnet", "devnet"], default=None)
+    p_run.add_argument("--network", choices=network_choices(), default=None)
 
     p_stat = sub.add_parser("status", help="checkpoint counters and balance")
     p_stat.add_argument("--state", type=Path, default=Path("data/load_state.sqlite"))
     p_stat.add_argument("--offline", action="store_true", help="skip RPC reads")
-    p_stat.add_argument("--network", choices=["mainnet", "testnet", "devnet"], default=None)
+    p_stat.add_argument("--network", choices=network_choices(), default=None)
 
     args = parser.parse_args(argv)
     load_dotenv()
@@ -669,26 +699,37 @@ def main(argv: list[str] | None = None) -> int:
     from nvnm_cite.chain.registrymap import load_manifest
 
     if args.command == "run":
-        # Writes default to testnet; mainnet requires the signing_context
-        # opt-in pair (never set in .env or sessions).
-        network = get_network(args.network, default="testnet")
+        network = get_network(args.network)
         db = open_state(args.state)
         rpc = EvmRpc(network.rpc_url())
         key, chain_id = signing_context(network)
         registry_ids = load_manifest(network.key).all_registries()
-        run_load(db, rpc, key, chain_id, registry_ids, depth=args.depth, max_records=args.max_records)
-        print_status(db, rpc, address_from_private_key(key))
+        run_load(
+            db, rpc, key, chain_id, registry_ids,
+            depth=args.depth, max_records=args.max_records,
+            fee_token=network.fee_token, fee_decimals=network.fee_token_decimals,
+        )
+        print_status(
+            db, rpc, address_from_private_key(key), network.gas_token,
+            network.fee_token, network.fee_token_decimals,
+        )
         db.close()
         return 0
 
-    network = get_network(args.network, default="testnet")
+    network = get_network(args.network)
     db = open_state(args.state)
     if args.offline:
-        print_status(db, None, None)
+        print_status(
+            db, None, None, network.gas_token,
+            network.fee_token, network.fee_token_decimals,
+        )
     else:
         rpc = EvmRpc(network.rpc_url())
         key, _ = signing_context(network)
-        print_status(db, rpc, address_from_private_key(key))
+        print_status(
+            db, rpc, address_from_private_key(key), network.gas_token,
+            network.fee_token, network.fee_token_decimals,
+        )
     db.close()
     return 0
 
