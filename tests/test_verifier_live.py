@@ -18,8 +18,8 @@ from nvnm_cite.config import TESTNET, load_dotenv
 from nvnm_cite.verifier.check import check_document
 from nvnm_cite.verifier.resolver import ChainResolver
 
-# Coverage for the live run: the pinned TESTNET manifest (pilot pair,
-# us-scotus=737 / us-ca11=738), id-keyed reads under anchoring v1.2.0.
+# Coverage for the live run: the pinned L1 TESTNET manifest (all 2,114 court
+# registries, us-scotus=82 / us-ca11=71), id-keyed reads under anchoring v1.2.0.
 REGISTRY_IDS = load_manifest("testnet").all_registries()
 
 
@@ -38,7 +38,7 @@ def rpc_url() -> str:
 
 # Real first-page SCOTUS cites loaded in tranche 1 (us-scotus), a real-but-
 # absent ca11 cite (the fabricated Varghese), a covered-but-wrong-name pair,
-# an out-of-pilot circuit, a court-less reporter cite, and an orphan Id.
+# an invented 2d Cir. cite, a court-less reporter cite, and an orphan Id.
 LIVE_BRIEF = """
 Id. at 50. We start here. The right was recognized in Roe v. Wade,
 410 U.S. 113 (1973). Segregation fell in Imaginary Plaintiff v.
@@ -58,7 +58,7 @@ def test_live_check_exercises_all_statuses(rpc_url: str):
 
     # VERIFIED against live chain state, id-keyed
     assert by["410 U.S. 113"]["status"] == "VERIFIED"
-    assert by["410 U.S. 113"]["registry_id"] == 737
+    assert by["410 U.S. 113"]["registry_id"] == 82
     assert by["410 U.S. 113"]["record"]["cases"], "a verified cite names a real case"
     # the exact, replayable query rides back with the verdict (non-repudiation)
     assert by["410 U.S. 113"]["query"]["params"][0]["to"] == pc.PRECOMPILE_ADDRESS
@@ -70,7 +70,8 @@ def test_live_check_exercises_all_statuses(rpc_url: str):
     # the fabricated cite: real-looking, covered court, genuinely absent
     assert by["925 F.3d 1339"]["status"] == "NOT_FOUND"
 
-    assert by["100 F.3d 200"]["status"] == "NOT_COVERED"  # 2d Cir., outside pilot
+    assert by["100 F.3d 200"]["status"] == "NOT_FOUND"  # 2d Cir. is covered; the cite is invented
+    assert by["100 F.3d 200"]["registry_id"] == 72
     assert by["12 F.3d 34"]["status"] == "AMBIGUOUS_JURISDICTION"  # no court parenthetical
     # 1.2.0: the orphan Id. is accounted for in unresolved_references,
     # no longer an UNPARSEABLE table row.
@@ -78,6 +79,6 @@ def test_live_check_exercises_all_statuses(rpc_url: str):
 
     counts = report["summary"]["by_status"]
     assert counts["VERIFIED"] == 2
-    assert counts["NOT_FOUND"] == 1
-    assert counts["NOT_COVERED"] == 1
+    assert counts["NOT_FOUND"] == 2
+    assert counts["NOT_COVERED"] == 0
     assert report["summary"]["name_mismatches"] == 1

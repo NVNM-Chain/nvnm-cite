@@ -55,7 +55,7 @@ class _RpcStub:
 
 def test_resolver_records_keyed_miss(tmp_path):
     sink = SqliteTelemetry(tmp_path / "t.sqlite")
-    err = RpcError("eth_call", 3, "collections: not found: key '(\"738\", \"925 F.3d 1339\")'")
+    err = RpcError("eth_call", 3, "execution reverted: record does not exist")
     resolver = ChainResolver(lambda: _RpcStub(err), telemetry=sink)
     res = resolver.resolve(738, "925 F.3d 1339", "us-ca11")
     assert res.record is None

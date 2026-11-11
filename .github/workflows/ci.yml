@@ -56,9 +56,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       # Boot the real image and hit it the way monitoring will: / must serve,
-      # /api/status must report a reachable mainnet RPC, the right chain id,
-      # full manifest coverage, a manifest-consistent sentinel registry, and
-      # telemetry OFF (the required production default).
+      # /api/status must report a reachable RPC for the image's network
+      # (testnet unless NVNM_NETWORK is set), chain_id_ok, manifest coverage,
+      # a manifest-consistent sentinel registry, and telemetry OFF.
       - name: Smoke test
         run: |
           docker run -d --name smoke -p 8787:8787 nvnm-cite:smoke

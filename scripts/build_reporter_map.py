@@ -1,6 +1,6 @@
 """Build the reporter-edition -> registry inference table for the normalizer.
 
-Generates src/nvnm_cite/normalizer/reporter_registries.json from the mainnet
+Generates src/nvnm_cite/normalizer/reporter_registries.json from the
 bulk-load export (data/mainnet-full-export/, byte-validated against the
 chain): for every reporter edition observed in the corpus, if ONE registry
 dominates it overwhelmingly, a citation in that edition can be routed there
@@ -29,7 +29,7 @@ Guards (an edition is included only if ALL hold):
   SCOTUS's location as District of Columbia ("Cranch", "Wall.") — those
   are adjudicated into EXCLUDE below, the M.J. precedent;
 - not a vendor identifier (WL / LEXIS): those are never registry keys;
-- the registry exists in the pinned mainnet manifest.
+- the registry exists in the pinned testnet manifest.
 
 Curated adjudications (DECISIONS 2026-08-01) applied on top:
 - EXCLUDED editions that are jurisdictionally multi-court in reality even
@@ -197,7 +197,7 @@ def scan_corpus() -> dict[str, Counter]:
 
 
 def main() -> int:
-    manifest = load_manifest("mainnet")
+    manifest = load_manifest("testnet")
     manifest_names = set(manifest.all_registries())
     ed_regs = scan_corpus()
 

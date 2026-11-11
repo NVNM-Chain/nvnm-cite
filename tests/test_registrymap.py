@@ -8,30 +8,23 @@ from nvnm_cite.chain.registrymap import RegistryManifest, load_manifest
 ADMIN = "nvnm14a3em3mr9mvta9ccgk80wn0dxgzt5lkt2r8trx"
 
 
-def test_mainnet_manifest_pins_live_verified_ids():
-    m = load_manifest("mainnet")
-    assert m.chain_id == 1611
+@pytest.mark.parametrize(
+    "network, chain_id",
+    [("testnet", 787223), ("devnet", 787222)],
+)
+def test_manifest_pins_its_own_chain(network, chain_id):
+    m = load_manifest(network)
+    assert m.network == network
+    assert m.chain_id == chain_id
     assert m.creator == ADMIN
     assert len(m.ids) == 2114
     assert m.registry_id("us-scotus") == 82
-    assert m.registry_id("us-ca11") == 71
-    assert m.registry_id("us-ca1") == 69
-    assert m.registry_name(2182) == "us-wyo"
     assert m.registry_id("not-a-court") is None
-    ids = sorted(m.ids.values())
-    assert ids[0] == 69 and ids[-1] == 2182
-    assert ids == list(range(69, 2183))  # contiguous block, no gaps
-
-
-def test_testnet_manifest_pins_pilot_pair():
-    m = load_manifest("testnet")
-    assert m.chain_id == 787111
-    assert m.all_registries() == {"us-scotus": 737, "us-ca11": 738}
 
 
 def test_load_manifest_unknown_network():
     with pytest.raises(FileNotFoundError):
-        load_manifest("devnet")
+        load_manifest("no-such-network")
 
 
 class _FakeRpc:

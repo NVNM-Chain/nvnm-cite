@@ -110,9 +110,6 @@ class EvmRpc:
     def block_number(self) -> int:
         return _to_int(self.call("eth_blockNumber"))
 
-    def get_balance(self, address: str) -> int:
-        return _to_int(self.call("eth_getBalance", [address, "latest"]))
-
     def get_transaction_count(self, address: str, tag: str = "pending") -> int:
         return _to_int(self.call("eth_getTransactionCount", [address, tag]))
 

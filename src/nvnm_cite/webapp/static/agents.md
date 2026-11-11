@@ -73,10 +73,10 @@ curl -sS "https://www.nvnmcite.com/api/receipt/lookup?sha256=<64-hex-digest>"
 
 Without a `registry` parameter the server searches every receipts registry on the chain by keyed read (the court citation registries are excluded — they hold citation keys, never document receipts). The response: `chain_wide` true, `found`, `sweep` (how many registries were checked), and `hits[]` — one entry per registry that anchors this hash, each with `registry` / `registry_id` / `registry_owner`, `versions[]` (each anchored version with its chain timestamp and the receipt JSON: document hash, chain id, block checked, normalizer version, court registries read, attesting wallet, and a status tally), and `proof.request`: the exact `eth_call` (method, `to`, `data`) to replay against any RPC for this network, so no trust in this server is required. Any wallet can anchor any hash into its own registry, so relay each hit's `registry_owner` — who recorded the receipt is part of the answer.
 
-If the filing prints a verification line, you can scope the lookup to that one registry instead:
+If the filing prints a verification line, you can scope the lookup to that one registry instead. The chain id in that line is the network this server is on (`/api/status` field `network.chain_id`). On the default profile that is 787223:
 
 ```
-Citation verifications: NVNM Chain (chain 1611) registry #4711 — example-firm--example-case
+Citation verifications: NVNM Chain (chain 787223) registry #4711 — example-firm--example-case
 ```
 
 ```

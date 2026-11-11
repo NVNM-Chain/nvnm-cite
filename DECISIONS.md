@@ -598,3 +598,35 @@ Albert: the same-day hostname/WAF troubleshooting writeup drafted into `docs/DEP
 - **Clean shutdown:** SIGTERM to the running server produced the graceful exit (the k8s-stop path).
 
 No code changes were needed or made; this session is verification + this record only.
+
+## 2026-11-09 — INV-43948: Cite reads the L1 fee balance from nUSD, not the native balance
+
+On L1 the native balance is not spendable gas. `eth_getBalance` returns the same placeholder for every address, and inside the EVM the native balance and `msg.value` are 0. Fees are paid in nUSD, the TIP-20 at `0x20C0000000000000000000000000000000000000`, with 6 decimals. Gas prices stay in attodollars per gas (10^-18 USD). A price per gas cannot be written in 6-decimal units, so a fee converts only as a total: `ceil(base_fee * gas_used / 10^12)` (docs.nvnmchain.io, "Token balances and fees"). A type-0 transaction pays its `gas_price`, so for the loader's sends that is `ceil(gas_price * gas_used / 10^12)`. The nUSD address on the unreleased L1 mainnet is not verified; the docs give it for the L1 networks that exist today.
+
+The bulk loader was the only code that treated the native balance as the fee balance (`run_load` halted below `10**18`; `print_status` divided by `1e18`). On L1 that placeholder sits above any such floor, so the halt could never fire. Both now read nUSD `balanceOf` in base units and halt below 1 nUSD (`10**6`). The status line prints that balance with six decimal places. `EvmRpc.get_balance` is deleted; Cite does not call the native-balance RPC. No scaling of nUSD up to 18 decimals.
+
+The receipt anchor has no balance preflight and keeps none: a send with too little nUSD is rejected by the chain, and the rejection amount is already in nUSD base units. `eth_estimateGas` without a gas price still returns a gas number for an unfunded account, so a successful estimate does not mean the account can pay. The webapp estimate is a permission probe, not a funds check, and is unchanged.
+
+L1-only, by choice: there is no L2 fallback, and `get_network()` is unchanged. On L2, `0x20C0…` has no code, so the read decodes to 0 and a loader run halts at its first balance check. Cite is not switched to L1 here.
+
+Not this change: the 40 gwei `GAS_FLOOR` is what a type-0 transaction pays, far above the L1 base fee. The loader's fixed gas limit is L2-calibrated and cannot cover an L1 `addRecord` (about 3.65M gas estimated against a 108k limit), which blocks pointing the loader at L1. The balance halt runs only every 500 sends. The MCP-server half of INV-43948 is outside this Cite change.
+
+## 2026-11-10 — INV-43948: Cite targets testnet and devnet; mainnet constants are not published
+
+The published networks are testnet (787223, `nvnm-next-testnet-1`, https://rpc.nvnm.testnet.nvnmchain.io) and devnet (787222, `nvnm-next-devnet-1`, https://rpc.nvnm.canary.mantrachain.dev, env `NVNM_DEVNET_RPC` / `NVNM_DEVNET_KEY`). Constants are from docs.nvnmchain.io "Network Details" and match `eth_chainId`. The profile field for that name is `network_name`. Mainnet constants are not published, so this change does not set them. Chain 1611 in earlier entries is the read default recorded on those dates, not the unpublished rollout mainnet.
+
+Measured on testnet and devnet (2026-11-10):
+- Keyed misses revert `execution reverted: record does not exist` (records(), including a missing registry) or `registry does not exist` (registries()). `precompile.is_keyed_miss` matches only these. The previous `collections: not found` marker is not recognized, so a miss on the chain recorded in earlier entries is an error, not NOT_FOUND.
+- Some third-party registry names on testnet are not valid UTF-8; the ABI string decoder now replaces bad bytes instead of raising.
+- Both networks carry 2,114 court registries at ids 69–2182 (creator `nvnm14a3em3…`, Roe → recordId 138702). The manifests were regenerated for testnet (block 6,982,472) and created for devnet (block 5,729,648); `manifest-verify` is clean on both. `scripts/build_registry_manifest.py` pins that id range for testnet and devnet only, and does not pin a mainnet id range or a mainnet record id.
+- `eth_gasPrice` was ~0.6 gwei (devnet) and ~0.85–1.34 gwei (testnet). The 40 gwei `GAS_FLOOR` (loader and anchor) is removed; writers send at `eth_gasPrice`.
+- `eth_estimateGas` for a new `addRecord` key: 2.88M at 51 payload bytes, 3.91M at 141, 6.99M at 541, 11.10M at 1,041, 19.07M at 2,041; a sent tx used within 2% of its estimate, and the chain charges gas used. The loader curve is now 3.0M + 8.5k/byte (+30%), which lies above every point (`test_gas_curve_covers_measured_l1_estimates`). Block gas limit is 500M.
+- Before each send the loader reserves `ceil(gas_limit * gas_price / 10**12)` token base units for that tx and for every tx still in flight, and halts without sending when the fee balance cannot cover the next one.
+- The loader's `chain_has_key` and the indexer's `rpc_fetch_page` / `registry_exists` use `precompile.is_keyed_miss`.
+- Live check on devnet: `run_load` wrote 3 probe records into the dev registry #2228 (nonces 3–5, all status 1, 1.27 tx/s). Each used 3,340,317 gas against a 5,214,950 limit (64%) at 0.6 gwei. The token drop (6,015 base units) equals the summed `ceil(price * gas_used / 10^12)`. Keyed reads find all three, and the indexer reports #999999 absent and an empty page past the end of #2228.
+
+The webapp names the network in the wallet with the profile `label` (`NVNM Chain testnet (nvnm-next-testnet-1)`) and in the badge with the profile key (`testnet` / `devnet`), keeps `decimals: 18` (wallets require it, and gas is priced in attodollars), and shows gas only when no live gas price is known instead of assuming 40 gwei. `tests/test_live_smoke.py` runs against any profile via `NVNM_SMOKE_NETWORK`; it passes on testnet and devnet.
+
+## 2026-11-10 — Network is a profile
+
+The running product loads chain identity from `src/nvnm_cite/networks/*.json`. Shipped profiles are testnet and devnet. `get_network()` resolves an explicit argument, then `NVNM_NETWORK`, then testnet, for every entry point including the container image. `signing_context` reads the env var named by the profile's `key_env` and never substitutes another profile's key. `load_manifest` refuses a manifest whose network key or chain id disagrees with the profile. The loader's fee token address and decimals come from the profile. The precompile address, ABI, and keyed-miss strings stay client constants. Adding a network is a new profile file plus `registry_manifest_<key>.json` from `scripts/build_registry_manifest.py`, which resolves the profile before that manifest exists. The previous third profile, its signing opt-in, and `registry_manifest_mainnet.json` are not part of the running product. Live read-only smoke is `tests/test_live_smoke.py`, gated by `NVNM_LIVE_SMOKE=1`, defaulting to testnet (`NVNM_SMOKE_NETWORK` still selects devnet). An image with `NVNM_NETWORK` unset serves testnet; set the variable in the deploy that rolls the image.
