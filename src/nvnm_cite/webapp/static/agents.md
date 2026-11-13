@@ -20,7 +20,7 @@ What an answer asserts: existence of a registry record, at a stated block, in a 
 curl -sS https://www.nvnmcite.com/api/status
 ```
 
-Returns the network this deployment serves (chain id, cosmos chain id, public RPC URL, explorer URL, gas token), coverage (the number of court registries in the pinned name-to-id manifest and its creator), the normalizer and schema versions, live chain health, and whether aggregate telemetry is enabled. Read it once per session; the anchor workflow needs `network.public_rpc`, `network.chain_id`, and `network.explorer` from it.
+Returns the network this deployment serves (chain id, cosmos chain id, public RPC URL, explorer URL, gas token), coverage (the number of court registries in the pinned name-to-id manifest, `coverage.empty` for courts that had no citation record when that manifest was built, and its creator), the normalizer and schema versions, live chain health, and whether aggregate telemetry is enabled. Read it once per session; the anchor workflow needs `network.public_rpc`, `network.chain_id`, and `network.explorer` from it.
 
 ## Check a document's citations
 
@@ -53,7 +53,7 @@ The response you care about:
 ### What each status means
 
 - `VERIFIED`: a record for this canonical citation exists in that court's registry on NVNM Chain. Existence only.
-- `NOT_FOUND`: the registry for that court was consulted live and has no record under the canonical key. This only ever comes from a real chain read.
+- `NOT_FOUND`: the registry for that court was consulted live and has no record under the canonical key. This only ever comes from a real chain read. A court counted in `/api/status` `coverage.empty` is read the same way: a record on chain is `VERIFIED`, and a miss is `NOT_FOUND`.
 - `NOT_COVERED`: no chain read happened. Either the court has no registry in the coverage manifest, or the citation is a vendor identifier (Westlaw/LEXIS), which is never a registry key. A real case may sit behind a NOT_COVERED citation.
 - `AMBIGUOUS_JURISDICTION`: the citation could not be mapped to a single court registry (some reporter editions are genuinely split across courts). The `snippet` field shows the source context so you can locate it.
 - `UNPARSEABLE`: the token could not be parsed as a citation at all. Also carries a `snippet`.

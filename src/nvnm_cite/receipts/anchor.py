@@ -28,6 +28,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from nvnm_cite.chain import precompile as pc
+from typing import Callable
 from nvnm_cite.chain.rpc import EvmRpc
 from nvnm_cite.chain.secp256k1 import address_from_private_key
 from nvnm_cite.chain.signer import LegacyTransaction, sign_transaction
@@ -146,34 +147,30 @@ class AnchorPlan:
 def prepare_anchor(
     data: bytes,
     filename: str,
-    *,
     firm: str,
     case: str,
     agent_address: str,
     chain_id: int,
-    registry_id: int | None = None,
-    rpc_factory=None,
-    reader: ChainReader | None = None,
-    resolver=None,
-    registry_ids: Mapping[str, int] | None = None,
+    registry_id: int | None,
+    rpc_factory: Callable[[], EvmRpc],
+    registry_ids: Mapping[str, int],
 ) -> AnchorPlan:
     """Read-only: pin the check, build the receipt (+ addRecord calldata when
     ``registry_id`` is known). ``registry_id=None`` means the (firm, case)
     registry does not exist yet: the plan carries the create step and the
     record calldata is built AFTER the create confirms (the id comes from the
-    AddRegistry event). ``reader``/``resolver`` are injectable for testing."""
-    if reader is None:
-        if rpc_factory is None:
-            raise ValueError("prepare_anchor needs rpc_factory or reader")
-        reader = ChainReader(rpc_factory)
+    AddRegistry event)."""
+    reader = ChainReader(rpc_factory)
     head = reader.head_block()
 
     # Pin the check to `head` so the receipt is reproducible at that block.
-    if resolver is None:
-        if rpc_factory is None:
-            raise ValueError("prepare_anchor needs rpc_factory or resolver")
-        resolver = ChainResolver(rpc_factory, block=hex(head))
-    report = check_document(data, filename, resolver, registry_ids=registry_ids)
+    resolver = ChainResolver(rpc_factory, block=hex(head))
+    report = check_document(
+        data=data,
+        filename=filename,
+        resolver=resolver,
+        registry_ids=registry_ids,
+    )
     sha = report["document"]["sha256"]
 
     registries_read = registries_read_from_report(report, head)

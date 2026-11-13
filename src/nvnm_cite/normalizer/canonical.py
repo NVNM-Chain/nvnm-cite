@@ -218,7 +218,7 @@ def _int_year(value: str | None) -> int | None:
     return int(value) if value and value.isdigit() else None
 
 
-def normalize(text: str, *, clean_steps: tuple[str, ...] = CLEAN_STEPS) -> NormalizationResult:
+def normalize(text: str, clean_steps: tuple[str, ...] = CLEAN_STEPS) -> NormalizationResult:
     """Extract and normalize every case-citation occurrence in text."""
     cleaned = clean_text(text, clean_steps)
     if not cleaned.strip():

@@ -21,9 +21,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
+from nvnm_cite.chain.rpc import EvmRpc
 from nvnm_cite.normalizer import NORMALIZER_VERSION
 from nvnm_cite.receipts.chainio import ChainReader
 from nvnm_cite.receipts.discover import find_anchors
@@ -61,26 +62,18 @@ class VerifyResult:
 def verify_document(
     data: bytes,
     filename: str,
-    *,
     registry_id: int,
-    rpc_factory=None,
-    reader: ChainReader | None = None,
-    resolver=None,
-    registry_ids: Mapping[str, int] | None = None,
-    expected_chain_id: int | None = None,
+    registry_ids: Mapping[str, int],
+    rpc_factory: Callable[[], EvmRpc],
+    expected_chain_id: int,
 ) -> VerifyResult:
-    """Read-only verification against registry ``registry_id``. When
-    ``expected_chain_id`` is given and the receipt names a different chain,
-    the recompute is skipped with an explanatory note instead of silently
-    rechecking against the wrong network. ``reader``/``resolver`` are
-    injectable for testing; in production they are built from
-    ``rpc_factory``."""
+    """Read-only verification against registry ``registry_id``. When the
+    receipt names a different chain than ``expected_chain_id``, the recompute
+    is skipped with an explanatory note instead of silently rechecking against
+    the wrong network."""
     sha = hashlib.sha256(data).hexdigest()
     _, query = records_query(registry_id, sha)
-    if reader is None:
-        if rpc_factory is None:
-            raise ValueError("verify_document needs rpc_factory or reader")
-        reader = ChainReader(rpc_factory)
+    reader = ChainReader(rpc_factory)
 
     def result(**kw) -> VerifyResult:
         base = dict(
@@ -137,11 +130,7 @@ def verify_document(
             "a recompute difference may be a version change, not tampering"
         )
 
-    chain_mismatch = (
-        expected_chain_id is not None
-        and isinstance(receipt_chain, int)
-        and receipt_chain != expected_chain_id
-    )
+    chain_mismatch = isinstance(receipt_chain, int) and receipt_chain != expected_chain_id
     if chain_mismatch:
         notes.append(
             f"this receipt was anchored on chain {receipt_chain}, but the check "
@@ -152,8 +141,13 @@ def verify_document(
     recomputed = None
     summary_matches = None
     if isinstance(checked_at_block, int) and not chain_mismatch:
-        rsv = resolver or ChainResolver(rpc_factory, block=hex(checked_at_block))
-        report = check_document(data, filename, rsv, registry_ids=registry_ids)
+        rsv = ChainResolver(rpc_factory, block=hex(checked_at_block))
+        report = check_document(
+            data=data,
+            filename=filename,
+            resolver=rsv,
+            registry_ids=registry_ids,
+        )
         recomputed = summary_tally(report)
         summary_matches = recomputed == stored_summary
 
@@ -181,13 +175,10 @@ def verify_document(
 def verify_document_anywhere(
     data: bytes,
     filename: str,
-    *,
-    rpc_factory=None,
-    reader: ChainReader | None = None,
-    resolver=None,
-    registry_ids: Mapping[str, int] | None = None,
-    expected_chain_id: int | None = None,
-    exclude_ids: set[int] | frozenset[int] = frozenset(),
+    registry_ids: Mapping[str, int],
+    rpc_factory: Callable[[], EvmRpc],
+    expected_chain_id: int,
+    exclude_ids: set[int] | frozenset[int],
 ) -> dict:
     """Registry-free verification: hash the file, sweep every non-court
     registry for that fingerprint (``exclude_ids`` = the pinned court-manifest
@@ -196,15 +187,15 @@ def verify_document_anywhere(
     and whether each receipt verifies. A hit's meaning comes from its
     registry's creator wallet, which travels in the result."""
     sha = hashlib.sha256(data).hexdigest()
-    if reader is None:
-        if rpc_factory is None:
-            raise ValueError("verify_document_anywhere needs rpc_factory or reader")
-        reader = ChainReader(rpc_factory)
+    reader = ChainReader(rpc_factory)
     sweep = find_anchors(reader, sha, exclude_ids=exclude_ids)
     results = [
         verify_document(
-            data, filename, registry_id=hit["registry"]["id"], rpc_factory=rpc_factory,
-            reader=reader, resolver=resolver, registry_ids=registry_ids,
+            data=data,
+            filename=filename,
+            registry_id=hit["registry"]["id"],
+            registry_ids=registry_ids,
+            rpc_factory=rpc_factory,
             expected_chain_id=expected_chain_id,
         )
         for hit in sweep["hits"]

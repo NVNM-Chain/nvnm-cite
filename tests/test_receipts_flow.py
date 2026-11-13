@@ -1,5 +1,6 @@
-"""Anchor + verify flow, hermetic. The chain is faked via injected reader /
-resolver and a fake RPC for the send path — no network, no writes.
+"""Anchor + verify flow, hermetic. Prepare and verify run the real ChainReader
+and ChainResolver against a fake eth_call. The tally fixture still uses
+FakeResolver. Send uses FakeRpc. No network, no writes.
 
 v1.2.0 flow shape under test: reads/writes key on the numeric registryId; a
 NEW registry's record calldata is built only after the create tx confirms
@@ -14,6 +15,7 @@ import pytest
 
 from nvnm_cite.chain import abi
 from nvnm_cite.chain import precompile as pc
+from nvnm_cite.chain.rpc import RpcError
 from nvnm_cite.receipts.anchor import AnchorPlan, prepare_anchor, send
 from nvnm_cite.receipts.schema import RECEIPT_CHECKSUM_ALGO, RECEIPT_URI, build_receipt, summary_tally
 from nvnm_cite.receipts.verify import (
@@ -80,11 +82,55 @@ COURTS = {
 }
 
 
+class _AnchorRpc:
+    """eth_call stand-in for prepare_anchor: registries() and records() only."""
+
+    def __init__(self, registries, records, head):
+        self._registries = registries
+        self._records = records
+        self._head = head
+        self._registries_sel = abi.function_selector(pc._FUNCTIONS["registries"])
+        self._records_sel = abi.function_selector(pc._FUNCTIONS["records"])
+
+    def block_number(self):
+        return self._head
+
+    def eth_call(self, to, data, block="latest"):
+        kind, args = data[:4], data[4:]
+        if kind == self._registries_sel:
+            registry_id = abi.decode_values(pc._FUNCTIONS["registries"]["inputs"], args)[0]
+            reg = self._registries.get(registry_id)
+            if reg is None:
+                raise RpcError("eth_call", 3, "execution reverted: registry does not exist")
+            row = [reg["id"], reg["name"], "", reg["creator"], reg["created_at"], ""]
+            return abi.encode_values(pc._FUNCTIONS["registries"]["outputs"], [[row], [b"", 0]])
+        if kind == self._records_sel:
+            registry_id, checksum = abi.decode_values(pc._FUNCTIONS["records"]["inputs"], args)[:2]
+            rec = self._records.get((registry_id, checksum))
+            if rec is None:
+                raise RpcError("eth_call", 3, "execution reverted: record does not exist")
+            row = [
+                rec.uri, rec.checksum, rec.checksum_algo, rec.metadata, rec.timestamp,
+                rec.status, rec.record_id, rec.index, rec.is_latest, rec.registry_id,
+            ]
+            return abi.encode_values(pc._FUNCTIONS["records"]["outputs"], [[row], [b"", 0]])
+        raise RpcError("eth_call", 3, f"unexpected selector {kind.hex()}")
+
+
 def _prepare(reader, registry_id=None):
+    records = dict(reader._records)
+    records.setdefault((737, "410 U.S. 113"), ROE)  # the brief's one on-chain citation
+    rpc = _AnchorRpc(reader._registries, records, reader._head)
     return prepare_anchor(
-        BRIEF, "brief.txt", firm="Inveniam", case="Mata v. Avianca",
-        agent_address=AGENT, chain_id=CHAIN_ID, registry_id=registry_id,
-        reader=reader, resolver=FakeResolver(), registry_ids=TEST_REGISTRY_IDS,
+        data=BRIEF,
+        filename="brief.txt",
+        firm="Inveniam",
+        case="Mata v. Avianca",
+        agent_address=AGENT,
+        chain_id=CHAIN_ID,
+        registry_id=registry_id,
+        rpc_factory=lambda: rpc,
+        registry_ids=TEST_REGISTRY_IDS,
     )
 
 
@@ -299,15 +345,27 @@ def _receipt_record(summary):
 
 
 TRUE_TALLY = summary_tally(
-    check_document(BRIEF, "brief.txt", FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+    check_document(
+        data=BRIEF,
+        filename="brief.txt",
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
 )
 TARGET_FACTS = {TARGET_ID: {"id": TARGET_ID, "name": TARGET_NAME, "creator": "nvnm1x", "created_at": "t"}}
 
 
-def _verify(data, reader, **kw):
+def _verify(data, reader, expected_chain_id=CHAIN_ID):
+    records = dict(reader._records)
+    records.setdefault((737, "410 U.S. 113"), ROE)  # the brief's one on-chain citation
+    rpc = _AnchorRpc(reader._registries, records, reader._head)
     return verify_document(
-        data, "brief.txt", registry_id=TARGET_ID, reader=reader,
-        resolver=FakeResolver(), registry_ids=TEST_REGISTRY_IDS, **kw
+        data=data,
+        filename="brief.txt",
+        registry_id=TARGET_ID,
+        registry_ids=TEST_REGISTRY_IDS,
+        rpc_factory=lambda: rpc,
+        expected_chain_id=expected_chain_id,
     )
 
 

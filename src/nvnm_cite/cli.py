@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 
 from nvnm_cite.chain.bech32 import eth_to_bech32
-from nvnm_cite.chain.registrymap import load_manifest
+from nvnm_cite.chain.registrymap import load_manifest, scan_first_citations
 from nvnm_cite.chain.rpc import EvmRpc, RpcError
 from nvnm_cite.chain.secp256k1 import address_from_private_key
 from nvnm_cite.config import get_network, load_dotenv, network_choices, signing_context
@@ -216,7 +216,12 @@ def cmd_check(args: argparse.Namespace) -> int:
     resolver = ChainResolver(lambda: EvmRpc(rpc_url), block=args.block, telemetry=telemetry)
 
     try:
-        report = check_document(data, path.name, resolver, registry_ids=registry_ids)
+        report = check_document(
+            data=data,
+            filename=path.name,
+            resolver=resolver,
+            registry_ids=registry_ids,
+        )
     except CheckError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -385,9 +390,14 @@ def cmd_anchor(args: argparse.Namespace) -> int:
 
     try:
         plan = prepare_anchor(
-            data, path.name, firm=args.firm, case=args.case,
-            agent_address=agent_address, chain_id=network.chain_id,
-            registry_id=registry_id, rpc_factory=rpc_factory,
+            data=data,
+            filename=path.name,
+            firm=args.firm,
+            case=args.case,
+            agent_address=agent_address,
+            chain_id=network.chain_id,
+            registry_id=registry_id,
+            rpc_factory=rpc_factory,
             registry_ids=registry_ids,
         )
     except (ReceiptError, CheckError) as exc:
@@ -449,7 +459,10 @@ def cmd_verify(args: argparse.Namespace) -> int:
         # checked by keyed read; each hit gets the full pinned re-verification.
         try:
             outcome = verify_document_anywhere(
-                data, path.name, rpc_factory=rpc_factory, registry_ids=court_ids,
+                data=data,
+                filename=path.name,
+                registry_ids=court_ids,
+                rpc_factory=rpc_factory,
                 expected_chain_id=network.chain_id,
                 exclude_ids=set(court_ids.values()),
             )
@@ -491,8 +504,11 @@ def cmd_verify(args: argparse.Namespace) -> int:
 
     try:
         result = verify_document(
-            data, path.name, registry_id=registry_id, rpc_factory=rpc_factory,
+            data=data,
+            filename=path.name,
+            registry_id=registry_id,
             registry_ids=court_ids,
+            rpc_factory=rpc_factory,
             expected_chain_id=network.chain_id,
         )
     except (RpcError, OSError) as exc:
@@ -569,35 +585,63 @@ def cmd_stats(args: argparse.Namespace) -> int:
 
 
 def cmd_manifest_verify(args: argparse.Namespace) -> int:
-    """Diff the pinned registry manifest against the live chain (read-only)."""
+    """Diff the pinned manifest, and compare each court's first record to its mark."""
     load_dotenv()
     network = get_network(args.network)
     manifest = load_manifest(network.key)
-    rpc = EvmRpc(args.rpc or network.rpc_url())
+    rpc = EvmRpc(
+        args.rpc or network.rpc_url(),
+        timeout=30,
+        max_attempts=8,
+        backoff_base=1.0,
+        backoff_cap=30.0,
+        on_retry=lambda method, attempt, exc: print(
+            f"  transient {type(exc).__name__} on {method} (attempt {attempt}); retrying",
+            flush=True,
+        ),
+    )
     chain_id = rpc.chain_id()
     if chain_id != network.chain_id:
         print(f"error: RPC chain id {chain_id} != {network.chain_id}", file=sys.stderr)
         return 2
     diff = manifest.diff_against_chain(rpc)
+    scan = scan_first_citations(rpc, manifest.ids)
+    chain_empty = set(scan.empty)
+    unexpected = [name for name in scan.empty if name not in manifest.empty]
+    filled = sorted(manifest.empty - chain_empty)
+    drifted = any(diff.values())
+    clean = not drifted and not scan.errors and not unexpected and not filled
     payload = {
         "network": network.key,
         "manifest_generated_at_block": manifest.generated_at_block,
         "registries_pinned": len(manifest.ids),
-        "clean": not any(diff.values()),
+        "clean": clean,
+        "record_failures": list(scan.errors),
+        "empty": list(scan.empty),
         **diff,
     }
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
         print(f"manifest-verify — {network.key} ({len(manifest.ids):,} pinned, block {manifest.generated_at_block:,})")
-        if payload["clean"]:
+        if clean:
             print("  clean: the chain matches the pinned manifest")
         else:
             for kind in ("added", "missing", "renamed"):
                 for rid, val in diff[kind].items():
                     print(f"  {kind}: #{rid} {val}")
-            print("  DRIFT — regenerate with scripts/build_registry_manifest.py, review, commit")
-    return 0 if payload["clean"] else 1
+            if drifted:
+                print("  DRIFT — regenerate with scripts/build_registry_manifest.py, review, commit")
+            for name in unexpected:
+                print(f"  {name} (#{manifest.registry_id(name)}): empty on chain, not marked")
+            for name in filled:
+                print(f"  {name} (#{manifest.registry_id(name)}): marked empty, chain has a citation record")
+            for failure in scan.errors:
+                print(f"  {failure}")
+        for name in scan.empty:
+            if name in manifest.empty:
+                print(f"  warning: {name} (#{manifest.registry_id(name)}): no citation record; marked empty")
+    return 0 if clean else 1
 
 
 # Operator commands delegate to their existing module CLIs (no logic
@@ -743,7 +787,10 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Re-enumerate registries() and compare against the checked-in "
             "name->id manifest — the trust anchor now that registry names are "
-            "not unique on chain. Exits nonzero on drift."
+            "not unique on chain. Also reads the first records() page of each "
+            "pinned registry. An empty court must carry the manifest's empty "
+            "mark; a row that is not a citation record fails the command. "
+            "Exits nonzero on drift, a bad record, or an empty-mark disagreement."
         ),
     )
     manifest.add_argument("--network", choices=network_choices(), default=None)

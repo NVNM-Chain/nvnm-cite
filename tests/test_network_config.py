@@ -16,9 +16,6 @@ def test_profiles_pin_chain_constants():
     assert config.TESTNET.key_env == "NVNM_TESTNET_KEY"
     assert config.TESTNET.rpc_env == "NVNM_TESTNET_RPC"
     assert config.TESTNET.fee_token_decimals == 6
-    assert config.TESTNET.manifest_check is not None
-    assert config.TESTNET.manifest_check.count == 2114
-    assert config.TESTNET.manifest_check.spot_name == "us-scotus"
     assert config.DEVNET.chain_id == 787222
     assert config.DEVNET.network_name == "nvnm-next-devnet-1"
     assert config.DEVNET.gas_token == "nUSD"

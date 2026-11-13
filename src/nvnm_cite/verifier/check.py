@@ -29,9 +29,7 @@ from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any
 
-from nvnm_cite import config
 from nvnm_cite.chain import precompile as pc
-from nvnm_cite.chain import registrymap
 from nvnm_cite.normalizer import CANONICAL_SPEC, NORMALIZER_VERSION, Disposition, normalize
 from nvnm_cite.normalizer import jurisdiction
 from nvnm_cite.verifier.extract import ExtractError, extract_text
@@ -57,10 +55,6 @@ EXPANDED_COVERAGE_CAUTION = (
     "citation on this signal alone."
 )
 
-
-def default_registry_ids() -> dict[str, int]:
-    """Coverage for the active network: the pinned manifest's name -> id map."""
-    return registrymap.load_manifest(config.get_network().key).all_registries()
 
 VERIFIED = "VERIFIED"
 NOT_FOUND = "NOT_FOUND"
@@ -268,21 +262,18 @@ def _unresolved_references_view(occurrences: list, cleaned: str) -> dict:
 def check_text(
     text: str,
     resolver: Resolver,
-    *,
-    registry_ids: Mapping[str, int] | None = None,
+    registry_ids: Mapping[str, int],
 ) -> dict:
     """Normalize ``text`` and resolve every citation against the chain.
 
     ``registry_ids`` is the coverage map (registry name -> numeric
-    registryId); ``None`` loads the active network's pinned manifest.
+    registryId).
     Raises ``CheckError`` on an over-long document. Transport / RPC failures
     from the resolver propagate (they are NOT NOT_FOUND); the caller decides
     how to surface a dead chain.
     """
     if len(text) > MAX_TEXT_CHARS:
         raise CheckError(f"document text exceeds {MAX_TEXT_CHARS:,} characters", http_status=413)
-    if registry_ids is None:
-        registry_ids = default_registry_ids()
 
     result = normalize(text)
     cleaned = result.cleaned_text
@@ -378,9 +369,10 @@ def check_text(
                             "before concluding"
                         )
             else:
+                routed = entry["registry"]
                 status = NOT_COVERED
                 reason = (
-                    f"{entry['registry']} has no registry in the pinned coverage "
+                    f"{routed} has no registry in the pinned coverage "
                     f"manifest ({len(registry_ids)} covered court registries)"
                 )
         elif kind == "ambiguous":
@@ -561,8 +553,7 @@ def check_document(
     data: bytes,
     filename: str,
     resolver: Resolver,
-    *,
-    registry_ids: Mapping[str, int] | None = None,
+    registry_ids: Mapping[str, int],
 ) -> dict:
     """Full pipeline: extract text from ``data``, then check it. The document
     SHA-256 binds the exact bytes (what a Phase 4 receipt anchors)."""
@@ -573,7 +564,11 @@ def check_document(
         raise CheckError(str(exc)) from exc
     sha256 = hashlib.sha256(data).hexdigest()
 
-    report = check_text(extraction.text, resolver, registry_ids=registry_ids)
+    report = check_text(
+        text=extraction.text,
+        resolver=resolver,
+        registry_ids=registry_ids,
+    )
     report["document"] = {
         "filename": filename,
         "sha256": sha256,
