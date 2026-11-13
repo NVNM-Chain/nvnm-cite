@@ -52,7 +52,10 @@ And a court-less reporter cite, Foo v. Bar, 12 F.3d 34, ends it.
 def test_live_check_exercises_all_statuses(rpc_url: str):
     resolver = ChainResolver(lambda: EvmRpc(rpc_url))
     report = check_document(
-        LIVE_BRIEF.encode(), "synthetic.txt", resolver, registry_ids=REGISTRY_IDS
+        data=LIVE_BRIEF.encode(),
+        filename="synthetic.txt",
+        resolver=resolver,
+        registry_ids=REGISTRY_IDS,
     )
     by = {c["canonical"] or c["as_written"]: c for c in report["citations"]}
 

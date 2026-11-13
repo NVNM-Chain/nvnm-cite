@@ -267,7 +267,10 @@ mislabeled but real citation appears as Totally Fabricated v. Name,
 
 
 def test_check_exercises_all_five_statuses():
-    service = CheckService(FakeResolver(CHAIN_RECORDS), TEST_REGISTRY_IDS)
+    service = CheckService(
+        resolver=FakeResolver(CHAIN_RECORDS),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     report = service.check(BRIEF.encode(), "brief.txt")
 
     assert report["document"]["sha256"] == hashlib.sha256(BRIEF.encode()).hexdigest()
@@ -296,7 +299,10 @@ def test_check_exercises_all_five_statuses():
 
 def test_check_canonicalizes_spacing_variant():
     # "410 U. S. 113" (line-broken/space-mangled form) must hit the registry key
-    service = CheckService(FakeResolver(CHAIN_RECORDS), TEST_REGISTRY_IDS)
+    service = CheckService(
+        resolver=FakeResolver(CHAIN_RECORDS),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     report = service.check(b"Roe v. Wade, 410 U. S.\n113 (1973).", "x.txt")
     assert report["citations"][0]["canonical"] == "410 U.S. 113"
     assert report["citations"][0]["status"] == "VERIFIED"
@@ -324,7 +330,7 @@ def fake_record(registry_id: int, checksum: str, metadata: str, index: int = 1, 
     )
 
 
-def minimal_receipt(sha: str, *, block: int = 1700, summary: dict | None = None) -> dict:
+def minimal_receipt(sha: str, block: int = 1700, summary: dict | None = None) -> dict:
     """A locked v1 receipt object (non-enumerating)."""
     return {
         "agent": {"address": AGENT_ADDR},
@@ -403,10 +409,14 @@ class FakeGateway:
 
 
 def make_service(gw: FakeGateway) -> ReceiptService:
-    return ReceiptService(gw, TESTNET, TEST_REGISTRY_IDS)
+    return ReceiptService(
+        gateway=gw,
+        network=TESTNET,
+        registry_ids=TEST_REGISTRY_IDS,
+    )
 
 
-def make_plan(*, registry_exists: bool = True, already_anchored: bool = False, create: bool = False) -> AnchorPlan:
+def make_plan(registry_exists: bool = True, already_anchored: bool = False, create: bool = False) -> AnchorPlan:
     receipt = minimal_receipt(DOC_SHA, block=1_700_000)
     receipt_json = compact_json(receipt)
     record_calldata = None

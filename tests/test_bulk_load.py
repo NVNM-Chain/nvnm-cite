@@ -177,7 +177,15 @@ def test_run_load_confirms_all_with_sequential_nonces(tmp_path: Path) -> None:
     db = open_state(state_path)
     rpc = FakeRpc()
 
-    counters = run_load(db, rpc, TEST_KEY, TESTNET_CHAIN_ID, {"us-ca11": 738}, depth=5, log=lambda s: None)
+    counters = run_load(
+        db=db,
+        rpc=rpc,
+        key=TEST_KEY,
+        chain_id=TESTNET_CHAIN_ID,
+        registry_ids={"us-ca11": 738},
+        depth=5,
+        log=lambda s: None,
+    )
     assert counters["confirmed"] == 60
     statuses = dict(db.execute("SELECT status, COUNT(*) FROM load_state GROUP BY status"))
     assert statuses == {"confirmed": 60}
@@ -195,7 +203,16 @@ def test_run_load_max_records_probe_stops_cleanly(tmp_path: Path) -> None:
     state_path = tmp_path / "load_state.sqlite"
     seed_state(state_path, 12)
     db = open_state(state_path)
-    counters = run_load(db, FakeRpc(), TEST_KEY, TESTNET_CHAIN_ID, {"us-ca11": 738}, depth=5, log=lambda s: None, max_records=3)
+    counters = run_load(
+        db=db,
+        rpc=FakeRpc(),
+        key=TEST_KEY,
+        chain_id=TESTNET_CHAIN_ID,
+        registry_ids={"us-ca11": 738},
+        depth=5,
+        log=lambda s: None,
+        max_records=3,
+    )
     assert counters["confirmed"] == 3
     statuses = dict(db.execute("SELECT status, COUNT(*) FROM load_state GROUP BY status"))
     assert statuses == {"confirmed": 3, "pending": 9}
@@ -215,7 +232,13 @@ def test_recover_submitted_settles_by_keyed_read(tmp_path: Path, monkeypatch) ->
         "chain_has_key",
         lambda _rpc, _registry_id, checksum, _log=None: checksum == "900 F.3d 100",
     )
-    recover_submitted(db, FakeRpc(), "0x" + "11" * 20, {"us-ca11": 738}, log=lambda s: None)
+    recover_submitted(
+        db=db,
+        rpc=FakeRpc(),
+        address="0x" + "11" * 20,
+        registry_ids={"us-ca11": 738},
+        log=lambda s: None,
+    )
     statuses = dict(db.execute("SELECT position, status FROM load_state"))
     assert statuses == {1: "confirmed", 2: "pending", 3: "pending"}
     assert db.execute("SELECT nonce FROM load_state WHERE position=2").fetchone() == (None,)
@@ -262,11 +285,11 @@ def test_run_load_halts_when_inflight_fees_exceed_balance(tmp_path: Path) -> Non
     db = open_state(state_path)
     rpc = FakeRpc(balance=_ROW_FEE * 3)
     run_load(
-        db,
-        rpc,
-        TEST_KEY,
-        TESTNET_CHAIN_ID,
-        {"us-ca11": 738},
+        db=db,
+        rpc=rpc,
+        key=TEST_KEY,
+        chain_id=TESTNET_CHAIN_ID,
+        registry_ids={"us-ca11": 738},
         depth=10,
         log=lambda s: None,
     )
@@ -281,11 +304,11 @@ def test_run_load_confirms_when_balance_equals_fees(tmp_path: Path) -> None:
     seed_state(state_path, 4)
     db = open_state(state_path)
     counters = run_load(
-        db,
-        FakeRpc(balance=_ROW_FEE * 4),
-        TEST_KEY,
-        TESTNET_CHAIN_ID,
-        {"us-ca11": 738},
+        db=db,
+        rpc=FakeRpc(balance=_ROW_FEE * 4),
+        key=TEST_KEY,
+        chain_id=TESTNET_CHAIN_ID,
+        registry_ids={"us-ca11": 738},
         depth=4,
         log=lambda s: None,
     )

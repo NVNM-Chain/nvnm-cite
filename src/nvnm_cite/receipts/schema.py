@@ -133,7 +133,6 @@ def registries_read_from_report(report: dict, head_block: int) -> list[dict]:
 
 
 def build_receipt(
-    *,
     document_sha256: str,
     checked_at_block: int,
     registries: list[dict],
