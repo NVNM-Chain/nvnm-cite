@@ -94,10 +94,14 @@ class Services:
         # Drafting checks read the chain LIVE (item 0): a fresh EvmRpc per call
         # keeps the resolver safe under the threaded server.
         self.check = CheckService(
-            ChainResolver(lambda: EvmRpc(rpc_url), telemetry=self.telemetry),
-            registry_ids,
+            resolver=ChainResolver(lambda: EvmRpc(rpc_url), telemetry=self.telemetry),
+            registry_ids=registry_ids,
         )
-        self.receipt = ReceiptService(gateway, network, registry_ids)
+        self.receipt = ReceiptService(
+            gateway=gateway,
+            network=network,
+            registry_ids=registry_ids,
+        )
         self.tx = TxService(gateway, network)
         # The status panel probes through a SHORT-timeout gateway so a dead or
         # slow RPC fails fast instead of stalling page load (task 4.5e).

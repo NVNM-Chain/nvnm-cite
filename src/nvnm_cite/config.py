@@ -39,16 +39,6 @@ _PROFILE_FIELDS = (
 
 
 @dataclass(frozen=True)
-class ManifestCheck:
-    count: int
-    id_min: int
-    id_max: int
-    spot_name: str
-    spot_checksum: str
-    spot_record_id: int | None
-
-
-@dataclass(frozen=True)
 class Network:
     key: str
     chain_id: int
@@ -62,29 +52,9 @@ class Network:
     creator: str
     fee_token: str
     fee_token_decimals: int
-    manifest_check: ManifestCheck | None
 
     def rpc_url(self) -> str:
         return os.environ.get(self.rpc_env, self.rpc_default)
-
-
-def _manifest_check(doc: dict, filename: str) -> ManifestCheck | None:
-    raw = doc.get("manifest_check")
-    if raw is None:
-        return None
-    try:
-        spot = raw["spot"]
-        record_id = spot.get("record_id")
-        return ManifestCheck(
-            count=int(raw["count"]),
-            id_min=int(raw["id_min"]),
-            id_max=int(raw["id_max"]),
-            spot_name=spot["name"],
-            spot_checksum=spot["checksum"],
-            spot_record_id=None if record_id is None else int(record_id),
-        )
-    except (KeyError, TypeError, ValueError) as exc:
-        raise ValueError(f"{filename} has an invalid manifest_check") from exc
 
 
 def _load_profiles() -> dict[str, Network]:
@@ -115,7 +85,6 @@ def _load_profiles() -> dict[str, Network]:
             creator=doc["creator"],
             fee_token=doc["fee_token"],
             fee_token_decimals=int(doc["fee_token_decimals"]),
-            manifest_check=_manifest_check(doc, path.name),
         )
     if not found:
         raise ValueError("no network profiles in nvnm_cite.networks")
@@ -138,7 +107,7 @@ def network_choices() -> list[str]:
     return sorted(NETWORKS)
 
 
-def match_manifest(network: Network, *, chain_id: int, manifest_network: str) -> None:
+def match_manifest(network: Network, chain_id: int, manifest_network: str) -> None:
     """Refuse a profile whose pinned manifest names another network or chain."""
     if manifest_network != network.key or chain_id != network.chain_id:
         raise ValueError(

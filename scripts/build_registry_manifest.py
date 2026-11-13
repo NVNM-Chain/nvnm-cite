@@ -1,19 +1,19 @@
 """Build the pinned registry-name -> registryId manifest for a network.
 
 READ-ONLY: enumerates registries() (offset-paged), filters to the profile's
-creator + the court-name list, hard-verifies the result when the profile
-carries manifest_check, and writes
+creator + the court-name list, hard-verifies the match, and writes
 src/nvnm_cite/chain/registry_manifest_<network>.json. Run after any
 registry-set change on chain, review the diff, commit.
 
     uv run python scripts/build_registry_manifest.py --network testnet
 
 Resolves the profile without requiring the manifest file, so the first
-manifest for a new profile can be written by this script. A profile with
-no manifest_check still writes; review the printed count before committing.
-Verification is deliberately loud when manifest_check is set: any duplicate
-name within the creator set, any court name missing, an id outside the
-pinned range, or a failed record spot-check aborts without writing.
+manifest for a new profile can be written by this script. Review the
+printed count before committing. Any duplicate name within the creator
+set, or any court name missing, aborts without writing. A matched
+registry with no citation record is marked
+``"empty": true`` and the manifest is still written. A first page that
+is not a citation record aborts without writing.
 """
 
 from __future__ import annotations
@@ -28,8 +28,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from nvnm_cite import config
 from nvnm_cite.chain import precompile as pc
-from nvnm_cite.chain.registrymap import MANIFEST_SCHEMA
-from nvnm_cite.chain.rpc import EvmRpc, RpcError
+from nvnm_cite.chain.registrymap import MANIFEST_SCHEMA, scan_first_citations
+from nvnm_cite.chain.rpc import EvmRpc
 
 REPO = Path(__file__).resolve().parent.parent
 EXPORT_REGISTRIES = REPO / "data" / "mainnet-full-export" / "registries.json"
@@ -61,6 +61,21 @@ def enumerate_registries(rpc: EvmRpc) -> list[pc.Registry]:
     return out
 
 
+def registry_entries(ids: dict[str, int], empty: tuple[str, ...]) -> dict[str, dict]:
+    """Sorted manifest entries. An empty court is marked and warned."""
+    registries: dict[str, dict] = {}
+    for name, rid in sorted(ids.items()):
+        entry: dict = {"id": rid}
+        if name in empty:
+            print(
+                f"warning: {name} (#{rid}): no citation record; marked empty",
+                file=sys.stderr,
+            )
+            entry["empty"] = True
+        registries[name] = entry
+    return registries
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--network", choices=config.network_choices(), required=True)
@@ -68,7 +83,17 @@ def main() -> int:
     args = ap.parse_args()
 
     network = config.resolve_profile(args.network)
-    rpc = EvmRpc(args.rpc or network.rpc_url(), timeout=30)
+    rpc = EvmRpc(
+        args.rpc or network.rpc_url(),
+        timeout=30,
+        max_attempts=8,
+        backoff_base=1.0,
+        backoff_cap=30.0,
+        on_retry=lambda method, attempt, exc: print(
+            f"  transient {type(exc).__name__} on {method} (attempt {attempt}); retrying",
+            flush=True,
+        ),
+    )
 
     chain_id = rpc.chain_id()
     if chain_id != network.chain_id:
@@ -82,63 +107,29 @@ def main() -> int:
     all_regs = enumerate_registries(rpc)
     print(f"{network.key}: enumerated {len(all_regs)} registries at block {block}")
 
-    matched = [
-        r for r in all_regs if r.creator == network.creator and r.name in names
-    ]
+    registry_by_name: dict[str, int] = {}
+    dupes: dict[str, list[int]] = {}
+
+    for registry in all_regs:
+        if registry.creator != network.creator or registry.name not in names:
+            continue
+
+        prior = registry_by_name.get(registry.name)
+        if prior is None:
+            registry_by_name[registry.name] = registry.id
+            continue
+        dupes.setdefault(registry.name, [prior]).append(registry.id)
 
     errors: list[str] = []
-    names_seen: dict[str, list[int]] = {}
-    for r in matched:
-        names_seen.setdefault(r.name, []).append(r.id)
-    dupes = {n: ids for n, ids in names_seen.items() if len(ids) > 1}
     if dupes:
         errors.append(f"duplicate names within the creator set: {dupes}")
 
-    by_name = {r.name: r.id for r in matched}
-    check = network.manifest_check
-    if check is None:
-        print(f"{network.key}: no manifest_check; matched {len(matched)} (review the diff)")
-    else:
-        if len(matched) != check.count:
-            errors.append(f"expected {check.count} registries, matched {len(matched)}")
-        ids = sorted(r.id for r in matched)
+    missing = sorted(names.difference(registry_by_name))
+    if missing:
+        errors.append(f"{len(missing)} court names missing on chain: {missing[:5]}...")
 
-        if ids and (ids[0] < check.id_min or ids[-1] > check.id_max):
-            errors.append(
-                f"ids outside expected range {check.id_min}-{check.id_max}: {ids[0]}..{ids[-1]}"
-            )
-
-        if len(ids) == check.count and ids != list(range(ids[0], ids[0] + len(ids))):
-            errors.append("ids are not contiguous")
-
-        missing = names - set(names_seen)
-        if missing:
-            errors.append(f"{len(missing)} court names missing on chain: {sorted(missing)[:5]}...")
-        rid = by_name.get(check.spot_name)
-        if rid is None:
-            errors.append(f"spot check: {check.spot_name} not in matched set")
-        else:
-            try:
-                raw = rpc.eth_call(
-                    pc.PRECOMPILE_ADDRESS,
-                    pc.build_records_query(registry_id=rid, checksum=check.spot_checksum),
-                )
-                recs, _ = pc.decode_records_result(raw)
-            except RpcError as err:
-                errors.append(f"spot check {check.spot_name}/{check.spot_checksum}: {err}")
-            else:
-                if not recs:
-                    errors.append(
-                        f"spot check {check.spot_name}/{check.spot_checksum}: empty result"
-                    )
-                elif (
-                    check.spot_record_id is not None
-                    and recs[0].record_id != check.spot_record_id
-                ):
-                    errors.append(
-                        f"spot check {check.spot_name}/{check.spot_checksum}: "
-                        f"recordId {recs[0].record_id} != {check.spot_record_id}"
-                    )
+    scan = scan_first_citations(rpc, registry_by_name)
+    errors.extend(scan.errors)
 
     if errors:
         for e in errors:
@@ -152,13 +143,11 @@ def main() -> int:
         "creator": network.creator,
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "generated_at_block": block,
-        "registries": {
-            name: {"id": rid} for name, rid in sorted(by_name.items())
-        },
+        "registries": registry_entries(registry_by_name, scan.empty),
     }
     out_path = REPO / "src" / "nvnm_cite" / "chain" / f"registry_manifest_{network.key}.json"
     out_path.write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n")
-    print(f"wrote {out_path.relative_to(REPO)}: {len(by_name)} registries, block {block}")
+    print(f"wrote {out_path.relative_to(REPO)}: {len(registry_by_name)} registries, block {block}")
     return 0
 
 

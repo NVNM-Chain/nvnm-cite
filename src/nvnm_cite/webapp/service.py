@@ -112,7 +112,10 @@ class CheckService:
     def check(self, data: bytes, filename: str) -> dict:
         try:
             return check_document(
-                data, filename, self.resolver, registry_ids=self.registry_ids
+                data=data,
+                filename=filename,
+                resolver=self.resolver,
+                registry_ids=self.registry_ids,
             )
         except CheckError as exc:
             raise WebAppError(str(exc), exc.http_status) from exc
@@ -354,7 +357,6 @@ class ReceiptService:
         self,
         data: bytes,
         filename: str,
-        *,
         firm: str,
         case: str,
         agent_address: str,
@@ -402,8 +404,8 @@ class ReceiptService:
 
         try:
             plan = prepare_anchor(
-                data,
-                filename,
+                data=data,
+                filename=filename,
                 firm=firm,
                 case=case,
                 agent_address=agent_address,
@@ -835,6 +837,7 @@ class StatusService:
             "registries": registries,
             "coverage": {
                 "count": len(self.manifest.ids),
+                "empty": len(self.manifest.empty),
                 "source": "pinned registry manifest (creator-verified name->id map)",
                 "creator": self.manifest.creator,
                 "generated_at": self.manifest.generated_at,

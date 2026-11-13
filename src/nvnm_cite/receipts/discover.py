@@ -30,7 +30,6 @@ SWEEP_WORKERS = 8
 def find_anchors(
     reader: Any,
     sha256: str,
-    *,
     exclude_ids: set[int] | frozenset[int] = frozenset(),
     max_workers: int = SWEEP_WORKERS,
 ) -> dict[str, Any]:

@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from dataclasses import replace
 
 import pytest
 
 import nvnm_cite.cli as cli
 from nvnm_cite.chain import precompile as pc
+from nvnm_cite.chain.registrymap import CitationScan
 from nvnm_cite.receipts.anchor import AnchorPlan
 from nvnm_cite.receipts.schema import RECEIPT_CHECKSUM_ALGO, RECEIPT_URI, build_receipt, summary_tally
 from nvnm_cite.receipts.verify import VerifyResult
@@ -109,7 +111,12 @@ def test_no_subcommand_errors(capsys):
 
 
 def _fake_plan():
-    report = check_document(BRIEF.encode(), "brief.txt", FakeResolver(RECORDS), registry_ids=TEST_REGISTRY_IDS)
+    report = check_document(
+        data=BRIEF.encode(),
+        filename="brief.txt",
+        resolver=FakeResolver(RECORDS),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     sha = report["document"]["sha256"]
     regs = [{"id": 82, "name": "us-scotus", "head_block": 1_700_000}]
     receipt, rj = build_receipt(
@@ -265,6 +272,78 @@ def test_stats_missing_db(tmp_path, capsys):
     rc = cli.main(["stats", "--db", str(tmp_path / "nope.sqlite")])
     assert rc == 2
     assert "no chain index" in capsys.readouterr().err
+
+
+def test_manifest_verify_fails_when_empty_is_unmarked(monkeypatch, capsys):
+    _patch_manifest_verify(monkeypatch, CitationScan(errors=(), empty=("us-scotus",)))
+    rc = cli.main(["manifest-verify", "--network", "testnet", "--json", "--rpc", "http://node.test"])
+    payload = json.loads(capsys.readouterr().out)
+    assert rc == 1
+    assert payload["clean"] is False
+    assert payload["empty"] == ["us-scotus"]
+    assert payload["record_failures"] == []
+
+
+def test_manifest_verify_accepts_a_marked_empty_court(monkeypatch, capsys):
+    from nvnm_cite.chain.registrymap import load_manifest as real_load
+
+    _patch_manifest_verify(monkeypatch, CitationScan(errors=(), empty=("us-scotus",)))
+    monkeypatch.setattr(
+        cli,
+        "load_manifest",
+        lambda key: replace(real_load(key), empty=frozenset({"us-scotus"})),
+    )
+    rc = cli.main(["manifest-verify", "--network", "testnet", "--json", "--rpc", "http://node.test"])
+    payload = json.loads(capsys.readouterr().out)
+    assert rc == 0
+    assert payload["clean"] is True
+    assert payload["empty"] == ["us-scotus"]
+
+
+def test_manifest_verify_fails_on_bad_first_record(monkeypatch, capsys):
+    _patch_manifest_verify(
+        monkeypatch,
+        CitationScan(errors=("us-scotus (#82): checksumAlgo 'sha256'",), empty=()),
+    )
+    rc = cli.main(["manifest-verify", "--network", "testnet", "--json", "--rpc", "http://node.test"])
+    payload = json.loads(capsys.readouterr().out)
+    assert rc == 1
+    assert payload["clean"] is False
+    assert payload["record_failures"] == ["us-scotus (#82): checksumAlgo 'sha256'"]
+    assert payload["empty"] == []
+    assert payload["added"] == {}
+    assert payload["missing"] == {}
+    assert payload["renamed"] == {}
+
+
+def test_manifest_verify_uses_transport_retry(monkeypatch):
+    recorded = _patch_manifest_verify(monkeypatch, CitationScan(errors=(), empty=()))
+    cli.main(["manifest-verify", "--network", "testnet", "--json", "--rpc", "http://node.test"])
+    kwargs = recorded["kwargs"]
+    assert kwargs["max_attempts"] == 8
+    assert kwargs["backoff_base"] == 1.0
+    assert kwargs["backoff_cap"] == 30.0
+    assert callable(kwargs["on_retry"])
+
+
+def _patch_manifest_verify(monkeypatch, scan):
+    recorded: dict = {}
+
+    class _Rpc:
+        def __init__(self, url, **kwargs):
+            self.url = url
+            recorded["kwargs"] = kwargs
+
+        def chain_id(self):
+            return 787223
+
+    monkeypatch.setattr(cli, "EvmRpc", _Rpc)
+    monkeypatch.setattr(
+        "nvnm_cite.chain.registrymap.RegistryManifest.diff_against_chain",
+        lambda self, rpc: {"added": {}, "missing": {}, "renamed": {}},
+    )
+    monkeypatch.setattr(cli, "scan_first_citations", lambda rpc, registries: scan)
+    return recorded
 
 
 def test_delegated_commands_route_to_module_mains(monkeypatch):

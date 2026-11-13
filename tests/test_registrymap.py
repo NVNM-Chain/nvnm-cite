@@ -2,8 +2,16 @@
 
 import pytest
 
+from nvnm_cite.chain import abi
 from nvnm_cite.chain import precompile as pc
-from nvnm_cite.chain.registrymap import RegistryManifest, load_manifest
+from nvnm_cite.chain.registrymap import (
+    CitationScan,
+    RegistryManifest,
+    _parse,
+    load_manifest,
+    scan_first_citations,
+)
+from nvnm_cite.chain.rpc import RpcError
 
 ADMIN = "nvnm14a3em3mr9mvta9ccgk80wn0dxgzt5lkt2r8trx"
 
@@ -20,6 +28,7 @@ def test_manifest_pins_its_own_chain(network, chain_id):
     assert len(m.ids) == 2114
     assert m.registry_id("us-scotus") == 82
     assert m.registry_id("not-a-court") is None
+    assert m.empty == frozenset()
 
 
 def test_load_manifest_unknown_network():
@@ -85,3 +94,138 @@ def test_diff_against_chain_detects_drift():
     assert diff["renamed"] == {737: {"pinned": "us-scotus", "chain": "us-renamed"}}
     assert diff["missing"] == {738: "us-ca11"}
     assert diff["added"] == {740: "us-ca11"}
+
+
+def _cite(registry_id=82, **overrides) -> pc.Record:
+    fields = dict(
+        uri="https://www.courtlistener.com/opinion/108713/roe-v-wade/",
+        checksum="410 U.S. 113",
+        checksum_algo="cite-canonical-v1",
+        metadata='{"cluster":108713,"name":"Roe v. Wade","year":1973}',
+        timestamp="2026-07-30T15:04:00Z",
+        status="Active",
+        record_id=138702,
+        index=1,
+        is_latest=True,
+        registry_id=registry_id,
+    )
+    fields.update(overrides)
+    return pc.Record(**fields)
+
+
+class _RecordsRpc:
+    """Serves records() pages, or one RpcError, through eth_call."""
+
+    def __init__(self, pages, error=None):
+        self.pages = pages
+        self.error = error
+        self.limits: list[int] = []
+
+    def eth_call(self, to, data, block="latest"):
+        decoded = abi.decode_values(pc._FUNCTIONS["records"]["inputs"], data[4:])
+        self.limits.append(decoded[4][2])
+        if self.error is not None:
+            raise self.error
+        rows = self.pages.get(decoded[0], [])
+        as_lists = [
+            [
+                r.uri,
+                r.checksum,
+                r.checksum_algo,
+                r.metadata,
+                r.timestamp,
+                r.status,
+                r.record_id,
+                r.index,
+                r.is_latest,
+                r.registry_id,
+            ]
+            for r in rows
+        ]
+        return abi.encode_values(
+            pc._FUNCTIONS["records"]["outputs"], [as_lists, [b"", 0]]
+        )
+
+
+def test_empty_registry_is_marked_not_failed():
+    rpc = _RecordsRpc({82: []})
+    scan = scan_first_citations(rpc, {"us-scotus": 82})
+    assert scan.empty == ("us-scotus",)
+    assert scan.errors == ()
+    assert rpc.limits == [1]
+
+
+def test_record_does_not_exist_counts_as_empty():
+    rpc = _RecordsRpc(
+        {},
+        error=RpcError("eth_call", -32000, "execution reverted: record does not exist"),
+    )
+    scan = scan_first_citations(rpc, {"us-scotus": 82})
+    assert scan.empty == ("us-scotus",)
+    assert scan.errors == ()
+
+
+@pytest.mark.parametrize(
+    "override, fragment",
+    [
+        ({"checksum_algo": "sha256"}, "checksumAlgo 'sha256'"),
+        ({"metadata": "not-json"}, "metadata is not a citation object"),
+        ({"metadata": '{"name":"Roe v. Wade"}'}, "metadata is not a citation object"),
+        ({"uri": "urn:nvnm-cite:receipt:v1"}, "uri 'urn:nvnm-cite:receipt:v1'"),
+        ({"status": "Superseded"}, "status 'Superseded'"),
+        ({"registry_id": 99}, "registry id 99"),
+    ],
+)
+def test_non_citation_record_fails(override, fragment):
+    rpc = _RecordsRpc({82: [_cite(**override)]})
+    scan = scan_first_citations(rpc, {"us-scotus": 82})
+    assert scan.errors == (f"us-scotus (#82): {fragment}",)
+    assert scan.empty == ()
+
+
+def _clean() -> CitationScan:
+    return CitationScan(errors=(), empty=())
+
+
+def test_cluster_record_passes():
+    rpc = _RecordsRpc({82: [_cite()]})
+    assert scan_first_citations(rpc, {"us-scotus": 82}) == _clean()
+
+
+def test_cases_record_passes():
+    meta = '{"cases":[{"cluster":111,"name":"A v. B","year":1990}]}'
+    rpc = _RecordsRpc({82: [_cite(metadata=meta)]})
+    assert scan_first_citations(rpc, {"us-scotus": 82}) == _clean()
+
+
+def test_full_page_of_citation_records_passes():
+    rpc = _RecordsRpc({82: [_cite(), _cite(checksum="347 U.S. 483")]})
+    assert scan_first_citations(rpc, {"us-scotus": 82}) == _clean()
+
+
+def test_bad_row_in_a_full_page_fails():
+    rpc = _RecordsRpc({82: [_cite(), _cite(checksum_algo="sha256")]})
+    scan = scan_first_citations(rpc, {"us-scotus": 82})
+    assert scan.errors == ("us-scotus (#82): checksumAlgo 'sha256'",)
+    assert scan.empty == ()
+
+
+def test_node_error_is_not_an_empty_registry():
+    rpc = _RecordsRpc({}, error=RpcError("eth_call", -32000, "header not found"))
+    scan = scan_first_citations(rpc, {"us-scotus": 82})
+    assert scan.empty == ()
+    assert scan.errors == ("us-scotus (#82): eth_call: [-32000] header not found",)
+
+
+def test_empty_flag_keeps_the_id():
+    manifest = _parse(
+        '{"schema":"nvnm-cite-registry-manifest/v1","network":"testnet",'
+        '"chain_id":787223,"creator":"nvnm1x","generated_at":"2026-11-12T00:00:00Z",'
+        '"generated_at_block":1,"registries":{'
+        '"us-scotus":{"id":82},'
+        '"us-ca11":{"id":71,"empty":true}'
+        "}}"
+    )
+    assert manifest.registry_id("us-ca11") == 71
+    assert manifest.all_registries() == {"us-scotus": 82, "us-ca11": 71}
+    assert manifest.empty == frozenset({"us-ca11"})

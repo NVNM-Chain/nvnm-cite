@@ -24,8 +24,10 @@ from importlib import resources
 from typing import Any
 
 from nvnm_cite.chain import precompile as pc
+from nvnm_cite.chain.rpc import RpcError
 
 MANIFEST_SCHEMA = "nvnm-cite-registry-manifest/v1"
+_COURTLISTENER_URI = "https://www.courtlistener.com/"
 
 
 @dataclass(frozen=True)
@@ -37,6 +39,7 @@ class RegistryManifest:
     generated_at: str
     generated_at_block: int
     ids: dict[str, int]  # name -> registryId
+    empty: frozenset[str] = frozenset()  # pinned courts with no citation record
 
     @property
     def names(self) -> dict[int, str]:
@@ -86,10 +89,76 @@ class RegistryManifest:
         return {"added": added, "missing": missing, "renamed": renamed}
 
 
+def _citation_problem(record: pc.Record, registry_id: int) -> str | None:
+    """Why this row is not a section-3 citation record, or None when it is."""
+    if record.checksum_algo != "cite-canonical-v1":
+        return f"checksumAlgo {record.checksum_algo!r}"
+    if record.status != "Active":
+        return f"status {record.status!r}"
+    if not record.uri.startswith(_COURTLISTENER_URI):
+        return f"uri {record.uri!r}"
+    try:
+        meta = json.loads(record.metadata)
+    except json.JSONDecodeError:
+        meta = None
+    if not isinstance(meta, dict) or ("cluster" not in meta and "cases" not in meta):
+        return "metadata is not a citation object"
+    if record.registry_id != registry_id:
+        return f"registry id {record.registry_id}"
+    return None
+
+
+@dataclass(frozen=True)
+class CitationScan:
+    """First-page read of court registries.
+
+    ``empty`` names had no record (empty page or a keyed miss). ``errors``
+    are a wrong citation shape, or an RPC error that is not a keyed miss.
+    One string per failing registry, and the string names it.
+    """
+
+    errors: tuple[str, ...]
+    empty: tuple[str, ...]
+
+
+def scan_first_citations(rpc: Any, registries: dict[str, int]) -> CitationScan:
+    """Read records(registry_id, limit=1) for each court.
+
+    An empty page and a keyed miss are the same empty outcome. Every row
+    in the returned page is checked. A node error is not treated as empty.
+    """
+    errors: list[str] = []
+    empty: list[str] = []
+    for name, rid in registries.items():
+        try:
+            raw = rpc.eth_call(
+                pc.PRECOMPILE_ADDRESS,
+                pc.build_records_query(registry_id=rid, limit=1),
+            )
+        except RpcError as err:
+            if pc.is_keyed_miss(err):
+                rows: list[pc.Record] = []
+            else:
+                errors.append(f"{name} (#{rid}): {err}")
+                continue
+        else:
+            rows, _ = pc.decode_records_result(raw)
+        if not rows:
+            empty.append(name)
+            continue
+        for row in rows:
+            problem = _citation_problem(row, rid)
+            if problem is not None:
+                errors.append(f"{name} (#{rid}): {problem}")
+                break
+    return CitationScan(errors=tuple(errors), empty=tuple(empty))
+
+
 def _parse(raw: str) -> RegistryManifest:
     doc = json.loads(raw)
     if doc.get("schema") != MANIFEST_SCHEMA:
         raise ValueError(f"unexpected manifest schema {doc.get('schema')!r}")
+    registries = doc["registries"]
     return RegistryManifest(
         schema=doc["schema"],
         network=doc["network"],
@@ -97,7 +166,8 @@ def _parse(raw: str) -> RegistryManifest:
         creator=doc["creator"],
         generated_at=doc["generated_at"],
         generated_at_block=doc["generated_at_block"],
-        ids={name: entry["id"] for name, entry in doc["registries"].items()},
+        ids={name: entry["id"] for name, entry in registries.items()},
+        empty=frozenset(name for name, entry in registries.items() if entry.get("empty") is True),
     )
 
 

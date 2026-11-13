@@ -34,7 +34,6 @@ def _case_record(registry_id: int, checksum: str, metadata: str, uri: str = "htt
 
 # Coverage map for these hermetic tests: the TESTNET pilot ids.
 TEST_REGISTRY_IDS = {"us-scotus": 737, "us-ca11": 738}
-
 CHAIN_RECORDS = {
     (737, "410 U.S. 113"): _case_record(
         737, "410 U.S. 113", '{"cluster":108713,"name":"Roe v. Wade","year":1973}',
@@ -90,7 +89,12 @@ mislabeled but real citation appears as Totally Fabricated v. Name,
 
 def test_all_five_statuses_and_name_mismatch():
     resolver = FakeResolver()
-    report = check_document(BRIEF.encode(), "brief.txt", resolver, registry_ids=TEST_REGISTRY_IDS)
+    report = check_document(
+        data=BRIEF.encode(),
+        filename="brief.txt",
+        resolver=resolver,
+        registry_ids=TEST_REGISTRY_IDS,
+    )
 
     by_key = {c["canonical"] or c["as_written"]: c for c in report["citations"]}
     assert by_key["410 U.S. 113"]["status"] == "VERIFIED"
@@ -121,7 +125,11 @@ def test_parallel_citations_cluster_into_one_authority():
     # reporters. The strongest member (VERIFIED official cite) is the row;
     # the S. Ct. parallel stays visible under "parallels".
     text = "Roe v. Wade, 410 U.S. 113, 93 S. Ct. 705 (1973), controls."
-    report = check_text(text, FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+    report = check_text(
+        text=text,
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     assert len(report["citations"]) == 1
     row = report["citations"][0]
     assert row["canonical"] == "410 U.S. 113" and row["status"] == "VERIFIED"
@@ -136,7 +144,11 @@ def test_parallel_run_with_pin_page_between_members_clusters():
     # Bluebook style interleaves a pin page before the parallel reporter:
     # "58 Ohio St.2d 108, 110, 388 N.E.2d 1370". Still one authority.
     text = "Counsel v. Pub. Util. Comm., 58 Ohio St.2d 108, 110, 388 N.E.2d 1370 (1979)."
-    report = check_text(text, FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+    report = check_text(
+        text=text,
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     assert len(report["citations"]) == 1
     assert len(report["citations"][0]["parallels"]) == 1
 
@@ -146,14 +158,22 @@ def test_string_cites_with_semicolons_do_not_cluster():
         "See Roe v. Wade, 410 U.S. 113 (1973); Acme Corp. v. Zenith Ltd., "
         "950 F.3d 1000 (11th Cir. 2020)."
     )
-    report = check_text(text, FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+    report = check_text(
+        text=text,
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     assert len(report["citations"]) == 2
     assert all(c["parallels"] == [] for c in report["citations"])
 
 
 def test_law_section_tokens_are_accounted_not_unparseable():
     text = "The Act, §2000d, applies. See Roe v. Wade, 410 U.S. 113 (1973)."
-    report = check_text(text, FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+    report = check_text(
+        text=text,
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     assert report["summary"]["law_sections_out_of_scope"]["count"] == 1
     assert "§2000d" in report["summary"]["law_sections_out_of_scope"]["examples"][0]
     assert not any(c["status"] == "UNPARSEABLE" for c in report["citations"])
@@ -161,7 +181,11 @@ def test_law_section_tokens_are_accounted_not_unparseable():
 
 def test_scotus_not_found_notes_parallel_reporter_lag():
     text = "Fulton v. City of Philadelphia, 141 S. Ct. 1868 (2021)."
-    report = check_text(text, FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+    report = check_text(
+        text=text,
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     row = report["citations"][0]
     assert row["status"] == "NOT_FOUND"
     assert "parallel U.S. / S. Ct." in row["reason"]
@@ -171,14 +195,24 @@ def test_not_covered_never_hits_the_chain():
     # A registry outside the coverage map must NOT trigger a chain read
     # (NOT_COVERED comes from the pinned manifest, no RPC).
     resolver = FakeResolver()
-    check_document(BRIEF.encode(), "brief.txt", resolver, registry_ids=TEST_REGISTRY_IDS)
+    check_document(
+        data=BRIEF.encode(),
+        filename="brief.txt",
+        resolver=resolver,
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     assert all("100 F.3d 200" != checksum for _, checksum in resolver.calls)
     # only the two covered citations were resolved
     assert set(resolver.calls) == {(737, "410 U.S. 113"), (738, "950 F.3d 1000"), (738, "925 F.3d 1339")}
 
 
 def test_registry_id_travels_with_resolved_citations():
-    report = check_document(BRIEF.encode(), "brief.txt", FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+    report = check_document(
+        data=BRIEF.encode(),
+        filename="brief.txt",
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     by_key = {c["canonical"] or c["as_written"]: c for c in report["citations"]}
     assert by_key["410 U.S. 113"]["registry_id"] == 737
     assert by_key["925 F.3d 1339"]["registry_id"] == 738
@@ -194,7 +228,11 @@ def test_expanded_coverage_not_found_carries_caution():
         "Also Varghese v. China Southern Airlines Co., 925 F.3d 1339 (11th Cir. 2019)."
     )
     ids = dict(TEST_REGISTRY_IDS, **{"us-nysd": 1500})
-    report = check_text(text, FakeResolver(), registry_ids=ids)
+    report = check_text(
+        text=text,
+        resolver=FakeResolver(),
+        registry_ids=ids,
+    )
     by_key = {c["canonical"]: c for c in report["citations"]}
     district = by_key["100 F. Supp. 2d 500"]
     assert district["status"] == "NOT_FOUND"
@@ -224,7 +262,11 @@ def test_family_sweep_finds_record_in_district_sibling():
     )
     resolver = FakeResolver({(903, "101 S.W.3d 381"): rec})
     text = "Joseph v. City of Austin, 101 S.W.3d 381 (Tex. App.—Austin 2003)."
-    report = check_text(text, resolver, registry_ids=dict(TEST_REGISTRY_IDS, **FAMILY_IDS))
+    report = check_text(
+        text=text,
+        resolver=resolver,
+        registry_ids=dict(TEST_REGISTRY_IDS, **FAMILY_IDS),
+    )
     row = report["citations"][0]
     assert row["status"] == "VERIFIED"
     assert row["registry"] == "us-txctapp3"
@@ -236,7 +278,11 @@ def test_family_sweep_finds_record_in_district_sibling():
 def test_family_sweep_miss_names_every_registry_read():
     resolver = FakeResolver({})
     text = "Joseph v. City of Austin, 101 S.W.3d 381 (Tex. App.—Austin 2003)."
-    report = check_text(text, resolver, registry_ids=dict(TEST_REGISTRY_IDS, **FAMILY_IDS))
+    report = check_text(
+        text=text,
+        resolver=resolver,
+        registry_ids=dict(TEST_REGISTRY_IDS, **FAMILY_IDS),
+    )
     row = report["citations"][0]
     assert row["status"] == "NOT_FOUND"
     # The routed registry stays the row's registry on a family-wide miss.
@@ -260,7 +306,11 @@ def test_edition_family_routes_bare_split_editions():
     )
     resolver = FakeResolver({(921, "30 Cal. App. 5th 696"): rec})
     text = "Drulias v. 1st Century Bancshares, Inc. (2018) 30 Cal.App.5th 696."
-    report = check_text(text, resolver, registry_ids=dict(TEST_REGISTRY_IDS, **FAMILY_IDS))
+    report = check_text(
+        text=text,
+        resolver=resolver,
+        registry_ids=dict(TEST_REGISTRY_IDS, **FAMILY_IDS),
+    )
     row = report["citations"][0]
     assert row["status"] == "VERIFIED"
     assert row["registry"] == "us-calctapp"
@@ -269,7 +319,10 @@ def test_edition_family_routes_bare_split_editions():
 
 def test_single_candidate_lookups_have_no_family_field():
     report = check_document(
-        BRIEF.encode(), "brief.txt", FakeResolver(), registry_ids=TEST_REGISTRY_IDS
+        data=BRIEF.encode(),
+        filename="brief.txt",
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
     )
     roe = next(c for c in report["citations"] if c["canonical"] == "410 U.S. 113")
     assert roe["status"] == "VERIFIED"
@@ -277,7 +330,12 @@ def test_single_candidate_lookups_have_no_family_field():
 
 
 def test_keyed_results_carry_a_replayable_query():
-    report = check_document(BRIEF.encode(), "brief.txt", FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+    report = check_document(
+        data=BRIEF.encode(),
+        filename="brief.txt",
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     by_key = {c["canonical"] or c["as_written"]: c for c in report["citations"]}
     # VERIFIED and NOT_FOUND came from a live read -> the exact query travels back
     for k in ("410 U.S. 113", "925 F.3d 1339"):
@@ -291,7 +349,12 @@ def test_keyed_results_carry_a_replayable_query():
 
 
 def test_document_binds_sha256_and_privacy_note():
-    report = check_document(BRIEF.encode(), "brief.txt", FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+    report = check_document(
+        data=BRIEF.encode(),
+        filename="brief.txt",
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     import hashlib
 
     assert report["document"]["sha256"] == hashlib.sha256(BRIEF.encode()).hexdigest()
@@ -310,23 +373,41 @@ def test_transport_failure_propagates_not_treated_as_not_found():
     for err in (ConnectionRefusedError("refused"), RpcError("eth_call", -32000, "execution reverted")):
         resolver = RaisingResolver(err)
         with pytest.raises(type(err)):
-            check_text(BRIEF, resolver, registry_ids=TEST_REGISTRY_IDS)
+            check_text(
+                text=BRIEF,
+                resolver=resolver,
+                registry_ids=TEST_REGISTRY_IDS,
+            )
         assert resolver.calls >= 1  # it did attempt the read
 
 
 def test_oversize_text_raises_checkerror():
     with pytest.raises(CheckError) as exc:
-        check_text("x" * 2_000_001, FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+        check_text(
+            text="x" * 2_000_001,
+            resolver=FakeResolver(),
+            registry_ids=TEST_REGISTRY_IDS,
+        )
     assert exc.value.http_status == 413
 
 
 def test_empty_document_raises_checkerror():
     with pytest.raises(CheckError):
-        check_document(b"", "empty.txt", FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+        check_document(
+            data=b"",
+            filename="empty.txt",
+            resolver=FakeResolver(),
+            registry_ids=TEST_REGISTRY_IDS,
+        )
 
 
 def test_clean_document_has_no_findings():
-    report = check_document(b"This brief cites no cases at all.", "x.txt", FakeResolver(), registry_ids=TEST_REGISTRY_IDS)
+    report = check_document(
+        data=b"This brief cites no cases at all.",
+        filename="x.txt",
+        resolver=FakeResolver(),
+        registry_ids=TEST_REGISTRY_IDS,
+    )
     assert report["citations"] == []
     assert report["summary"]["occurrences"] == 0
 

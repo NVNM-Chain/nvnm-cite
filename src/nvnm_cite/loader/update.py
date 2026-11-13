@@ -245,7 +245,6 @@ def update_court(
     court: str,
     client: CourtListenerClient,
     db: sqlite3.Connection,
-    *,
     dry_run: bool,
     since: str | None = None,
     default_since: str | None = None,
@@ -383,8 +382,13 @@ def main(argv: list[str] | None = None) -> int:
         key, chain_id = signing_context(network)
         registry_ids = load_manifest(network.key).all_registries()
         run_load(
-            db, rpc, key, chain_id, registry_ids,
-            fee_token=network.fee_token, fee_decimals=network.fee_token_decimals,
+            db=db,
+            rpc=rpc,
+            key=key,
+            chain_id=chain_id,
+            registry_ids=registry_ids,
+            fee_token=network.fee_token,
+            fee_decimals=network.fee_token_decimals,
         )
         print_status(
             db, rpc, address_from_private_key(key), network.gas_token,
