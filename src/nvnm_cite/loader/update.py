@@ -378,13 +378,18 @@ def main(argv: list[str] | None = None) -> int:
         from nvnm_cite.config import get_network, signing_context
         from nvnm_cite.loader.bulk_load import print_status, run_load
 
-        # Writes default to testnet; mainnet needs the signing opt-in pair.
-        network = get_network(default="testnet")
+        network = get_network()
         rpc = EvmRpc(network.rpc_url())
         key, chain_id = signing_context(network)
         registry_ids = load_manifest(network.key).all_registries()
-        run_load(db, rpc, key, chain_id, registry_ids)
-        print_status(db, rpc, address_from_private_key(key), token=network.gas_token)
+        run_load(
+            db, rpc, key, chain_id, registry_ids,
+            fee_token=network.fee_token, fee_decimals=network.fee_token_decimals,
+        )
+        print_status(
+            db, rpc, address_from_private_key(key), network.gas_token,
+            network.fee_token, network.fee_token_decimals,
+        )
     elif args.submit and not total_appended:
         print("\n--submit: nothing new to load")
 

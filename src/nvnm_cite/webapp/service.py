@@ -819,13 +819,14 @@ class StatusService:
                 "label": self.network.label,
                 "chain_id": self.network.chain_id,
                 "chain_id_hex": hex(self.network.chain_id),
-                "cosmos_chain_id": self.network.cosmos_chain_id,
+                "network_name": self.network.network_name,
                 "rpc_urls": [self.rpc_url or self.network.rpc_default],
                 "public_rpc": self.network.rpc_default,
                 "explorer": self.network.explorer,
                 "gas_token": {
                     "name": self.network.gas_token,
                     "symbol": self.network.gas_token,
+                    # wallet_addEthereumChain requires 18. This is the display unit, not the fee-token scale.
                     "decimals": 18,
                 },
                 "gas_price_gwei": gas_price_gwei,

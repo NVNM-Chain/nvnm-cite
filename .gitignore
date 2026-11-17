@@ -23,3 +23,4 @@ prep_body.txt
 
 # Claude Code session config (local tooling, never public)
 .claude/
+.vscode/

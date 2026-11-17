@@ -261,16 +261,10 @@ a:hover { text-decoration-color: var(--navy); }
   white-space: nowrap;
 }
 
-.badge-testnet {
+.badge-network {
   background: var(--bronze-tint);
   border-color: #dcc18f;
   color: #7a4e1c;
-}
-
-.badge-mainnet {
-  background: #e8f3ec;
-  border-color: #9ec7ab;
-  color: #1e5c38;
 }
 
 .badge-muted { background: var(--mute-tint); border-color: var(--mute-line); color: var(--mute); }

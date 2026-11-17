@@ -1,10 +1,12 @@
-"""Mainnet read-only smoke: the production chain answers as the manifest pins.
+"""Live read-only smoke: a network's chain answers as its manifest pins.
 
 STRICTLY READ-ONLY (eth_call / eth_chainId only — no key is loaded, no
-transaction can be constructed here; sessions must never write mainnet).
-Opt-in via NVNM_MAINNET_SMOKE=1 so the default suite stays offline-green:
+transaction can be constructed here). Opt-in via NVNM_LIVE_SMOKE=1 so the
+default suite stays offline-green:
 
-    NVNM_MAINNET_SMOKE=1 uv run pytest tests/test_mainnet_smoke.py
+    NVNM_LIVE_SMOKE=1 uv run pytest tests/test_live_smoke.py
+
+NVNM_SMOKE_NETWORK selects a profile. Unset, the checks run against testnet.
 """
 
 from __future__ import annotations
@@ -16,24 +18,25 @@ import pytest
 from nvnm_cite.chain import precompile as pc
 from nvnm_cite.chain.registrymap import load_manifest
 from nvnm_cite.chain.rpc import EvmRpc, RpcError
-from nvnm_cite.config import MAINNET
+from nvnm_cite.config import get_network
 
 pytestmark = pytest.mark.skipif(
-    os.environ.get("NVNM_MAINNET_SMOKE") != "1",
-    reason="mainnet smoke is opt-in: set NVNM_MAINNET_SMOKE=1",
+    os.environ.get("NVNM_LIVE_SMOKE") != "1",
+    reason="live smoke is opt-in: set NVNM_LIVE_SMOKE=1",
 )
 
-MANIFEST = load_manifest("mainnet")
+NETWORK = get_network(os.environ.get("NVNM_SMOKE_NETWORK") or "testnet")
+MANIFEST = load_manifest(NETWORK.key)
 
 
 @pytest.fixture(scope="module")
 def rpc() -> EvmRpc:
-    client = EvmRpc(MAINNET.rpc_url(), timeout=20)
+    client = EvmRpc(NETWORK.rpc_url(), timeout=20)
     try:
         chain_id = client.chain_id()
     except Exception as exc:
-        pytest.skip(f"mainnet RPC unreachable: {exc}")
-    assert chain_id == 1611, f"RPC serves chain {chain_id}, not mainnet"
+        pytest.skip(f"{NETWORK.key} RPC unreachable: {exc}")
+    assert chain_id == NETWORK.chain_id, f"RPC serves chain {chain_id}, not {NETWORK.key}"
     return client
 
 

@@ -5,7 +5,7 @@ The drafting-time check resolves each citation by a LIVE keyed
 (item 0, DECISIONS 2026-06-13; supersedes the old local-index-only rule).
 Two properties the core depends on and that every Resolver must honor:
 
-1. A keyed MISS -- the precompile's ``collections: not found`` error --
+1. A keyed MISS -- the ``record does not exist`` revert --
    returns ``record=None`` (the citation is genuinely absent → NOT_FOUND).
    Every OTHER failure (transport, timeout, a non-miss RPC error)
    PROPAGATES unchanged. A dead or slow RPC must never be mistaken for

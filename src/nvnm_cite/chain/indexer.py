@@ -47,6 +47,7 @@ from nvnm_cite.chain.precompile import (
     build_registries_query,
     decode_records_result,
     decode_registries_result,
+    is_keyed_miss,
 )
 from nvnm_cite.chain.rpc import EvmRpc, RpcError
 
@@ -198,7 +199,7 @@ def rpc_fetch_page(rpc: EvmRpc, block_tag: str) -> FetchPage:
             # Keyed-miss semantics: an empty/missing collection ERRORS, it
             # never returns an empty page (DECISIONS 2026-06-10). Registry
             # existence is checked separately before paging.
-            if "not found" in err.message:
+            if is_keyed_miss(err):
                 return []
             raise
         rows, _page = decode_records_result(raw)
@@ -213,7 +214,7 @@ def registry_exists(rpc: EvmRpc, registry_id: int) -> bool:
             rpc.eth_call(PRECOMPILE_ADDRESS, build_registries_query(registry_id=registry_id))
         )
     except RpcError as err:
-        if "not found" in err.message:
+        if is_keyed_miss(err):
             return False
         raise
     return any(r.id == registry_id for r in registries)
@@ -242,11 +243,11 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="comma-separated registry names (resolved via the pinned manifest) or numeric ids",
     )
-    parser.add_argument("--network", choices=["mainnet", "testnet"], default=None)
+    from nvnm_cite.config import get_network, load_dotenv, network_choices
+
+    parser.add_argument("--network", choices=network_choices(), default=None)
     parser.add_argument("--rpc", default=None, help="RPC URL (default: the network's)")
     args = parser.parse_args(argv)
-
-    from nvnm_cite.config import get_network, load_dotenv
 
     load_dotenv()
     network = get_network(args.network)

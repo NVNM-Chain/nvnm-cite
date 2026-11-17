@@ -57,21 +57,25 @@ EVENT_TOPICS = {
     for name, ev in _EVENTS.items()
 }
 
-# Measured (DECISIONS 2026-06-10; re-verified under v1.2.0 2026-07-31): a keyed
-# records()/registries() lookup that misses ERRORs through eth_call with this
-# marker; an empty page is NOT the miss signal. The one place this string
-# lives, so the verifier's NOT_FOUND path and the registry-existence probe
+# Measured on L1 testnet 787223 (DECISIONS 2026-11-09): a keyed records() /
+# registries() lookup that misses REVERTS through eth_call with one of these
+# reasons; an empty page is NOT the miss signal (the published docs say
+# "empty result" — the live RPC disagrees and wins). records() on a missing
+# registry also reverts "record does not exist". The one place these strings
+# live, so the verifier's NOT_FOUND path and the registry-existence probe
 # agree with each other.
-KEYED_MISS_MARKER = "collections: not found"
+KEYED_MISS_MARKERS = ("record does not exist", "registry does not exist")
 
 
 def is_keyed_miss(err: Exception) -> bool:
-    """True when ``err`` is the precompile's keyed-miss error (record/registry
-    absent). Duck-typed on ``.message`` so this stays decoupled from the RPC
-    client. Callers map a miss to NOT_FOUND / registry-absent and let every
-    other failure -- transport, timeout, a non-miss RPC error -- propagate;
-    a transport failure must never be mistaken for a real chain answer."""
-    return KEYED_MISS_MARKER in (getattr(err, "message", "") or "")
+    """True when ``err`` is the anchoring contract's keyed-miss revert
+    (record/registry absent). Duck-typed on ``.message`` so this stays
+    decoupled from the RPC client. Callers map a miss to NOT_FOUND /
+    registry-absent and let every other failure -- transport, timeout, a
+    non-miss RPC error -- propagate; a transport failure must never be
+    mistaken for a real chain answer."""
+    message = getattr(err, "message", "") or ""
+    return any(marker in message for marker in KEYED_MISS_MARKERS)
 
 
 @dataclass(frozen=True)

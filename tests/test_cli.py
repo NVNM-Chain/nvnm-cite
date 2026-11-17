@@ -29,12 +29,12 @@ def _rec(registry_id: int, checksum: str, metadata: str) -> pc.Record:
     )
 
 
-# CLI tests run with --network testnet, so the fixture ids are the pilot pair.
-TEST_REGISTRY_IDS = {"us-scotus": 737, "us-ca11": 738}
+# CLI tests run with --network testnet, so the fixture ids are the L1 testnet manifest's.
+TEST_REGISTRY_IDS = {"us-scotus": 82, "us-ca11": 71}
 
 RECORDS = {
-    (737, "410 U.S. 113"): _rec(
-        737, "410 U.S. 113", '{"cluster":108713,"name":"Roe v. Wade","year":1973}'
+    (82, "410 U.S. 113"): _rec(
+        82, "410 U.S. 113", '{"cluster":108713,"name":"Roe v. Wade","year":1973}'
     ),
 }
 
@@ -111,18 +111,18 @@ def test_no_subcommand_errors(capsys):
 def _fake_plan():
     report = check_document(BRIEF.encode(), "brief.txt", FakeResolver(RECORDS), registry_ids=TEST_REGISTRY_IDS)
     sha = report["document"]["sha256"]
-    regs = [{"id": 737, "name": "us-scotus", "head_block": 1_700_000}]
+    regs = [{"id": 82, "name": "us-scotus", "head_block": 1_700_000}]
     receipt, rj = build_receipt(
         document_sha256=sha, checked_at_block=1_700_000, registries=regs,
         summary=summary_tally(report), agent_address="0x" + "ab" * 20, timestamp="t",
-        chain_id=787111,
+        chain_id=787223,
     )
     reg = "inveniam--mata-v-avianca"
     # create path: the id (and record calldata) exist only after the create
     # tx confirms.
     return AnchorPlan(
         registry=reg, registry_id=None, registry_exists=False, name_matches=None,
-        document_sha256=sha, checked_at_block=1_700_000, chain_id=787111,
+        document_sha256=sha, checked_at_block=1_700_000, chain_id=787223,
         registries_read=regs, receipt=receipt, receipt_json=rj,
         record_calldata=None,
         create_registry={"name": reg}, create_calldata=pc.build_add_registry(reg, "d", '{"k":1}'),
@@ -143,9 +143,8 @@ def test_anchor_dry_run_does_not_send(brief_file, monkeypatch, capsys):
     assert "will be CREATED" in out
 
 
-def test_anchor_defaults_to_mainnet(brief_file, monkeypatch, capsys):
-    """No --network means mainnet, like every other command (Albert
-    2026-08-06: everything runs mainnet, demos included; testnet is opt-in)."""
+def test_anchor_defaults_to_testnet(brief_file, monkeypatch, capsys):
+    """No --network means testnet, the same default as every other command."""
     monkeypatch.delenv("NVNM_NETWORK", raising=False)
     seen = {}
 
@@ -157,7 +156,7 @@ def test_anchor_defaults_to_mainnet(brief_file, monkeypatch, capsys):
     monkeypatch.setattr(cli, "find_receipt_registries", lambda *a, **k: [])
     rc = cli.main(["anchor", str(brief_file), "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
     assert rc == 0
-    assert seen["chain_id"] == 1611
+    assert seen["chain_id"] == 787223
 
 
 def test_anchor_ambiguous_registries_require_explicit_id(brief_file, monkeypatch, capsys):

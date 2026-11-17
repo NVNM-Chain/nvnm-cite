@@ -6,7 +6,7 @@ A per-jurisdiction registry of canonical US case citations stored in plaintext o
 
 It never asserts that a case supports a proposition or is good law. It proves the check happened, against what, and by whom. Provenance, not truth.
 
-**Status:** MAINNET is live — the full corpus (2,114 US court registries, 11.94M citation records, registry ids 69–2182) is on NVNM Chain mainnet (1611), and the codebase runs the anchoring v1.2.0 id-keyed interface (registry names are not unique on chain; the pinned manifests in `src/nvnm_cite/chain/` are the name→id trust anchor). The webapp is the production surface (`uv run python -m nvnm_cite.webapp`, mainnet by default) and the `nvnm-cite` CLI does `check | anchor | verify | stats | manifest-verify` (plus operator commands), reading the chain live. Receipts anchor to per-firm-per-case registries via a two-step create→anchor flow whose discovery line carries the registry #id. Pilot history (phases 0–4.5, testnet) is tagged `phase-0-done` … `phase-4-done`. See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) and DECISIONS 2026-07-31.
+**Status:** The codebase runs the anchoring v1.2.0 id-keyed interface (registry names are not unique on chain; the pinned manifests in `src/nvnm_cite/chain/` are the name→id trust anchor). The webapp is the production surface (`uv run python -m nvnm_cite.webapp`, testnet by default) and the `nvnm-cite` CLI does `check | anchor | verify | stats | manifest-verify` (plus operator commands), reading the chain live. Receipts anchor to per-firm-per-case registries via a two-step create→anchor flow whose discovery line carries the registry #id. Shipped networks are testnet and devnet, loaded from `src/nvnm_cite/networks/`. Pilot history (phases 0–4.5) is tagged `phase-0-done` … `phase-4-done`. See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) and DECISIONS 2026-07-31.
 
 ## Working on this project (the multi-session protocol)
 
@@ -32,7 +32,7 @@ Two phases deserve an extra line pasted after the kickoff prompt: Phase 0 (paste
 
 1. [uv](https://docs.astral.sh/uv/) manages the environment (`uv sync`, `uv run pytest`).
 2. Copy `.env.example` to `.env` and fill in the values yourself. Never paste keys into chat; never commit `.env`.
-3. Chain WRITES from development run against NVNM **testnet** (chain id 787111) only; reads default to **mainnet** (chain id 1611), which now holds the full 2,114-registry corpus. Mainnet is never written from a session (`config.signing_context` enforces it).
+3. The default network is **testnet** (chain id 787223). Devnet is 787222, selected with `--network devnet` or `NVNM_NETWORK=devnet`. Signing reads the key env named by that profile (`NVNM_TESTNET_KEY` or `NVNM_DEVNET_KEY`) and never substitutes the other.
 
 ## Web demo
 
