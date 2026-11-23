@@ -69,6 +69,8 @@ class EvmRpc:
         self._next_id = 1
 
     def call(self, method: str, params: list[Any] | None = None) -> Any:
+        if not self.url:
+            raise ConnectionError("no RPC URL configured")
         payload = {
             "jsonrpc": "2.0",
             "id": self._next_id,

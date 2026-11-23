@@ -6,7 +6,7 @@ A per-jurisdiction registry of canonical US case citations stored in plaintext o
 
 It never asserts that a case supports a proposition or is good law. It proves the check happened, against what, and by whom. Provenance, not truth.
 
-**Status:** The codebase runs the anchoring v1.2.0 id-keyed interface (registry names are not unique on chain; the pinned manifests in `src/nvnm_cite/chain/` are the name→id trust anchor). The webapp is the production surface (`uv run python -m nvnm_cite.webapp`, testnet by default) and the `nvnm-cite` CLI does `check | anchor | verify | stats | manifest-verify` (plus operator commands), reading the chain live. Receipts anchor to per-firm-per-case registries via a two-step create→anchor flow whose discovery line carries the registry #id. Shipped networks are testnet and devnet, loaded from `src/nvnm_cite/networks/`. Pilot history (phases 0–4.5) is tagged `phase-0-done` … `phase-4-done`. See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) and DECISIONS 2026-07-31.
+**Status:** The codebase runs the anchoring v1.2.0 id-keyed interface (registry names are not unique on chain; the pinned manifests in `src/nvnm_cite/chain/` are the name→id trust anchor). The webapp is the production surface (`uv run python -m nvnm_cite.webapp`, mainnet by default) and the `nvnm-cite` CLI does `check | anchor | verify | stats | manifest-verify` (plus operator commands), reading the chain live. Receipts anchor to per-firm-per-case registries via a two-step create→anchor flow whose discovery line carries the registry #id. Published networks are testnet and devnet, loaded from `src/nvnm_cite/networks/`. `mainnet` leaves chain id and RPC empty in its profile; those env vars fill them when set. A value written in a profile is not replaced by env. Pilot history (phases 0–4.5) is tagged `phase-0-done` … `phase-4-done`. See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) and DECISIONS 2026-07-31.
 
 ## Working on this project (the multi-session protocol)
 
@@ -32,7 +32,7 @@ Two phases deserve an extra line pasted after the kickoff prompt: Phase 0 (paste
 
 1. [uv](https://docs.astral.sh/uv/) manages the environment (`uv sync`, `uv run pytest`).
 2. Copy `.env.example` to `.env` and fill in the values yourself. Never paste keys into chat; never commit `.env`.
-3. The default network is **testnet** (chain id 787223). Devnet is 787222, selected with `--network devnet` or `NVNM_NETWORK=devnet`. Signing reads the key env named by that profile (`NVNM_TESTNET_KEY` or `NVNM_DEVNET_KEY`) and never substitutes the other.
+3. The default network is **mainnet**. It starts with no chain id until `NVNM_MAINNET_CHAIN_ID` and `NVNM_MAINNET_RPC` are set. Testnet is 787223 and devnet is 787222, selected with `--network` or `NVNM_NETWORK`. Signing reads the key env named by that profile (`NVNM_MAINNET_KEY`, `NVNM_TESTNET_KEY`, or `NVNM_DEVNET_KEY`) and never substitutes another.
 
 ## Web demo
 

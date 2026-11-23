@@ -8,8 +8,8 @@ read-only by scripts/build_registry_manifest.py from a creator-filtered
 enumeration of registries() cross-checked against the court-name list, and
 checked in beside the vendored ABI. Runtime resolution goes through the
 pinned map, never through a live name search; diff_against_chain() exists
-to DETECT drift, not to follow it silently. A manifest whose network key
-or chain id disagrees with its profile is refused.
+to DETECT drift, not to follow it silently. A manifest that lists registries is refused when its network key or chain
+id disagrees with its profile. An empty manifest does not pin a chain id.
 
 Stdlib only, like the rest of chain/. The profile check imports config
 lazily so config can finish loading its JSON before this module runs.
@@ -18,9 +18,11 @@ lazily so config can finish loading its JSON before this module runs.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from functools import lru_cache
 from importlib import resources
+from pathlib import Path
 from typing import Any
 
 from nvnm_cite.chain import precompile as pc
@@ -32,7 +34,7 @@ MANIFEST_SCHEMA = "nvnm-cite-registry-manifest/v1"
 class RegistryManifest:
     schema: str
     network: str
-    chain_id: int
+    chain_id: int | None
     creator: str
     generated_at: str
     generated_at_block: int
@@ -90,10 +92,11 @@ def _parse(raw: str) -> RegistryManifest:
     doc = json.loads(raw)
     if doc.get("schema") != MANIFEST_SCHEMA:
         raise ValueError(f"unexpected manifest schema {doc.get('schema')!r}")
+    raw_chain = doc["chain_id"]
     return RegistryManifest(
         schema=doc["schema"],
         network=doc["network"],
-        chain_id=doc["chain_id"],
+        chain_id=None if raw_chain is None else int(raw_chain),
         creator=doc["creator"],
         generated_at=doc["generated_at"],
         generated_at_block=doc["generated_at_block"],
@@ -101,23 +104,63 @@ def _parse(raw: str) -> RegistryManifest:
     )
 
 
-@lru_cache(maxsize=4)
-def load_manifest(network_key: str) -> RegistryManifest:
-    """Load the pinned manifest for a shipped network profile."""
+def _read_packaged(network_key: str) -> tuple[str, str]:
     filename = f"registry_manifest_{network_key}.json"
     raw = resources.files("nvnm_cite.chain").joinpath(filename).read_text()
-    manifest = _parse(raw)
-    if manifest.network != network_key:
-        raise ValueError(
-            f"manifest {filename} claims network {manifest.network!r}"
-        )
+    return filename, raw
+
+
+def _agree(network: Any, manifest: RegistryManifest, filename: str) -> RegistryManifest:
+    if manifest.network != network.key:
+        raise ValueError(f"manifest {filename} claims network {manifest.network!r}")
+    if not manifest.ids:
+        # An empty map does not pin a chain id, so the identity env can be
+        # filled later without replacing this file.
+        return manifest
     from nvnm_cite import config
 
-    try:
-        profile = config.NETWORKS[network_key]
-    except KeyError:
-        raise ValueError(f"no profile for manifest network {network_key!r}") from None
+    if network.chain_id is None:
+        raise ValueError(
+            f"{network.profile_env('CHAIN_ID')} is not set; the manifest lists registries"
+        )
+    if manifest.chain_id is None:
+        raise ValueError(f"manifest {filename} lists registries but has no chain_id")
+    if manifest.creator != network.creator:
+        raise ValueError(
+            f"manifest {filename} creator {manifest.creator!r} is not profile creator {network.creator!r}"
+        )
     config.match_manifest(
-        profile, chain_id=manifest.chain_id, manifest_network=manifest.network
+        network, chain_id=manifest.chain_id, manifest_network=manifest.network
     )
     return manifest
+
+
+@lru_cache(maxsize=4)
+def _load_pinned(network_key: str) -> RegistryManifest:
+    filename, raw = _read_packaged(network_key)
+    from nvnm_cite import config
+
+    return _agree(config.resolve_profile(network_key), _parse(raw), filename)
+
+
+def load_manifest(network_key: str) -> RegistryManifest:
+    """Load the pinned manifest for a network profile.
+
+    A packaged manifest that lists registries is cached and ignores
+    ``NVNM_MANIFEST_PATH``. A packaged manifest with no registries reads
+    that path when it is set, so a generated file can fill the hole
+    without a new image.
+    """
+    from nvnm_cite import config
+
+    filename, raw = _read_packaged(network_key)
+    if _parse(raw).ids:
+        return _load_pinned(network_key)
+    network = config.resolve_profile(network_key)
+    override = os.environ.get("NVNM_MANIFEST_PATH", "").strip()
+    if not override:
+        return _agree(network, _parse(raw), filename)
+    path = Path(override)
+    if not path.is_file():
+        raise ValueError(f"NVNM_MANIFEST_PATH does not name a file: {override}")
+    return _agree(network, _parse(path.read_text()), path.name)

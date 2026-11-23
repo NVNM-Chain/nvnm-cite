@@ -4,23 +4,26 @@ Values are loaded, never logged. Code in this package must not print
 private keys or token values; callers get parsed values only.
 
 Network identity is a JSON profile in ``nvnm_cite.networks``. ``get_network()``
-resolves an explicit argument, then ``NVNM_NETWORK``, then testnet, and
-refuses the result unless the pinned registry manifest names the same
-network and chain id. Signing reads the env var named by that profile
-(``key_env``) and never a key belonging to another profile.
+resolves an explicit argument, then ``NVNM_NETWORK``, then mainnet. A field
+the JSON leaves empty is filled from ``NVNM_<PROFILE>_<FIELD>``; a
+field the JSON sets is kept. ``rpc_url()`` still prefers ``rpc_env`` for the
+server's call when ``rpc_default`` is already set. A manifest that lists
+registries must name the same network and chain id. An empty manifest does
+not. Signing reads the env var named by ``key_env`` and never another
+profile's key.
 """
 
 from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from importlib import resources
 from pathlib import Path
 
 from nvnm_cite.chain.signer import parse_private_key
 
-DEFAULT_NETWORK = "testnet"
+DEFAULT_NETWORK = "mainnet"
 
 _PROFILE_FIELDS = (
     "key",
@@ -51,7 +54,7 @@ class ManifestCheck:
 @dataclass(frozen=True)
 class Network:
     key: str
-    chain_id: int
+    chain_id: int | None
     network_name: str
     rpc_default: str
     rpc_env: str  # env var that overrides rpc_default
@@ -66,6 +69,10 @@ class Network:
 
     def rpc_url(self) -> str:
         return os.environ.get(self.rpc_env, self.rpc_default)
+
+    def profile_env(self, field: str) -> str:
+        """``NVNM_MAINNET_CHAIN_ID`` for key ``mainnet`` and field ``CHAIN_ID``."""
+        return f"NVNM_{self.key.upper()}_{field}"
 
 
 def _manifest_check(doc: dict, filename: str) -> ManifestCheck | None:
@@ -102,9 +109,11 @@ def _load_profiles() -> dict[str, Network]:
             raise ValueError(f"{path.name} declares key {key!r}")
         if key in found:
             raise ValueError(f"duplicate network profile {key!r}")
+        raw_chain = doc["chain_id"]
+        chain_id = None if raw_chain is None else int(raw_chain)
         found[key] = Network(
             key=key,
-            chain_id=int(doc["chain_id"]),
+            chain_id=chain_id,
             network_name=doc["network_name"],
             rpc_default=doc["rpc_default"],
             rpc_env=doc["rpc_env"],
@@ -147,25 +156,60 @@ def match_manifest(network: Network, *, chain_id: int, manifest_network: str) ->
         )
 
 
+def _fill_empty(network: Network) -> Network:
+    """Fill JSON fields that were left empty. A value in the file stays."""
+    updates: dict[str, object] = {}
+    if network.chain_id is None:
+        chain_env = network.profile_env("CHAIN_ID")
+        chain_raw = os.environ.get(chain_env, "").strip()
+        if chain_raw:
+            try:
+                chain_id = int(chain_raw, 10)
+            except ValueError as exc:
+                raise ValueError(f"{chain_env} must be a positive integer") from exc
+            if chain_id <= 0:
+                raise ValueError(f"{chain_env} must be a positive integer")
+            updates["chain_id"] = chain_id
+    if not network.rpc_default:
+        # rpc_default is what the wallet is told. Copy it only when the file
+        # had no public URL. A set rpc_default stays; rpc_url() still prefers rpc_env.
+        rpc = os.environ.get(network.rpc_env, "").strip()
+        if rpc:
+            updates["rpc_default"] = rpc
+    for field, attr in (("NETWORK_NAME", "network_name"), ("EXPLORER", "explorer")):
+        if getattr(network, attr):
+            continue
+        value = os.environ.get(network.profile_env(field), "").strip()
+        if value:
+            updates[attr] = value
+    if not updates:
+        return network
+    return replace(network, **updates)
+
+
 def resolve_profile(name: str | None = None) -> Network:
     """Resolve a profile without reading its manifest.
 
     The manifest builder uses this so it can write the first manifest for a
-    new profile. Every other entry point uses ``get_network()``.
+    new profile. Every other entry point uses ``get_network()``. Empty
+    profile fields are filled from env. Set fields are unchanged.
     """
     chosen = name or os.environ.get("NVNM_NETWORK") or DEFAULT_NETWORK
     try:
-        return NETWORKS[chosen]
+        network = NETWORKS[chosen]
     except KeyError:
         raise ValueError(
             f"unknown network {chosen!r}; expected one of {sorted(NETWORKS)}"
         ) from None
+    return _fill_empty(network)
 
 
 def get_network(name: str | None = None) -> Network:
-    """Resolve a profile and require its pinned manifest to agree.
+    """Resolve a profile and load its manifest.
 
-    Precedence: explicit arg, then ``NVNM_NETWORK``, then testnet.
+    Precedence: explicit arg, then ``NVNM_NETWORK``, then mainnet. A manifest
+    that lists registries must agree on network key and chain id. An empty
+    manifest loads either way.
     """
     network = resolve_profile(name)
     # Lazy import: registrymap checks the profile, so this module must finish
@@ -202,6 +246,9 @@ def signing_context(network: Network) -> tuple[int, int]:
     """The single gate for transaction signing: returns (private_key, chain_id).
 
     The key is the env var named by ``network.key_env``. A key set for
-    another profile is never read.
+    another profile is never read. A profile with no chain id refuses, so a
+    receipt is never signed for an unknown chain.
     """
+    if network.chain_id is None:
+        raise RuntimeError(f"{network.profile_env('CHAIN_ID')} is not set; refusing to sign")
     return _env_private_key(network.key_env), network.chain_id

@@ -336,6 +336,9 @@ def cmd_anchor(args: argparse.Namespace) -> int:
 
     load_dotenv()
     network = get_network(args.network)
+    if network.chain_id is None:
+        print(f"error: {network.profile_env('CHAIN_ID')} is not set", file=sys.stderr)
+        return 2
     rpc_url = args.rpc or network.rpc_url()
     rpc_factory = lambda: EvmRpc(rpc_url)  # noqa: E731
     registry_ids = load_manifest(network.key).all_registries()
@@ -573,6 +576,9 @@ def cmd_manifest_verify(args: argparse.Namespace) -> int:
     load_dotenv()
     network = get_network(args.network)
     manifest = load_manifest(network.key)
+    if network.chain_id is None:
+        print(f"error: {network.profile_env('CHAIN_ID')} is not set", file=sys.stderr)
+        return 2
     rpc = EvmRpc(args.rpc or network.rpc_url())
     chain_id = rpc.chain_id()
     if chain_id != network.chain_id:
@@ -656,7 +662,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--network",
         choices=network_choices(),
         default=None,
-        help="which NVNM Chain network to read (default: testnet, or NVNM_NETWORK)",
+        help="which NVNM Chain network to read (default: mainnet, or NVNM_NETWORK)",
     )
     check.add_argument(
         "--rpc",
@@ -700,7 +706,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--network",
         choices=network_choices(),
         default=None,
-        help="which network to anchor on (default: testnet, or NVNM_NETWORK)",
+        help="which network to anchor on (default: mainnet, or NVNM_NETWORK)",
     )
     anchor.add_argument("--rpc", default=None, help="EVM RPC URL (default: the selected network's public RPC)")
     anchor.add_argument("--anchor", action="store_true", help="actually send the transaction(s) (default: dry-run plan only)")
@@ -731,7 +737,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--network",
         choices=network_choices(),
         default=None,
-        help="which network to verify against (default: testnet, or NVNM_NETWORK)",
+        help="which network to verify against (default: mainnet, or NVNM_NETWORK)",
     )
     verify.add_argument("--rpc", default=None, help="EVM RPC URL (default: the selected network's public RPC)")
     verify.add_argument("--json", action="store_true", help="emit the full JSON result")

@@ -738,8 +738,8 @@
             "properties": {
               "key": {"type": "string"},
               "label": {"type": "string"},
-              "chain_id": {"type": "integer"},
-              "chain_id_hex": {"type": "string"},
+              "chain_id": {"type": ["integer", "null"], "description": "Null when the profile left chain id empty and NVNM_MAINNET_CHAIN_ID is unset."},
+              "chain_id_hex": {"type": ["string", "null"]},
               "network_name": {"type": "string"},
               "rpc_urls": {"type": "array", "items": {"type": "string"}},
               "public_rpc": {"type": "string", "description": "Where to broadcast signed transactions and replay proof eth_calls."},
@@ -796,7 +796,7 @@
             "type": "object",
             "properties": {
               "precompile": {"type": "string", "description": "The anchoring precompile address."},
-              "chain_id": {"type": "integer"},
+              "chain_id": {"type": ["integer", "null"]},
               "explorer": {"type": "string"},
               "rpc_url": {"type": "string"},
               "receipt_uri": {"type": "string"}

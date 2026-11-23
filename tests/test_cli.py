@@ -134,7 +134,7 @@ def test_anchor_dry_run_does_not_send(brief_file, monkeypatch, capsys):
     monkeypatch.setattr(cli, "prepare_anchor", lambda *a, **k: _fake_plan())
     monkeypatch.setattr(cli, "find_receipt_registries", lambda *a, **k: [])
     # --agent avoids needing the signing key; no --anchor means dry run
-    rc = cli.main(["anchor", str(brief_file), "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
+    rc = cli.main(["anchor", str(brief_file), "--network", "testnet", "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
     out = capsys.readouterr().out
     assert rc == 0
     assert "Dry run" in out and "Receipt to anchor" in out
@@ -143,20 +143,19 @@ def test_anchor_dry_run_does_not_send(brief_file, monkeypatch, capsys):
     assert "will be CREATED" in out
 
 
-def test_anchor_defaults_to_testnet(brief_file, monkeypatch, capsys):
-    """No --network means testnet, the same default as every other command."""
+def test_anchor_defaults_to_mainnet(brief_file, monkeypatch, capsys):
+    """No --network means mainnet; with no chain id it refuses before any chain read."""
     monkeypatch.delenv("NVNM_NETWORK", raising=False)
-    seen = {}
+    monkeypatch.delenv("NVNM_MAINNET_CHAIN_ID", raising=False)
 
-    def fake_prepare(*args, **kwargs):
-        seen.update(kwargs)
-        return _fake_plan()
+    def boom(*args, **kwargs):
+        raise AssertionError("chain read")
 
-    monkeypatch.setattr(cli, "prepare_anchor", fake_prepare)
-    monkeypatch.setattr(cli, "find_receipt_registries", lambda *a, **k: [])
+    monkeypatch.setattr(cli, "prepare_anchor", boom)
+    monkeypatch.setattr(cli, "find_receipt_registries", boom)
     rc = cli.main(["anchor", str(brief_file), "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
-    assert rc == 0
-    assert seen["chain_id"] == 787223
+    assert rc == 2
+    assert "NVNM_MAINNET_CHAIN_ID is not set" in capsys.readouterr().err
 
 
 def test_anchor_ambiguous_registries_require_explicit_id(brief_file, monkeypatch, capsys):
@@ -165,7 +164,7 @@ def test_anchor_ambiguous_registries_require_explicit_id(brief_file, monkeypatch
         {"id": 901, "name": "inveniam--mata-v-avianca", "creator": "nvnm1x", "created_at": "t2"},
     ]
     monkeypatch.setattr(cli, "find_receipt_registries", lambda *a, **k: matches)
-    rc = cli.main(["anchor", str(brief_file), "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
+    rc = cli.main(["anchor", str(brief_file), "--network", "testnet", "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
     err = capsys.readouterr().err
     assert rc == 2
     assert "--registry-id" in err and "#900" in err and "#901" in err

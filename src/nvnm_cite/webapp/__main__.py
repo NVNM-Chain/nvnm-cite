@@ -18,7 +18,7 @@ def main() -> None:
         "--network",
         choices=network_choices(),
         default=None,
-        help="which NVNM Chain network to serve against (default: testnet, or NVNM_NETWORK)",
+        help="which NVNM Chain network to serve against (default: mainnet, or NVNM_NETWORK)",
     )
     parser.add_argument("--rpc", default=None, help="EVM RPC URL (default: the selected network's)")
     parser.add_argument("--data-dir", default="data", help="directory holding corpus.sqlite / chain_index.sqlite")

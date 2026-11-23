@@ -371,6 +371,8 @@ class ReceiptService:
                 "name the filer/firm and the case/matter — together they name the "
                 "per-case receipt registry your wallet will own"
             )
+        if self.network.chain_id is None:
+            raise WebAppError(f"{self.network.profile_env('CHAIN_ID')} is not set")
 
         # Resolve the target registry id when the client did not pin one:
         # search this wallet's own registries for the derived name. Names are
@@ -781,33 +783,41 @@ class StatusService:
         chain: dict[str, Any] = {"rpc_ok": False}
         registries: dict[str, Any] = {}
         gas_price_gwei: float | None = None
-        try:
-            chain = {
-                "rpc_ok": True,
-                "chain_id": self.gateway.chain_id(),
-                "expected_chain_id": self.network.chain_id,
-                "head_block": self.gateway.head_block(),
-            }
-            chain["chain_id_ok"] = chain["chain_id"] == self.network.chain_id
-            gas_price_gwei = round(self.gateway.gas_price() / 1e9, 3)
-            # Sentinel probes only — coverage counts come from the manifest.
-            for name in self.SENTINELS:
-                rid = self.manifest.registry_id(name)
-                if rid is None:
-                    continue
-                reg = self.gateway.registry(rid)
-                registries[name] = (
-                    {
-                        "exists": True,
-                        "id": reg["id"],
-                        "created_at": reg["created_at"],
-                        "name_matches_manifest": reg["name"] == name,
-                    }
-                    if reg
-                    else {"exists": False, "id": rid}
+        rpc = self.rpc_url or self.network.rpc_default
+        if not rpc:
+            chain["error"] = f"{self.network.rpc_env} is not set"
+        else:
+            try:
+                chain = {
+                    "rpc_ok": True,
+                    "chain_id": self.gateway.chain_id(),
+                    "expected_chain_id": self.network.chain_id,
+                    "head_block": self.gateway.head_block(),
+                }
+                chain["chain_id_ok"] = (
+                    self.network.chain_id is not None
+                    and chain["chain_id"] == self.network.chain_id
                 )
-        except (RpcError, OSError, TimeoutError) as err:
-            chain["error"] = str(err)
+                gas_price_gwei = round(self.gateway.gas_price() / 1e9, 3)
+                # Sentinel probes only — coverage counts come from the manifest.
+                for name in self.SENTINELS:
+                    rid = self.manifest.registry_id(name)
+                    if rid is None:
+                        continue
+                    reg = self.gateway.registry(rid)
+                    registries[name] = (
+                        {
+                            "exists": True,
+                            "id": reg["id"],
+                            "created_at": reg["created_at"],
+                            "name_matches_manifest": reg["name"] == name,
+                        }
+                        if reg
+                        else {"exists": False, "id": rid}
+                    )
+            except (RpcError, OSError, TimeoutError) as err:
+                chain["error"] = str(err)
+        chain_id = self.network.chain_id
         result = {
             "app": {
                 "name": "nvnm-cite",
@@ -817,8 +827,8 @@ class StatusService:
             "network": {
                 "key": self.network.key,
                 "label": self.network.label,
-                "chain_id": self.network.chain_id,
-                "chain_id_hex": hex(self.network.chain_id),
+                "chain_id": chain_id,
+                "chain_id_hex": None if chain_id is None else hex(chain_id),
                 "network_name": self.network.network_name,
                 "rpc_urls": [self.rpc_url or self.network.rpc_default],
                 "public_rpc": self.network.rpc_default,

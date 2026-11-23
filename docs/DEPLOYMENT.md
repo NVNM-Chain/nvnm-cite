@@ -38,7 +38,7 @@ docker run --rm -p 8787:8787 ghcr.io/nvnm-chain/nvnm-cite:latest
   one write path (recording a filing receipt) is signed in the user's own
   browser wallet, with the user's own gas. Never mount a `.env` into it.
 - Only runtime dependency: the RPC of the selected network. The image default
-  is testnet. Chain reads are free.
+  is mainnet. Chain reads are free.
 - Runs as non-root (uid 10001) and handles SIGTERM with a clean shutdown.
   `readOnlyRootFilesystem` is fine; if enabled, mount an emptyDir at `/tmp`
   (PDF parsing may use it).
@@ -48,21 +48,27 @@ docker run --rm -p 8787:8787 ghcr.io/nvnm-chain/nvnm-cite:latest
 
 ## Configuration
 
-The image defaults to testnet. Set `NVNM_NETWORK` explicitly in the
-production deploy; a value with no shipped profile stops the app at boot.
+The image defaults to mainnet. Set `NVNM_NETWORK` explicitly in the
+production deploy; a value with no profile stops the app at boot.
+`NVNM_NETWORK=testnet` selects the published testnet. Unset, the process
+boots on mainnet before that chain's id and RPC exist.
 
 | Variable | Default | Notes |
 |---|---|---|
-| `NVNM_NETWORK` | `testnet` | `devnet` selects the other shipped profile. One process serves one network. |
-| `NVNM_TESTNET_RPC` / `NVNM_DEVNET_RPC` | the profile's `rpc_default` | RPC URL override for the selected profile. |
+| `NVNM_NETWORK` | `mainnet` | `testnet` or `devnet` selects a published profile. One process serves one network. `mainnet` starts with no chain id and an empty court manifest. |
+| `NVNM_TESTNET_RPC` / `NVNM_DEVNET_RPC` | the profile's `rpc_default` | RPC URL override for that profile. |
+| `NVNM_MAINNET_CHAIN_ID` | unset | Decimal chain id. Required before a mainnet manifest that lists registries will load, and before any receipt is built. |
+| `NVNM_MAINNET_RPC` | unset | Mainnet RPC. Unset, `/api/status` stays HTTP 200 and reports the RPC down. |
+| `NVNM_MAINNET_EXPLORER` | unset | Block explorer URL the wallet and status page use. |
+| `NVNM_MAINNET_NETWORK_NAME` | unset | Chain name recorded on the profile (`network_name`). |
+| `NVNM_MAINNET_KEY` | unset | Signing key for writer processes. Do not set it on the web image. |
+| `NVNM_MANIFEST_PATH` | packaged manifest | Read only when that file lists no registries. Ignored once it lists them. |
 
 Telemetry (aggregate by-citation lookup counts) is **off** because the image
 CMD passes no `--telemetry` flag. Leave it off; turning it on is a product
 decision, not an ops setting.
 
-A second hostname can run the same image with `NVNM_NETWORK=devnet`. Reads
-are free. Set `NVNM_NETWORK` in the deploy that rolls the image so the
-target is explicit.
+A second hostname can run the same image with `NVNM_NETWORK=devnet` or `NVNM_NETWORK=mainnet`. Reads are free. Set `NVNM_NETWORK` in the deploy that rolls the image so the target is explicit.
 
 ## Health and monitoring
 
