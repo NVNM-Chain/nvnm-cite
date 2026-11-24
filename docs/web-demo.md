@@ -56,7 +56,8 @@ by the user's own wallet (MetaMask or compatible; the page offers the chain-add 
 the server-selected network — mainnet by default, which has no chain id until
 `NVNM_MAINNET_CHAIN_ID` is set. Testnet is 787223 and devnet is 787222, selected
 with `--network`. Checks report NOT_COVERED while the mainnet court manifest
-is empty. Writes are deny-by-default on chain, and the page pre-flights them
+is empty. The page does not open a wallet until a chain id is set, and a receipt
+is refused while that manifest is empty. Writes are deny-by-default on chain, and the page pre-flights them
 with an `eth_estimateGas` probe so a lawyer learns about a missing editor grant
 *before* their wallet pops.
 

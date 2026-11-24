@@ -342,6 +342,9 @@ def cmd_anchor(args: argparse.Namespace) -> int:
     rpc_url = args.rpc or network.rpc_url()
     rpc_factory = lambda: EvmRpc(rpc_url)  # noqa: E731
     registry_ids = load_manifest(network.key).all_registries()
+    if not registry_ids:
+        print("error: court manifest is empty; refusing to anchor", file=sys.stderr)
+        return 2
 
     key: int | None = None
     if args.agent:
@@ -579,12 +582,26 @@ def cmd_manifest_verify(args: argparse.Namespace) -> int:
     if network.chain_id is None:
         print(f"error: {network.profile_env('CHAIN_ID')} is not set", file=sys.stderr)
         return 2
-    rpc = EvmRpc(args.rpc or network.rpc_url())
-    chain_id = rpc.chain_id()
-    if chain_id != network.chain_id:
-        print(f"error: RPC chain id {chain_id} != {network.chain_id}", file=sys.stderr)
+    rpc_url = args.rpc or network.rpc_url()
+    if not rpc_url:
+        print(f"error: {network.rpc_env} is not set", file=sys.stderr)
         return 2
-    diff = manifest.diff_against_chain(rpc)
+    if not manifest.ids:
+        print(
+            "error: court manifest is empty; refusing to audit an uninitialized manifest",
+            file=sys.stderr,
+        )
+        return 2
+    rpc = EvmRpc(rpc_url)
+    try:
+        chain_id = rpc.chain_id()
+        if chain_id != network.chain_id:
+            print(f"error: RPC chain id {chain_id} != {network.chain_id}", file=sys.stderr)
+            return 2
+        diff = manifest.diff_against_chain(rpc)
+    except (RpcError, OSError) as exc:
+        print(f"error: could not reach NVNM Chain at {rpc_url} ({exc})", file=sys.stderr)
+        return 2
     payload = {
         "network": network.key,
         "manifest_generated_at_block": manifest.generated_at_block,

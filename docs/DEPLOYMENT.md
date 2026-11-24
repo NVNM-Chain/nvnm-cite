@@ -57,12 +57,12 @@ boots on mainnet before that chain's id and RPC exist.
 |---|---|---|
 | `NVNM_NETWORK` | `mainnet` | `testnet` or `devnet` selects a published profile. One process serves one network. `mainnet` starts with no chain id and an empty court manifest. |
 | `NVNM_TESTNET_RPC` / `NVNM_DEVNET_RPC` | the profile's `rpc_default` | RPC URL override for that profile. |
-| `NVNM_MAINNET_CHAIN_ID` | unset | Decimal chain id. Required before a mainnet manifest that lists registries will load, and before any receipt is built. |
+| `NVNM_MAINNET_CHAIN_ID` | unset | Decimal chain id. Required before a mainnet manifest that lists registries will load, and before any receipt is built. A receipt is also refused while the court manifest lists no registries. |
 | `NVNM_MAINNET_RPC` | unset | Mainnet RPC. Unset, `/api/status` stays HTTP 200 and reports the RPC down. |
 | `NVNM_MAINNET_EXPLORER` | unset | Block explorer URL the wallet and status page use. |
 | `NVNM_MAINNET_NETWORK_NAME` | unset | Chain name recorded on the profile (`network_name`). |
 | `NVNM_MAINNET_KEY` | unset | Signing key for writer processes. Do not set it on the web image. |
-| `NVNM_MANIFEST_PATH` | packaged manifest | Read only when that file lists no registries. Ignored once it lists them. |
+| `NVNM_MANIFEST_PATH` | packaged manifest | Read only when that file lists no registries. Ignored once it lists them. `nvnm-cite manifest-verify` exits 2 while the effective manifest is empty. |
 
 Telemetry (aggregate by-citation lookup counts) is **off** because the image
 CMD passes no `--telemetry` flag. Leave it off; turning it on is a product

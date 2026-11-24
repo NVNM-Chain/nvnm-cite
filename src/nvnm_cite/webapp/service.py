@@ -373,6 +373,8 @@ class ReceiptService:
             )
         if self.network.chain_id is None:
             raise WebAppError(f"{self.network.profile_env('CHAIN_ID')} is not set")
+        if not self.registry_ids:
+            raise WebAppError("court manifest is empty; refusing to anchor")
 
         # Resolve the target registry id when the client did not pin one:
         # search this wallet's own registries for the derived name. Names are
