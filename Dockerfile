@@ -53,7 +53,9 @@ ENV PATH="/app/.venv/bin:${PATH}" \
 USER nvnm
 EXPOSE 8787
 
-# Default network is testnet. Set NVNM_NETWORK to another shipped profile.
+# Default network is mainnet. Set NVNM_NETWORK=testnet or NVNM_NETWORK=devnet
+# for a published chain. mainnet boots with an empty court manifest until
+# its identity env is set.
 # /app/data is an OPTIONAL local index mount (status-panel counts only; the
 # chain is the lookup authority). No --telemetry flag: telemetry stays OFF,
 # which is the required production posture unless explicitly decided otherwise.

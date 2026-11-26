@@ -134,7 +134,7 @@ def test_anchor_dry_run_does_not_send(brief_file, monkeypatch, capsys):
     monkeypatch.setattr(cli, "prepare_anchor", lambda *a, **k: _fake_plan())
     monkeypatch.setattr(cli, "find_receipt_registries", lambda *a, **k: [])
     # --agent avoids needing the signing key; no --anchor means dry run
-    rc = cli.main(["anchor", str(brief_file), "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
+    rc = cli.main(["anchor", str(brief_file), "--network", "testnet", "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
     out = capsys.readouterr().out
     assert rc == 0
     assert "Dry run" in out and "Receipt to anchor" in out
@@ -143,20 +143,114 @@ def test_anchor_dry_run_does_not_send(brief_file, monkeypatch, capsys):
     assert "will be CREATED" in out
 
 
-def test_anchor_defaults_to_testnet(brief_file, monkeypatch, capsys):
-    """No --network means testnet, the same default as every other command."""
+def _quiet_dotenv(monkeypatch):
+    monkeypatch.setattr(cli, "load_dotenv", lambda *a, **k: None)
+
+
+def test_manifest_verify_unconfigured_mainnet_names_chain_id(monkeypatch, capsys):
+    _quiet_dotenv(monkeypatch)
     monkeypatch.delenv("NVNM_NETWORK", raising=False)
-    seen = {}
+    monkeypatch.delenv("NVNM_MAINNET_CHAIN_ID", raising=False)
+    monkeypatch.delenv("NVNM_MAINNET_RPC", raising=False)
+    monkeypatch.delenv("NVNM_MANIFEST_PATH", raising=False)
 
-    def fake_prepare(*args, **kwargs):
-        seen.update(kwargs)
-        return _fake_plan()
+    def boom(*args, **kwargs):
+        raise AssertionError("chain read")
 
-    monkeypatch.setattr(cli, "prepare_anchor", fake_prepare)
-    monkeypatch.setattr(cli, "find_receipt_registries", lambda *a, **k: [])
+    monkeypatch.setattr(cli, "EvmRpc", boom)
+    rc = cli.main(["manifest-verify"])
+    assert rc == 2
+    assert "NVNM_MAINNET_CHAIN_ID is not set" in capsys.readouterr().err
+
+
+def test_manifest_verify_missing_rpc_exits_2(monkeypatch, capsys):
+    _quiet_dotenv(monkeypatch)
+    monkeypatch.delenv("NVNM_MANIFEST_PATH", raising=False)
+    monkeypatch.setenv("NVNM_MAINNET_CHAIN_ID", "424242")
+    monkeypatch.delenv("NVNM_MAINNET_RPC", raising=False)
+
+    def boom(*args, **kwargs):
+        raise AssertionError("chain read")
+
+    monkeypatch.setattr(cli, "EvmRpc", boom)
+    rc = cli.main(["manifest-verify", "--network", "mainnet"])
+    assert rc == 2
+    assert "NVNM_MAINNET_RPC is not set" in capsys.readouterr().err
+
+
+def test_manifest_verify_empty_manifest_is_not_clean(monkeypatch, capsys):
+    _quiet_dotenv(monkeypatch)
+    monkeypatch.delenv("NVNM_MANIFEST_PATH", raising=False)
+    monkeypatch.setenv("NVNM_MAINNET_CHAIN_ID", "424242")
+    monkeypatch.setenv("NVNM_MAINNET_RPC", "http://127.0.0.1:9")
+
+    def boom(*args, **kwargs):
+        raise AssertionError("chain read")
+
+    monkeypatch.setattr(cli, "EvmRpc", boom)
+    rc = cli.main(["manifest-verify", "--network", "mainnet"])
+    err = capsys.readouterr().err
+    assert rc == 2
+    assert "uninitialized" in err
+    assert "clean" not in err
+
+
+def test_manifest_verify_dead_rpc_exits_2(monkeypatch, capsys):
+    _quiet_dotenv(monkeypatch)
+    monkeypatch.delenv("NVNM_MANIFEST_PATH", raising=False)
+    monkeypatch.setenv("NVNM_MAINNET_CHAIN_ID", "424242")
+    monkeypatch.setenv("NVNM_MAINNET_RPC", "http://127.0.0.1:9")
+
+    class Down:
+        def __init__(self, url):
+            self.url = url
+
+        def chain_id(self):
+            raise ConnectionError("refused")
+
+    monkeypatch.setattr(cli, "EvmRpc", Down)
+    monkeypatch.setattr(
+        cli,
+        "load_manifest",
+        lambda key: type("M", (), {"ids": {"us-scotus": 82}})(),
+    )
+    rc = cli.main(["manifest-verify", "--network", "mainnet"])
+    assert rc == 2
+    err = capsys.readouterr().err
+    assert "could not reach" in err and "NVNM Chain" in err
+
+
+def test_anchor_refuses_empty_court_manifest(brief_file, monkeypatch, capsys):
+    _quiet_dotenv(monkeypatch)
+    monkeypatch.delenv("NVNM_MANIFEST_PATH", raising=False)
+    monkeypatch.setenv("NVNM_MAINNET_CHAIN_ID", "424242")
+    monkeypatch.setenv("NVNM_MAINNET_RPC", "http://127.0.0.1:9")
+
+    def boom(*args, **kwargs):
+        raise AssertionError("chain read")
+
+    monkeypatch.setattr(cli, "find_receipt_registries", boom)
+    rc = cli.main([
+        "anchor", str(brief_file), "--network", "mainnet",
+        "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20,
+    ])
+    assert rc == 2
+    assert "court manifest is empty" in capsys.readouterr().err
+
+
+def test_anchor_defaults_to_mainnet(brief_file, monkeypatch, capsys):
+    """No --network means mainnet; with no chain id it refuses before any chain read."""
+    monkeypatch.delenv("NVNM_NETWORK", raising=False)
+    monkeypatch.delenv("NVNM_MAINNET_CHAIN_ID", raising=False)
+
+    def boom(*args, **kwargs):
+        raise AssertionError("chain read")
+
+    monkeypatch.setattr(cli, "prepare_anchor", boom)
+    monkeypatch.setattr(cli, "find_receipt_registries", boom)
     rc = cli.main(["anchor", str(brief_file), "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
-    assert rc == 0
-    assert seen["chain_id"] == 787223
+    assert rc == 2
+    assert "NVNM_MAINNET_CHAIN_ID is not set" in capsys.readouterr().err
 
 
 def test_anchor_ambiguous_registries_require_explicit_id(brief_file, monkeypatch, capsys):
@@ -165,7 +259,7 @@ def test_anchor_ambiguous_registries_require_explicit_id(brief_file, monkeypatch
         {"id": 901, "name": "inveniam--mata-v-avianca", "creator": "nvnm1x", "created_at": "t2"},
     ]
     monkeypatch.setattr(cli, "find_receipt_registries", lambda *a, **k: matches)
-    rc = cli.main(["anchor", str(brief_file), "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
+    rc = cli.main(["anchor", str(brief_file), "--network", "testnet", "--firm", "Inveniam", "--case", "Mata v. Avianca", "--agent", "0x" + "ab" * 20])
     err = capsys.readouterr().err
     assert rc == 2
     assert "--registry-id" in err and "#900" in err and "#901" in err

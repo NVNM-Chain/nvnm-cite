@@ -997,16 +997,6 @@ async function applyWalletState() {
   btn.className = "btn btn-outline btn-wallet";
   btn.disabled = false;
   wallet.detected = !!eth;
-  if (!eth) {
-    btn.textContent = "No wallet detected";
-    btn.disabled = true;
-    btn.title = "Install MetaMask (metamask.io) to record receipts. Checking and verifying never need a wallet.";
-    wallet.address = null;
-    wallet.chainOk = false;
-    if (wasConnected) track("wallet_disconnected");
-    syncRecordPanel();
-    return;
-  }
   if (!NET) {
     // Network identity not loaded yet: never guess a chain id.
     btn.textContent = "Connect wallet";
@@ -1014,6 +1004,27 @@ async function applyWalletState() {
     btn.title = "Waiting for the server's network identity…";
     wallet.address = null;
     wallet.chainOk = false;
+    syncRecordPanel();
+    return;
+  }
+  if (netChainId() == null) {
+    // No chain to switch to. Do not ask the wallet for accounts.
+    btn.textContent = "Chain id not set";
+    btn.disabled = true;
+    btn.title = "Chain id is not set. Recording stays off until this deployment has one.";
+    wallet.address = null;
+    wallet.chainOk = false;
+    if (wasConnected) track("wallet_disconnected");
+    syncRecordPanel();
+    return;
+  }
+  if (!eth) {
+    btn.textContent = "No wallet detected";
+    btn.disabled = true;
+    btn.title = "Install MetaMask (metamask.io) to record receipts. Checking and verifying never need a wallet.";
+    wallet.address = null;
+    wallet.chainOk = false;
+    if (wasConnected) track("wallet_disconnected");
     syncRecordPanel();
     return;
   }
@@ -1044,7 +1055,7 @@ async function applyWalletState() {
 
 async function connectWallet() {
   const eth = providerOrNull();
-  if (!eth || !NET) return;
+  if (!eth || !NET || netChainId() == null) return;
   const hadAddress = !!wallet.address;
   setUserDisconnected(false);
   try {
@@ -1088,7 +1099,7 @@ function walletButtonClick() {
 
 async function switchNetwork() {
   const eth = providerOrNull();
-  if (!NET) return;
+  if (!NET || netChainId() == null) return;
   try {
     await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: NET.chain_id_hex }] });
   } catch (err) {
@@ -1185,6 +1196,16 @@ function setSteps() {
 function buildWalletCallout() {
   const box = clear($("wallet-callout"));
   if (wallet.address && wallet.chainOk) return;
+  if (NET && netChainId() == null) {
+    const c = el("div", "callout callout-warn");
+    c.appendChild(icon("i-alert"));
+    const d = el("div");
+    d.appendChild(el("strong", null, "Chain id is not set."));
+    d.appendChild(el("p", null, "Recording stays off until this deployment has a chain id. Checking and verifying never need a wallet."));
+    c.appendChild(d);
+    box.appendChild(c);
+    return;
+  }
   const wrong = !!wallet.address && !wallet.chainOk;
   const c = el("div", "callout" + (wrong ? " callout-warn" : ""));
   c.appendChild(icon(wrong ? "i-alert" : "i-info"));

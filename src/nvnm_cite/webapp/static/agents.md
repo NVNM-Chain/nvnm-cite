@@ -20,7 +20,7 @@ What an answer asserts: existence of a registry record, at a stated block, in a 
 curl -sS https://www.nvnmcite.com/api/status
 ```
 
-Returns the network this deployment serves (chain id, cosmos chain id, public RPC URL, explorer URL, gas token), coverage (the number of court registries in the pinned name-to-id manifest and its creator), the normalizer and schema versions, live chain health, and whether aggregate telemetry is enabled. Read it once per session; the anchor workflow needs `network.public_rpc`, `network.chain_id`, and `network.explorer` from it.
+Returns the network this deployment serves (chain id, cosmos chain id, public RPC URL, explorer URL, gas token), coverage (the number of court registries in the pinned name-to-id manifest and its creator), the normalizer and schema versions, live chain health, and whether aggregate telemetry is enabled. Read it once per session; the anchor workflow needs `network.public_rpc`, `network.chain_id`, and `network.explorer` from it. On a mainnet deployment whose profile left those fields empty, `network.chain_id` may be null; `coverage.count` is 0 until the court manifest lists registries, and checks then report NOT_COVERED without a chain read. `chain.rpc_ok: false` with HTTP 200 means the process is up and the RPC is not.
 
 ## Check a document's citations
 

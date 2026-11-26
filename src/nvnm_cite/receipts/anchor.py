@@ -162,6 +162,12 @@ def prepare_anchor(
     registry does not exist yet: the plan carries the create step and the
     record calldata is built AFTER the create confirms (the id comes from the
     AddRegistry event). ``reader``/``resolver`` are injectable for testing."""
+    if chain_id is None or chain_id <= 0:
+        raise ReceiptError("chain id is not set; refusing to build a receipt")
+    # An empty court map makes every citation NOT_COVERED. A later manifest
+    # would change that tally for the same bytes (SUMMARY_DRIFT).
+    if registry_ids is not None and len(registry_ids) == 0:
+        raise ReceiptError("court manifest is empty; refusing to anchor")
     if reader is None:
         if rpc_factory is None:
             raise ValueError("prepare_anchor needs rpc_factory or reader")

@@ -57,11 +57,12 @@ jobs:
 
       # Boot the real image and hit it the way monitoring will: / must serve,
       # /api/status must report a reachable RPC for the image's network
-      # (testnet unless NVNM_NETWORK is set), chain_id_ok, manifest coverage,
+      # The image default is mainnet. This smoke selects testnet so it checks
+      # a published chain: chain_id_ok, manifest coverage,
       # a manifest-consistent sentinel registry, and telemetry OFF.
       - name: Smoke test
         run: |
-          docker run -d --name smoke -p 8787:8787 nvnm-cite:smoke
+          docker run -d --name smoke -e NVNM_NETWORK=testnet -p 8787:8787 nvnm-cite:smoke
           trap 'echo "--- container logs ---"; docker logs smoke || true; docker rm -f smoke || true' EXIT
           for i in $(seq 1 30); do
             curl -fsS -o /dev/null http://localhost:8787/ && break

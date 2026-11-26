@@ -79,8 +79,9 @@ class Services:
         # court-registry resolution (names are non-unique under v1.2.0).
         manifest = load_manifest(network.key)
         registry_ids = manifest.all_registries()
-        # Fail fast on a network/manifest mismatch rather than serving wrong ids.
-        if manifest.chain_id != network.chain_id:
+        # A manifest that lists registries must name this process's chain.
+        # An empty manifest does not pin a chain id.
+        if manifest.ids and manifest.chain_id != network.chain_id:
             raise RuntimeError(
                 f"manifest chain_id {manifest.chain_id} != network {network.chain_id}"
             )

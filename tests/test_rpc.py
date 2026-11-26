@@ -95,6 +95,13 @@ def test_gives_up_after_max_attempts(monkeypatch) -> None:
     assert calls["n"] == 4
 
 
+def test_empty_url_is_a_transport_error(monkeypatch) -> None:
+    calls = patch_urlopen(monkeypatch, [])
+    with pytest.raises(OSError, match="no RPC URL configured"):
+        EvmRpc("").call("eth_chainId")
+    assert calls["n"] == 0
+
+
 def test_on_retry_callback_fires(monkeypatch) -> None:
     patch_urlopen(
         monkeypatch,

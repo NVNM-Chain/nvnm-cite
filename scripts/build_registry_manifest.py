@@ -68,7 +68,14 @@ def main() -> int:
     args = ap.parse_args()
 
     network = config.resolve_profile(args.network)
-    rpc = EvmRpc(args.rpc or network.rpc_url(), timeout=30)
+    if network.chain_id is None:
+        print(f"FATAL: {network.profile_env('CHAIN_ID')} is not set", file=sys.stderr)
+        return 1
+    rpc_url = args.rpc or network.rpc_url()
+    if not rpc_url:
+        print(f"FATAL: {network.rpc_env} is not set", file=sys.stderr)
+        return 1
+    rpc = EvmRpc(rpc_url, timeout=30)
 
     chain_id = rpc.chain_id()
     if chain_id != network.chain_id:
@@ -143,6 +150,9 @@ def main() -> int:
     if errors:
         for e in errors:
             print(f"FATAL: {e}", file=sys.stderr)
+        return 1
+    if not by_name:
+        print("FATAL: matched 0 registries; refusing to write an empty manifest", file=sys.stderr)
         return 1
 
     manifest = {

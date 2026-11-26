@@ -504,6 +504,16 @@ def test_receipt_prepare_surfaces_same_name_ambiguity():
     assert "tx" not in out and "setup" not in out
 
 
+def test_receipt_prepare_refuses_empty_court_manifest():
+    class _NoScan(FakeGateway):
+        def registries_by_creator(self, creator):
+            raise AssertionError("chain read")
+
+    svc = ReceiptService(_NoScan(), TESTNET, {})
+    with pytest.raises(WebAppError, match="court manifest is empty"):
+        svc.prepare(b"x", "f.pdf", firm=FIRM, case=CASE, agent_address=AGENT_ADDR)
+
+
 def test_receipt_prepare_validates_input():
     svc = make_service(FakeGateway())
     with pytest.raises(WebAppError):  # bad agent address

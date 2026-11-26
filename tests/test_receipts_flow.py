@@ -15,7 +15,13 @@ import pytest
 from nvnm_cite.chain import abi
 from nvnm_cite.chain import precompile as pc
 from nvnm_cite.receipts.anchor import AnchorPlan, prepare_anchor, send
-from nvnm_cite.receipts.schema import RECEIPT_CHECKSUM_ALGO, RECEIPT_URI, build_receipt, summary_tally
+from nvnm_cite.receipts.schema import (
+    RECEIPT_CHECKSUM_ALGO,
+    RECEIPT_URI,
+    ReceiptError,
+    build_receipt,
+    summary_tally,
+)
 from nvnm_cite.receipts.verify import (
     FOUND,
     NOT_FOUND,
@@ -154,11 +160,28 @@ def test_prepare_anchor_warns_on_name_mismatch_never_blocks():
 
 
 def test_prepare_anchor_unknown_registry_id_errors():
-    from nvnm_cite.receipts.schema import ReceiptError
-
     reader = FakeReader(COURTS)
     with pytest.raises(ReceiptError, match="does not exist"):
         _prepare(reader, registry_id=4711)
+
+
+def test_prepare_anchor_refuses_empty_court_map_after_chain_id():
+    class _NoRead:
+        def head_block(self):
+            raise AssertionError("chain read")
+
+    with pytest.raises(ReceiptError, match="chain id is not set"):
+        prepare_anchor(
+            BRIEF, "brief.txt", firm="Inveniam", case="Mata v. Avianca",
+            agent_address=AGENT, chain_id=None, reader=_NoRead(), resolver=FakeResolver(),
+            registry_ids={},
+        )
+    with pytest.raises(ReceiptError, match="court manifest is empty"):
+        prepare_anchor(
+            BRIEF, "brief.txt", firm="Inveniam", case="Mata v. Avianca",
+            agent_address=AGENT, chain_id=CHAIN_ID, reader=_NoRead(), resolver=FakeResolver(),
+            registry_ids={},
+        )
 
 
 # ---------------------------------------------------------------- send (writes)
