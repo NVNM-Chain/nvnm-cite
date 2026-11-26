@@ -154,7 +154,11 @@ locked field layouts above:
   creator-verified manifest `src/nvnm_cite/chain/registry_manifest_<network>.json`
   (schema `nvnm-cite-registry-manifest/v1`; regenerate with
   `scripts/build_registry_manifest.py`, audit with `nvnm-cite manifest-verify`).
-  Mainnet: 2,114 registries, ids 69–2182 (`us-scotus` = 82).
+  Shipped manifests are `registry_manifest_testnet.json` and
+  `registry_manifest_devnet.json`. A court entry is `{"id": <n>}`, with
+  `"empty": true` when that registry had no citation record at build time.
+  A citation check reads a marked-empty court with the other courts in the
+  map: a hit is VERIFIED and a miss is NOT_FOUND.
 - **The discovery line on a filing carries the #id.** Locked format
   (`receipts/anchor.py::registry_line`):
   `Citation verifications: NVNM Chain (chain <chain_id>) registry #<id> — <firm>--<case>`.

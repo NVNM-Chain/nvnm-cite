@@ -124,7 +124,7 @@ def get_balance(rpc: EvmRpc, address: str, token: str) -> int:
     return int.from_bytes(rpc.eth_call(token, data), "big")
 
 
-def fee_base_units(gas: int, gas_price: int, *, decimals: int = 6) -> int:
+def fee_base_units(gas: int, gas_price: int, decimals: int = 6) -> int:
     """Token base units a type-0 tx can debit."""
     scale = 10 ** (18 - decimals)
     return (gas * gas_price + scale - 1) // scale
@@ -705,9 +705,15 @@ def main(argv: list[str] | None = None) -> int:
         key, chain_id = signing_context(network)
         registry_ids = load_manifest(network.key).all_registries()
         run_load(
-            db, rpc, key, chain_id, registry_ids,
-            depth=args.depth, max_records=args.max_records,
-            fee_token=network.fee_token, fee_decimals=network.fee_token_decimals,
+            db=db,
+            rpc=rpc,
+            key=key,
+            chain_id=chain_id,
+            registry_ids=registry_ids,
+            depth=args.depth,
+            max_records=args.max_records,
+            fee_token=network.fee_token,
+            fee_decimals=network.fee_token_decimals,
         )
         print_status(
             db, rpc, address_from_private_key(key), network.gas_token,

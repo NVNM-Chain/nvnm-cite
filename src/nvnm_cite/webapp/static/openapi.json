@@ -769,6 +769,7 @@
             "description": "The pinned creator-verified name-to-id manifest: count, creator, generation block.",
             "properties": {
               "count": {"type": "integer"},
+              "empty": {"type": "integer", "description": "Pinned courts whose manifest entry says they had no citation records at build time. Checks still read them."},
               "source": {"type": "string"},
               "creator": {"type": "string"},
               "generated_at": {"type": "string"},

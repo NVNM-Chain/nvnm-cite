@@ -179,7 +179,12 @@ def prepare_anchor(
         if rpc_factory is None:
             raise ValueError("prepare_anchor needs rpc_factory or resolver")
         resolver = ChainResolver(rpc_factory, block=hex(head))
-    report = check_document(data, filename, resolver, registry_ids=registry_ids)
+    report = check_document(
+        data=data,
+        filename=filename,
+        resolver=resolver,
+        registry_ids=registry_ids,
+    )
     sha = report["document"]["sha256"]
 
     registries_read = registries_read_from_report(report, head)
